@@ -1,0 +1,59 @@
+schema: PaldarkTaskPacket/v1
+
+task_id: ""
+title: ""
+status: proposed # proposed | approved | implementing | compiled | human_test | accepted | blocked
+deadline: "" # ISO-8601 with timezone, for example 2026-08-05T10:00:00+07:00
+
+player_value: ""
+behavior_contract:
+  given: []
+  when: []
+  then: []
+  failure_visible_as: []
+
+evidence:
+  palworld_behavior: [] # version + video/doc/data source
+  engine_official: []
+  course_source: [] # [C++] | [Asset] | [Doc]
+  donor_code: [] # Lab | V2 | V3 | KYWorld; include limits
+  unknowns: []
+
+state_owners: {}
+invariants: []
+commands: []
+queries: []
+events: []
+api_versions: {}
+
+write_set:
+  owner_agent: ""
+  allowed_paths: []
+  forbidden_paths:
+    - "PaldarkKit/PaldarkKit.uproject"
+    - "PaldarkKit/Source/PaldarkCore/**"
+    - "generated assets/main Experience"
+  shared_api_delta: none # none | separate_approval_required
+
+implementation:
+  compile_target: "PaldarkKitEditor Win64 Development"
+  normal_entry_point: ""
+  qa_fixture_is_not_acceptance: true
+  expected_logs: []
+  blueprint_handoff: []
+  explicitly_out_of_scope: []
+
+human_test_card: ""
+definition_of_done:
+  designed: false
+  source_present: false
+  compiled: false
+  integrated: false
+  player_observable: false
+  user_verified: false
+  parity_evidenced: false
+
+approval:
+  decision_owner: "" # product/architecture role responsible for the decision
+  architecture_approved_at: ""
+  notes: ""

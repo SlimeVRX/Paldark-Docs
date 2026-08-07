@@ -1,0 +1,145 @@
+import type { DefaultTheme } from 'vitepress'
+
+const page = (text: string, link: string): DefaultTheme.SidebarItem => ({ text, link })
+
+export const bookSidebar: DefaultTheme.SidebarItem[] = [
+  {
+    text: 'Bắt đầu',
+    collapsed: false,
+    items: [
+      page('Tổng quan Paldark', '/'),
+      page('Mục lục toàn bộ sách', '/00-MucLuc'),
+      page('Kiến trúc hiện hành · ADR-001', '/Q6-Kien-Truc-VibeCoding/39-kien-truc-hoi-tu-vibecoding'),
+    ],
+  },
+  {
+    text: 'Quyển 1 · Đọc một game',
+    collapsed: true,
+    items: [
+      page('01 · Nhìn một game thì nhìn cái gì', '/Q1-Doc-Mot-Game/01-nhin-mot-game-thi-nhin-cai-gi'),
+      page('02 · Palworld có gì vui', '/Q1-Doc-Mot-Game/02-palworld-co-gi-vui'),
+      page('03 · Catalog tính năng', '/Q1-Doc-Mot-Game/03-catalog-tinh-nang'),
+      page('04 · Từ tính năng ra trạng thái', '/Q1-Doc-Mot-Game/04-tu-tinh-nang-ra-trang-thai'),
+      page('05 · Bản đồ hệ thống', '/Q1-Doc-Mot-Game/05-ban-do-he-thong'),
+    ],
+  },
+  {
+    text: 'Quyển 2 · Vấn đề nghìn người',
+    collapsed: true,
+    items: [
+      page('06 · Vì sao codebase vỡ', '/Q2-Van-De-Nghin-Nguoi/06-vi-sao-codebase-vo-khi-dong-nguoi'),
+      page('07 · Lyra chữa được gì', '/Q2-Van-De-Nghin-Nguoi/07-lyra-chua-duoc-gi'),
+      page('08 · Cái giá của Lyra', '/Q2-Van-De-Nghin-Nguoi/08-cai-gia-cua-lyra'),
+      page('09 · UEFN dạy thêm gì', '/Q2-Van-De-Nghin-Nguoi/09-uefn-day-them-gi'),
+      page('10 · Bằng chứng modular', '/Q2-Van-De-Nghin-Nguoi/10-bang-chung-modular-co-that'),
+      page('11 · Luật kiến trúc Paldark', '/Q2-Van-De-Nghin-Nguoi/11-luat-kien-truc-paldark'),
+    ],
+  },
+  {
+    text: 'Quyển 3 · Bộ khung',
+    collapsed: true,
+    items: [
+      page('12 · Khái niệm và quyền ghi', '/Q3-Bo-Khung/12-danh-muc-khai-niem-va-quyen-ghi'),
+      page('13 · Bản đồ module', '/Q3-Bo-Khung/13-ban-do-module'),
+      page('14 · Hợp đồng dữ liệu', '/Q3-Bo-Khung/14-hop-dong-du-lieu'),
+      page('15 · Đăng ký không file chung', '/Q3-Bo-Khung/15-dang-ky-khong-can-file-dung-chung'),
+      page('15b · Game Features', '/Q3-Bo-Khung/15b-game-features-va-modular-gameplay'),
+      page('16 · Một tính năng gồm gì', '/Q3-Bo-Khung/16-mot-tinh-nang-gom-nhung-gi'),
+      page('17 · Blueprint được làm gì', '/Q3-Bo-Khung/17-blueprint-duoc-lam-gi'),
+      page('18 · Log, test và bằng chứng', '/Q3-Bo-Khung/18-log-test-va-bang-chung'),
+      page('19 · CI là trọng tài', '/Q3-Bo-Khung/19-ci-la-trong-tai'),
+    ],
+  },
+  {
+    text: 'Quyển 4 · Dựng lại Palworld',
+    collapsed: true,
+    items: [
+      page('20 · Nền và cách đọc', '/Q4-Dung-Lai-Palworld/20-nen-va-cach-doc-quyen-nay'),
+      page('21 · Di chuyển và input', '/Q4-Dung-Lai-Palworld/21-di-chuyen-va-input'),
+      page('22 · Tương tác và thu thập', '/Q4-Dung-Lai-Palworld/22-tuong-tac-va-thu-thap'),
+      page('23 · Vật phẩm và túi đồ', '/Q4-Dung-Lai-Palworld/23-vat-pham-va-tui-do'),
+      page('24 · Chế tạo', '/Q4-Dung-Lai-Palworld/24-che-tao'),
+      page('25 · Chiến đấu', '/Q4-Dung-Lai-Palworld/25-chien-dau'),
+      page('26 · Bắt giữ', '/Q4-Dung-Lai-Palworld/26-bat-giu'),
+      page('27 · Bạn đồng hành', '/Q4-Dung-Lai-Palworld/27-ban-dong-hanh'),
+      page('28 · Xây dựng', '/Q4-Dung-Lai-Palworld/28-xay-dung'),
+      page('29 · Làm việc và tự động hóa', '/Q4-Dung-Lai-Palworld/29-lam-viec-va-tu-dong-hoa'),
+      page('30 · Tiến trình và công nghệ', '/Q4-Dung-Lai-Palworld/30-tien-trinh-va-cong-nghe'),
+      page('31 · Thế giới và nhịp sống', '/Q4-Dung-Lai-Palworld/31-the-gioi-va-sinh-san'),
+      page('32 · Hang động và trùm', '/Q4-Dung-Lai-Palworld/32-hang-dong-va-trum'),
+      page('33 · Lưu trữ', '/Q4-Dung-Lai-Palworld/33-luu-tru'),
+      page('34 · Nhiều người chơi', '/Q4-Dung-Lai-Palworld/34-nhieu-nguoi-choi'),
+      page('35 · Nhân giống và kinh tế', '/Q4-Dung-Lai-Palworld/35-nhan-giong-va-kinh-te'),
+    ],
+  },
+  {
+    text: 'Quyển 5 · Lộ trình và giáo trình',
+    collapsed: true,
+    items: [
+      page('37 · Độ phức tạp và lộ trình', '/Q5-Lo-Trinh/37-do-phuc-tap-va-lo-trinh'),
+      page('38 · Giáo trình 15 khóa', '/Q5-Lo-Trinh/38-giao-trinh-15-khoa-hoc'),
+    ],
+  },
+  {
+    text: 'Quyển 6 · VibeCoding đa tác nhân',
+    collapsed: true,
+    items: [
+      page('39 · Kiến trúc hội tụ', '/Q6-Kien-Truc-VibeCoding/39-kien-truc-hoi-tu-vibecoding'),
+      page('40 · Giao thức đa tác nhân', '/Q6-Kien-Truc-VibeCoding/40-giao-thuc-vibecoding-da-agent'),
+      page('41 · Log và bàn giao test', '/Q6-Kien-Truc-VibeCoding/41-log-va-ban-giao-test-cho-nguoi'),
+      page('44 · CI/CD tự kiểm chứng', '/Q6-Kien-Truc-VibeCoding/44-ci-cd-tu-kiem-chung-paldarkv5'),
+      page('45 · Test case nhỏ', '/Q6-Kien-Truc-VibeCoding/45-test-case-nho-va-vong-tu-kiem-chung'),
+      page('46 · Bộ công cụ kiểm thử Epic', '/Q6-Kien-Truc-VibeCoding/46-bo-cong-cu-kiem-thu-epic'),
+    ],
+  },
+  {
+    text: 'Hồ sơ dự án · Theo thời điểm',
+    collapsed: true,
+    items: [
+      page('36 · Các snapshot tiến độ', '/Q5-Lo-Trinh/36-danh-gia-tien-do'),
+      page('42 · Sprint 12 giờ', '/Q6-Kien-Truc-VibeCoding/42-sprint-12-gio-sau-design-gate'),
+      page('43 · Human gate ADR-001', '/Q6-Kien-Truc-VibeCoding/43-human-gate-adr-001-capture-to-work'),
+    ],
+  },
+  {
+    text: 'Khóa 27 · Bạn đồng hành',
+    collapsed: true,
+    items: [
+      page('00 · Vì sao hệ thống tồn tại', '/KhoaHoc/M27-Ban-Dong-Hanh/00-tai-sao-he-thong-nay-ton-tai'),
+      page('01 · Phân rã ngược', '/KhoaHoc/M27-Ban-Dong-Hanh/01-phan-ra-nguoc'),
+      page('02 · Đối chiếu KYWorld', '/KhoaHoc/M27-Ban-Dong-Hanh/02-doi-chieu-kyworld-va-khoa-hoc'),
+      page('03 · Máy trạng thái trong code', '/KhoaHoc/M27-Ban-Dong-Hanh/03-may-trang-thai-trong-code'),
+      page('04 · Tri giác và quyết định', '/KhoaHoc/M27-Ban-Dong-Hanh/04-tri-giac-va-ranh-gioi-quyet-dinh'),
+      page('05 · Hành vi và công việc', '/KhoaHoc/M27-Ban-Dong-Hanh/05-noi-hanh-vi-voi-cong-viec'),
+    ],
+  },
+  {
+    text: 'Danh mục sống',
+    collapsed: true,
+    items: [
+      page('Khái niệm', '/DanhMuc/khai-niem'),
+      page('Quyền ghi', '/DanhMuc/quyen-ghi'),
+      page('Phân công', '/DanhMuc/phan-cong'),
+    ],
+  },
+  {
+    text: 'Phụ lục và nguồn',
+    collapsed: true,
+    items: [
+      page('A · Sổ bằng chứng', '/PhuLuc/A-so-bang-chung'),
+      page('B · Câu hỏi mở', '/PhuLuc/B-cau-hoi-mo'),
+      page('C · Trạng thái submodule', '/PhuLuc/C-trang-thai-submodule'),
+      page('D · Kiểm kê 13 khóa học', '/PhuLuc/D-kiem-ke-13-khoa-hoc'),
+      page('E · Case study KYWorld', '/PhuLuc/E-case-study-kyworld'),
+      page('F · Nguồn chính thức', '/PhuLuc/F-nguon-chinh-thuc'),
+      page('G · DeepWiki và nguồn sự thật', '/PhuLuc/G-deepwiki-va-nguon-su-that'),
+      page('H · Ma trận donor', '/PhuLuc/H-ma-tran-donor-paldark'),
+      page('Bản đồ tài liệu tham chiếu', '/PhuLuc/ban-do-tai-lieu'),
+    ],
+  },
+  {
+    text: 'Mẫu làm việc',
+    collapsed: true,
+    items: [page('Task packet & Human test card', '/Templates/')],
+  },
+]

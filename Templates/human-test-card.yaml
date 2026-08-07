@@ -1,0 +1,30 @@
+schema: PaldarkHumanTestCard/v1
+
+test_id: ""
+task_id: ""
+build_commit: ""
+artifact_permalink: ""
+map_experience: ""
+tester: ""
+
+preconditions: []
+steps: []
+expected_visible: []
+expected_logs: []
+correlation_rule: "one root correlation id from input to presentation"
+
+return_to_agent:
+  verdict: "" # PASS | FAIL | BLOCKED
+  last_correct_step: ""
+  first_wrong_observation: ""
+  correlation_id: ""
+  final_log_line: ""
+  video_or_image_paths: []
+  reproduced_twice: false
+  game_feel_notes: ""
+
+evidence_ledger_update:
+  claim: ""
+  status: "" # USER_VERIFIED | FAILED | UNKNOWN
+  observed: ""
+  next_decision: ""
