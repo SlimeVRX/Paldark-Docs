@@ -4,6 +4,8 @@ Một agent nhận việc “thêm animation cho Pal” có thể mở editor, k
 
 Hai việc đó nhìn giống nhau ở màn hình editor nhưng không giống nhau về kiến trúc. Animation là phần trình bày. Đói là state, có luật giảm theo thời gian, có quyền ghi, có thể ảnh hưởng năng suất hoặc máu, có thể phải replicate và có thể phải save. Nếu để cả hai vào Blueprint, project mất khả năng phân biệt phần nào là luật của game và phần nào chỉ là cách trình bày luật đó.
 
+Câu hỏi cần hỏi không phải “node này có đơn giản không?” mà là: **nếu node ấy đổi kết quả, ai khác trong game phải coi kết quả đó là sự thật?** Một node chọn material có thể chỉ ảnh hưởng cách nhìn. Một node trừ máu dù chỉ dài một ô vẫn chạm authority, replication, save và log. Độ dài graph không quyết định ranh giới; hậu quả của nó mới quyết định.
+
 Vấn đề còn nặng hơn khi có một nghìn agent. Blueprint là asset nhị phân: Git không merge được hai người cùng sửa một file. Agent không thể tạo một Blueprint bằng cách gửi patch text như với `.h`, `.cpp`, JSON hay CSV. Reviewer cũng không thể đọc diff để biết một nhánh quyết định đã đổi từ “trừ 10” sang “trừ 100”. Không phải Blueprint dở. Nó chỉ là một công cụ không phù hợp để làm nơi chứa phần logic cần được nhiều người tạo, review và kiểm tra tự động.
 
 Đó là lý do L11 không nói “cấm Blueprint”. L11 nói phải đặt đúng ranh giới.
@@ -26,7 +28,7 @@ Bảng dưới đây là hợp đồng làm việc, không phải sở thích st
 | Bố cục widget và binding hiển thị | Widget Blueprint | UI quyết định trình bày, không quyết định kết quả gameplay |
 | Một đoạn glue rất nhỏ chỉ chuyển event thành presentation | Vùng xám | Chỉ được giữ nếu không tạo hoặc sửa gameplay state |
 
-“Vùng xám” không có nghĩa là agent được tự chọn. Nó phải trả lời ba câu hỏi trước khi dùng Blueprint:
+Phần lớn hàng trong bảng có câu trả lời dứt khoát. “Vùng xám” không có nghĩa là agent được tự chọn theo sở thích; nó chỉ nói rằng phải nhìn vào tác động thay vì tên node. Trước khi giữ một đoạn glue trong Blueprint, agent phải trả lời ba câu hỏi:
 
 1. Node này có ghi một biến mà hệ thống khác xem là sự thật không?
 2. Nếu xóa Blueprint, luật gameplay có thay đổi không?
@@ -36,17 +38,19 @@ Nếu câu trả lời cho một trong hai câu đầu là “có”, đưa ph�
 
 ## 17.2 — Ba quy tắc không thương lượng
 
-Mọi Blueprint gameplay đều phải kế thừa từ một lớp C++ đã tồn tại. `BP_PaldarkPlayer` có thể kế thừa `APaldarkPlayerCharacter`; `BP_PaldarkPal` có thể kế thừa `APaldarkPalCharacter`; widget có thể kế thừa `UPaldarkStatusWidget`. Không tạo một Blueprint “tự do” rồi dùng nó như lớp cơ sở mới cho cả project.
+Ba câu hỏi trên giúp review vùng xám; ba quy tắc dưới đây dựng hàng rào cho những việc không cần tranh luận.
 
-Blueprint không được khai báo biến replicated. Nếu một giá trị cần đi qua mạng, nó phải xuất hiện trong property hoặc component C++ có owner rõ ràng. Blueprint có thể đọc giá trị đó để hiện thanh máu, nhưng không được biến thanh máu thành nơi quyết định máu.
+Thứ nhất, mọi Blueprint gameplay đều phải kế thừa từ một lớp C++ đã tồn tại. `BP_PaldarkPlayer` có thể kế thừa `APaldarkPlayerCharacter`; `BP_PaldarkPal` có thể kế thừa `APaldarkPalCharacter`; widget có thể kế thừa `UPaldarkStatusWidget`. Không tạo một Blueprint “tự do” rồi dùng nó như lớp cơ sở mới cho cả project. Parent C++ là nơi contract có thể được diff, compile và kiểm bằng máy.
 
-Blueprint cũng không được chứa nhánh quyết định trạng thái game. Một node `Branch` để chọn VFX khi `HealthPercent < 0.25` là presentation. Một node `Branch` để quyết định `Health = 0` là gameplay logic và phải ở C++. Ranh giới nằm ở tác động, không nằm ở việc node trông đơn giản hay phức tạp.
+Thứ hai, Blueprint không được khai báo biến replicated. Nếu một giá trị cần đi qua mạng, nó phải xuất hiện trong property hoặc component C++ có owner rõ ràng. Blueprint có thể đọc giá trị đó để hiện thanh máu, nhưng không được biến thanh máu thành nơi quyết định máu. Nhờ vậy câu hỏi “server hay client viết?” luôn có một chỗ trả lời bằng source.
+
+Thứ ba, Blueprint không được chứa nhánh quyết định trạng thái game. Một node `Branch` để chọn VFX khi `HealthPercent < 0.25` là presentation. Một node `Branch` để quyết định `Health = 0` là gameplay logic và phải ở C++. Ranh giới nằm ở tác động, không nằm ở việc node trông đơn giản hay phức tạp.
 
 ## 17.3 — Mẫu hướng dẫn Blueprint từng bước
 
 Có những việc thật sự nên làm trong editor. Chọn skeletal mesh, gán Animation Blueprint hoặc bố trí widget không phải việc nên biến thành hàng trăm dòng C++. Nhưng nếu tài liệu chỉ viết “tạo một Blueprint rồi gán mesh”, agent kế tiếp vẫn phải đoán tên asset, parent class, panel và kết quả mong đợi.
 
-Mỗi tính năng có thao tác Blueprint bắt buộc phải dùng mẫu sau:
+Mỗi lần đoán là một cơ hội tạo asset sai parent hoặc đặt logic vào sai tầng. Vì vậy mỗi tính năng có thao tác Blueprint bắt buộc phải dùng mẫu sau; bảng không chỉ liệt kê bước bấm mà còn khóa tiền đề, ranh giới và cách chứng minh kết quả:
 
 | Mục | Nội dung bắt buộc |
 |---|---|
@@ -58,6 +62,8 @@ Mỗi tính năng có thao tác Blueprint bắt buộc phải dùng mẫu sau:
 | Lỗi thường gặp | Parent sai, asset ngoài plugin, chưa compile, hoặc biến logic bị tạo nhầm trong Blueprint |
 
 ### Ví dụ hoàn chỉnh — tạo Blueprint nhân vật từ lớp C++
+
+Mẫu trống chỉ có giá trị khi người viết biết mức chi tiết cần đạt. Ví dụ dưới đây đi hết một thao tác presentation nhỏ, từ parent class tới kiểm tra runtime, để người thực hiện không phải tự lấp chỗ trống bằng phỏng đoán.
 
 **Tiền đề.** Module `PaldarkLab` đã compile và có lớp `APaldarkPlayerCharacter`. Asset mesh `SKM_Manny_Simple` tồn tại trong project. `ABP_PaldarkPlayer` là Animation Blueprint hợp lệ, đọc movement state từ character nhưng không tự ghi health hoặc movement speed. Người thực hiện đang ở Content Browser trong thư mục `Paldark/Presentation/Player`.
 
@@ -95,7 +101,7 @@ Kết quả mong đợi: nhân vật xuất hiện với mesh và animation đú
 
 ## 17.4 — Máy kiểm tra L11
 
-L11 cần ba lớp kiểm, vì một lớp chỉ bắt được một phần vi phạm:
+Hướng dẫn từng bước giúp người làm đi đúng đường; nó không ngăn một asset khác lặng lẽ vượt ranh giới. L11 vì vậy cần nhiều lớp kiểm, bởi parent, property, node và dependency là bốn loại dấu vết khác nhau. Bảng sau cho biết mỗi phép kiểm đang bảo vệ điều gì:
 
 | Kiểm tra | Quy tắc đề xuất | Kết quả |
 |---|---|---|
@@ -108,6 +114,8 @@ L11 cần ba lớp kiểm, vì một lớp chỉ bắt được một phần vi 
 Ngưỡng node không phải chân lý về độ phức tạp. Một node `Set Health` đã sai dù chỉ có một node; một animation graph có thể cần nhiều node hơn 50. Vì vậy node budget là tín hiệu để review, còn audit property, parent và loại node mới là hàng rào. Với Animation Blueprint và Widget Blueprint, validator cần allow-list riêng thay vì áp cùng một con số mù.
 
 Khi một agent gửi feature, review không nên hỏi “Blueprint có đẹp không?”. Câu hỏi phải là: state nằm ở đâu, ai ghi, Blueprint đang đọc gì, và nếu xóa toàn bộ asset presentation thì test C++ có còn chứng minh được luật hay không. Đó là cách biến L11 từ khẩu hiệu thành ranh giới có thể làm việc.
+
+Nếu câu trả lời cuối cùng là “có”, Blueprint đang làm đúng vai: nó khiến game nhìn, nghe và chuyển động như mong muốn mà không trở thành nơi duy nhất biết luật. Nếu câu trả lời là “không”, việc cần làm không phải viết thêm tài liệu cho graph; phải kéo quyết định gameplay trở lại contract C++ rồi để Blueprint quan sát nó. Chương 18 sẽ chỉ ra cách log và test theo dõi chính đường đi từ quyết định ấy tới thứ người chơi nhìn thấy.
 
 ---
 

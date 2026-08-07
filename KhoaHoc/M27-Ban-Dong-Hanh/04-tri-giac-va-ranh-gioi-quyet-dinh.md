@@ -4,9 +4,9 @@
 
 ## Câu hỏi
 
-Pal đã biết đi. Bây giờ cho nó **thấy**. Câu hỏi tưởng chừng hiển nhiên: thấy rồi thì làm gì?
+Pal đã biết đi. Bây giờ ta cho nó **thấy** — và ngay lập tức phải trả lời câu hỏi tưởng như hiển nhiên: thấy rồi thì ai được quyết định việc tiếp theo?
 
-Câu trả lời hiển nhiên — "thấy kẻ địch thì đánh" — là sai, và bài này giải thích vì sao nó sai theo cách phải mất vài tháng mới nhận ra nếu làm bừa.
+Câu trả lời nhanh nhất là “thấy kẻ địch thì đánh”. Nó cũng là câu trả lời khiến perception lấn sang quyền của Combat, một lỗi thường chỉ lộ ra sau nhiều tháng khi hai nơi bắt đầu áp hai luật sát thương khác nhau.
 
 ## Tri giác là một hệ riêng, không phải một phép đo khoảng cách
 

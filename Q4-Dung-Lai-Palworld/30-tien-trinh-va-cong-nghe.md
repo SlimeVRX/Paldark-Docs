@@ -1,12 +1,12 @@
 # Chương 30 — Tiến trình và công nghệ
 
-Tiến trình là cảm giác một chuyến đi có ý nghĩa sau khi người chơi quay về. Hôm nay chưa craft được station, ngày mai đã mở được; một node mới làm resource cũ có giá trị khác; một level mới mở ra lựa chọn chứ không chỉ tăng con số. Vì vậy ai cũng muốn ghi vào tiến trình: Crafting muốn tự mở recipe, Building muốn tự mở structure, Combat muốn tự mở skill.
+Người chơi trở về sau một chuyến đi, nhận level mới và mở được workbench hôm qua còn khóa. Cùng đống resource cũ bỗng có thêm ý nghĩa vì một recipe mới xuất hiện. Tiến trình hay không nằm ở con số tăng, mà ở việc thế giới cho người chơi thêm lựa chọn mà trước đó họ chưa có.
 
-Đó chính là nguy hiểm. Nếu mỗi hệ thống tự thêm node khi thấy mình cần, L8 không còn nghĩa gì: cùng một technology state có nhiều chủ ghi, thứ tự request tạo ra kết quả khác nhau, và save không biết ai chịu trách nhiệm. Progression phải làm chủ tập node đã mở; hệ khác chỉ hỏi.
+Vì kết quả của progression xuất hiện ở khắp nơi, feature nào cũng có lý do để muốn ghi vào nó: Crafting muốn tự mở recipe, Build muốn mở structure, Combat muốn mở skill. Đó chính là nguy hiểm. Nếu mỗi hệ thống tự thêm node khi thấy mình cần, cùng một technology state có nhiều chủ ghi, thứ tự request làm kết quả thay đổi và save không còn biết ai chịu trách nhiệm. L8 ở đây phải rất cụ thể: Progression làm chủ tập node đã mở; hệ khác chỉ query hoặc gửi request.
 
 ## 30.1 — Vì sao hệ thống này tồn tại
 
-Progression biến hành động thành hướng đi. EXP, level, status point và technology point cho người chơi lựa chọn; prerequisite và cost khiến unlock có trọng lượng; recipe, structure, equipment và station là những nơi kết quả được nhìn thấy.
+Progression biến hành động lặp lại thành một hướng đi có thể dự tính. EXP, level, status point và technology point cho người chơi lựa chọn; prerequisite cùng cost khiến unlock có trọng lượng; recipe, structure, equipment và station là nơi lựa chọn ấy hiện ra trong gameplay.
 
 Catalog ghi nhận 150+ technology nodes và tier cost như hình dạng reference. Paldark không nên hard-code con số đó vào logic. Điều cần giữ là graph data, một owner cho unlock state và các query ổn định để feature khác biết mình có được phép làm gì.
 
@@ -27,7 +27,7 @@ Catalog ghi nhận 150+ technology nodes và tier cost như hình dạng referen
 - `F-090` — Unlock equipment.
 - `F-091` — Unlock station.
 
-Progression sở hữu unlock state và point/level state. Crafting/building/combat đọc query. Một feature có thể phát `Paldark.Progression.Request.XP`, nhưng chỉ Progression quyết định threshold và mutation.
+Danh sách catalog đi từ nguyên nhân — EXP gain — qua quyết định — spend point/unlock — tới hậu quả nhìn thấy ở bốn feature khác. Mạch ấy không thay đổi owner: Progression sở hữu unlock, point và level state. Crafting/Build/Combat chỉ đọc query. Một feature có thể phát `Paldark.Progression.Request.XP`, nhưng threshold và mutation vẫn do Progression quyết định.
 
 ## 30.3 — Trạng thái và chủ sở hữu
 
@@ -41,11 +41,11 @@ Progression sở hữu unlock state và point/level state. Crafting/building/com
 | Player stat result | stat/attribute owner | combat, movement, UI | `Paldark.Core.AttributeRequest` |
 | Recipe/structure/equipment availability | feature tương ứng đọc query | UI, server validator | không tự ghi; `Paldark.Core.ProgressionRead` |
 
-Đặc biệt, Crafting không được thêm `Crafting.Recipe.X` vào unlocked set, Build không được thêm `Build.Structure.X`, Combat không được mở skill bằng cách tự đổi array. Tất cả gửi request tới Progression; đây là ranh giới L8 quan trọng nhất của chương.
+Bảng làm rõ sự khác nhau giữa “nơi kết quả được dùng” và “nơi kết quả được ghi”. Crafting không thêm `Crafting.Recipe.X` vào unlocked set, Build không thêm `Build.Structure.X`, Combat không mở skill bằng cách tự đổi array. Tất cả gửi request tới Progression; đây là ranh giới L8 quan trọng nhất của chương.
 
 ## 30.4 — Hợp đồng dữ liệu
 
-Mảnh do Progression định nghĩa là `Progression.Node`. Nó mô tả một node tĩnh, còn unlocked set là state của entity/player và được lưu trong chunk `Paldark.Progression`, schema `1`.
+Một technology graph là dữ liệu tĩnh; việc player đã đi qua node nào mới là state. `Progression.Node` mô tả node, prerequisite, cost và target. Unlocked set thuộc entity/player và được lưu trong chunk `Paldark.Progression`, schema `1`.
 
 ```cpp
 USTRUCT()
@@ -83,7 +83,7 @@ Definition đã điền:
 
 ## 30.5 — Giao diện lập trình
 
-Component là `UProgressionComponent` trên player progression owner. Các feature khác dùng `Paldark.Core.ProgressionRead` hoặc request interface; không include `ProgressionComponent.h`.
+Khi một feature cần biết “được phép chưa?”, nó phải nhận một câu trả lời ổn định chứ không lục mảng state. `UProgressionComponent` nằm trên player progression owner. Feature khác dùng `Paldark.Core.ProgressionRead` hoặc request interface; không include `ProgressionComponent.h`.
 
 ```cpp
 UFUNCTION()
@@ -133,7 +133,7 @@ Combat, Crafting và Capture có thể phát request/reason, nhưng không inclu
 
 ## 30.6 — Quyền hạn và đồng bộ
 
-Server quyết định XP accepted, level threshold, point spend, prerequisite, unlock mutation và stat result. Client được hiển thị graph, preview node và gửi intent; client không tự mở recipe/structure/skill.
+UI technology tree có thể cho người chơi thử chọn ngay, nhưng node chỉ sáng thật sau quyết định authority. Server quyết định XP accepted, level threshold, point spend, prerequisite, unlock mutation và stat result. Client hiển thị graph, preview node rồi gửi intent; nó không tự mở recipe, structure hay skill.
 
 Unlocked node set, level, available points và relevant stat result replicate. Technology definition graph, names và icons là static data. UI tree, highlight, toast và animation là presentation.
 
@@ -141,7 +141,7 @@ Save chunk `Paldark.Progression` giữ level, points, unlocked node ids và stat
 
 ## 30.7 — Log, console command, và cách biết là chạy đúng
 
-Dùng `LogPaldarkProgression`. Mỗi XP mutation, level change, spend và unlock phải có requester, target player, node/field, before/after, reason và `corr`. Một log `Build accepted` không được đồng thời ghi `Technology unlocked`; nếu Build cần node, nó phải có dòng query/read trước đó.
+Một toast “Technology unlocked” không đủ để biết owner nào đã thay đổi state. `LogPaldarkProgression` ghi mỗi XP mutation, level change, spend và unlock với requester, target player, node/field, before/after, reason cùng `corr`. Log `Build accepted` không được đồng thời ghi `Technology unlocked`; Build cần node thì phải có dòng query/read trước đó.
 
 Command:
 
@@ -151,11 +151,11 @@ Command:
 - `Paldark.Experience.Current` — command thật để quan sát experience.
 - `Paldark.Experience.ListExtensions` — command thật để quan sát extension registry.
 
-Test đúng: setup player với point; status thấy node locked; trigger unlock thiếu prerequisite nhận rejection; setup prerequisite rồi unlock, chỉ Progression ghi node; `Paldark.Crafting`/`Paldark.Build` query thấy target available; save snapshot giữ node sau reload. Test phải bắt trường hợp hai feature cùng gửi unlock request và chỉ có một mutation owner.
+Test đúng bắt đầu bằng một node còn khóa: setup player có point, đọc status, thử unlock thiếu prerequisite để nhận rejection; sau khi dựng prerequisite, unlock phải chỉ tạo mutation ở Progression; `Paldark.Crafting`/`Paldark.Build` query thấy target available và save giữ node qua reload. Cuối cùng phải cho hai feature cùng gửi request để chứng minh vẫn chỉ có một mutation owner.
 
 ## 30.8 — Progression mở rộng sau khi ra đời sớm vì Build
 
-Theo thứ tự tài liệu, Progression là Chương 30; nhưng Chương 28 cần một owner
+Thứ tự xây dựng thực tế đã đặt câu hỏi ownership này sớm hơn câu chuyện. Theo thứ tự tài liệu, Progression là Chương 30; nhưng Chương 28 cần một owner
 thật cho technology gate. Vì vậy branch Build giới thiệu `Progression` ở dạng
 tối thiểu: chỉ có tập technology đã mở, query `IPaldarkProgressionRead`, và
 đường `IPaldarkProgressionRequest::Unlock` dành cho QA. Chương này mở rộng
@@ -170,6 +170,8 @@ prerequisite id gãy trước runtime. QA chứng minh bốn reason từ chối 
 XP do Combat gửi nhưng Progression tự quyết threshold, và hai requester cùng
 gửi unlock request cho workbench nhưng chỉ một mutation được ghi. Build ghi
 `PALDARK_BUILD_TECHNOLOGY_READ` trước khi accepted, không ghi technology unlock.
+
+Sau chín hệ thống, người chơi đã có một vòng từ khám phá tới căn cứ rồi quay lại unlock. Nhưng vòng ấy vẫn diễn ra trong một sân khấu tĩnh nếu ngày đêm, thời tiết và population không tự thay đổi. Chương 31 đưa nhịp thời gian và sinh sản vào thế giới — đồng thời buộc ta phân biệt entity tồn tại với actor đang relevant thêm một lần nữa.
 
 ---
 

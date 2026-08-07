@@ -1,12 +1,12 @@
 # Chương 29 — Làm việc và tự động hóa
 
-Đây là hệ thống làm cho một căn cứ có đời sống riêng. Người chơi không chỉ đặt máy rồi đứng nhìn; họ bắt Pal phù hợp, giao Pal vào station, cung cấp input, rồi quay lại thấy output đã tích lũy. Cảm giác đặc biệt nằm ở việc roster biến thành nhân lực và căn cứ tiếp tục có ích khi người chơi đi nơi khác.
+Người chơi giao một Pal cho station, đặt input vào kho rồi rời căn cứ đi khám phá. Khi quay về, output đã nằm đó. Căn cứ không còn là tập hợp công trình đứng yên; nó đã có nhịp sống riêng, và roster không còn chỉ là bộ sưu tập mà trở thành nhân lực. Cảm giác “việc vẫn chạy khi mình đi vắng” là phần thưởng lớn nhất của automation.
 
-Đồng thời đây là hệ thống khó nhất về state. Worker có assignment, suitability, queue, progress, hunger, sanity, output và relation với station. Khi người chơi vắng mặt, game phải trả lời: ai mô phỏng, mô phỏng từng tick hay tính bù, và dữ liệu nào đủ để kết quả không phụ thuộc vào việc actor có đang tồn tại hay không.
+Đằng sau cảm giác nhẹ nhàng ấy là hệ state dày nhất từ đầu quyển: worker có assignment, suitability, queue, progress, hunger, sanity, output và relation với station. Chỉ cần người chơi rời relevancy, game đã phải trả lời ai tiếp tục mô phỏng, tick thật hay tính bù, và cần lưu những gì để kết quả không phụ thuộc vào việc actor representation còn tồn tại hay không.
 
 ## 29.1 — Vì sao hệ thống này tồn tại
 
-Work nối ba vòng lặp: bắt Pal, xây station và sản xuất item. `EPalWorkSuitability` có 13 loại việc; đó là hình dạng cho thấy một Pal không chỉ có một cờ “worker được hay không”, mà có nhiều năng lực cần đọc theo station. `Work.Capable` đã được định nghĩa ở Chương 14 và Chương 16; chương này dùng lại, không định nghĩa fragment khác thay thế.
+Work nối ba vòng lặp trước thành một dây chuyền: bắt Pal cung cấp worker, xây dựng cung cấp station, còn Inventory nhận input/output. `EPalWorkSuitability` có 13 loại việc; hình dạng ấy cho thấy một Pal không thể chỉ có cờ “làm việc được”. Năng lực phải được đọc theo loại station. `Work.Capable` đã được định nghĩa ở Chương 14 và 16, nên chương này dùng lại thay vì tạo một fragment gần giống rồi buộc registry hiểu hai ngôn ngữ.
 
 Tự động hóa không có nghĩa là bỏ hết quyết định cho AI. Người chơi vẫn chọn worker, station, priority và hậu cần. Máy chỉ thực hiện contract đã được chốt. Nếu worker kẹt, thiếu input hoặc chết đói, log phải cho biết dây chuyền đứt ở đâu.
 
@@ -27,7 +27,7 @@ Tự động hóa không có nghĩa là bỏ hết quyết định cho AI. Ngư�
 - `F-076` — Sick state.
 - `F-077` — Worker bị kẹt.
 
-`EPalWorkSuitability` có 13 loại là EXTRACTED; tên và số 13 là hình dạng dữ liệu tham khảo, không phải lời hứa Paldark phải có đúng mọi loại ngay ở vertical slice. `WorkOutput` 300 giây → 60 giây là ví dụ tuning REFERENCE, không được hard-code vào scheduler.
+Catalog trải từ năng lực tới nhu cầu và lỗi kẹt, cho thấy “worker đang làm” chỉ là trạng thái ở giữa một vòng dài. `EPalWorkSuitability` có 13 loại là `EXTRACTED`; tên và số 13 mô tả hình dạng tham khảo, không phải lời hứa vertical slice phải có đủ. `WorkOutput` 300 giây → 60 giây là tuning `REFERENCE`, không được hard-code vào scheduler.
 
 ## 29.3 — Trạng thái và chủ sở hữu
 
@@ -41,11 +41,11 @@ Tự động hóa không có nghĩa là bỏ hết quyết định cho AI. Ngư�
 | Output transaction | Inventory owner | Work, UI, save | `Paldark.Inventory.Request.Add` |
 | Offline checkpoint và last simulation time | `Work` persistence owner | scheduler, save/load, QA | `Paldark.Work.Request.Reconcile` |
 
-Work không ghi Hunger, Sanity hay Inventory quantity. Nó quyết định assignment, queue, progress và offline checkpoint. Nếu Work cần thay đổi need, nó gửi request tới owner tương ứng; output cũng phải đi qua Inventory transaction.
+Theo bảng, Work sở hữu chính phần “điều phối”: assignment, queue, progress và offline checkpoint. Nó không sở hữu cơ thể worker hay kho chứa kết quả. Hunger, Sanity thuộc need owner; quantity thuộc Inventory. Nếu tiến độ cần phản ứng với một need, Work đọc modifier hoặc gửi request qua contract, còn output vẫn phải đi qua Inventory transaction.
 
 ## 29.4 — Hợp đồng dữ liệu
 
-Chương này **dùng lại** `Work.Capable` và `Work.Station` từ Chương 14/16, không định nghĩa lại hình dạng fragment. Definition worker chỉ gắn mảnh đã đăng ký:
+Data contract phải phản ánh đúng việc Pal và station gặp nhau qua capability. Vì thế chương này **dùng lại** `Work.Capable` và `Work.Station` từ Chương 14/16, không định nghĩa lại hình dạng fragment. Definition worker chỉ gắn mảnh đã đăng ký:
 
 ```json
 {
@@ -88,7 +88,7 @@ File station cũng dùng `Work.Station` đã khai báo:
 
 ## 29.5 — Giao diện lập trình
 
-Component là `UWorkStationComponent` trên station và `UWorkRuntimeComponent` trên Pal actor representation. Worker entity có thể chưa có actor; scheduler phải làm việc với stable id.
+Ở runtime, station cần giữ queue còn actor Pal chỉ trình bày hoạt động khi available. `UWorkStationComponent` nằm trên station, `UWorkRuntimeComponent` trên Pal actor representation. Scheduler luôn làm việc với stable id vì worker entity có thể tồn tại khi actor chưa được dựng.
 
 ```cpp
 UFUNCTION()
@@ -137,17 +137,17 @@ Không có include từ Work sang Build, Pal hay Inventory. `StructureReady` cho
 
 ### Worker vắng mặt: ba chính sách phải chốt
 
-Tài liệu không được viết “offline chạy như bình thường” rồi bỏ qua chi tiết. Có ba lựa chọn:
+Đây là lúc tình huống mở đầu quay lại thành một quyết định kỹ thuật. Câu “offline chạy như bình thường” không đủ, vì “bình thường” có thể là server vẫn tick hoặc không có process nào chạy cả. Có ba lựa chọn:
 
 1. **Server mô phỏng liên tục.** Dedicated server giữ assignment và scheduler cho cả station không relevant. Kết quả gần real-time, nhưng tốn tick và yêu cầu server luôn sống.
 2. **Tính bù khi quay lại.** Lưu `LastSimulationTime`, assignment, queue, progress, input/output relation và các modifier ảnh hưởng tốc độ. Khi station được load hoặc player quay lại, Work tính delta thời gian qua policy đã chọn.
 3. **Hybrid.** Server tick các station active trong một budget; station inactive lưu checkpoint và tính bù khi được truy cập.
 
-Paldark nên bắt đầu bằng hybrid, nhưng đây là **INFERRED**, cần benchmark. Nếu chọn tính bù, state tối thiểu phải lưu: stable worker id, station id, task/recipe id, progress, queue order, last simulation timestamp, input reservation, output pending, suitability/work rate modifier và need state nào thực sự ảnh hưởng sản xuất. Không lưu actor pointer hay animation state. Nếu server không tồn tại trong thời gian offline, client không được tự tính bù rồi gửi kết quả; server/load authority phải tính.
+Paldark nên bắt đầu bằng hybrid, nhưng đây là **INFERRED** và cần benchmark. Nếu chọn tính bù, state tối thiểu phải lưu: stable worker id, station id, task/recipe id, progress, queue order, last simulation timestamp, input reservation, output pending, suitability/work rate modifier và need state nào thực sự ảnh hưởng sản xuất. Actor pointer cùng animation state không thuộc phép tính. Nếu server không tồn tại trong thời gian offline, client cũng không được tự tính bù rồi gửi thành quả; server/load authority phải là bên tính.
 
 ## 29.6 — Quyền hạn và đồng bộ
 
-Server/authority của Work quyết định assignment, slot conflict, queue, progress, output request và offline reconcile. Client được kéo-thả worker, xem suitability và hiển thị progress dự đoán; không được tự assign hoặc tạo output.
+Kéo-thả một Pal vào station cần phản hồi ngay trên UI, nhưng slot conflict và output không thể do client kết luận. Server/authority của Work quyết định assignment, queue, progress, output request và offline reconcile. Client được xem suitability, kéo ghost và hiển thị progress dự đoán; nó không tự assign hoặc tạo output.
 
 Assignment, queue summary, progress, output result và worker activity relevant replicate. Definition `Work.Capable`/`Work.Station` là static. Path, animation, task marker và actor representation chỉ là presentation; worker entity không relevant vẫn được scheduler xử lý theo policy.
 
@@ -155,7 +155,7 @@ Need owner quyết định Hunger/Sanity. Nếu hunger làm giảm output, Work 
 
 ## 29.7 — Log, console command, và cách biết là chạy đúng
 
-Dùng `LogPaldarkWork`. Mỗi assignment, queue transition, progress checkpoint, offline reconcile, output request và failure phải có `corr`, worker stable id, station id, task, before/after và policy. Đặc biệt log phải ghi `simulation=LiveTick`, `OfflineCatchUp` hoặc `Hybrid`.
+Khi người chơi quay về mà không thấy output, log phải chỉ được dây chuyền đứt ở đâu. `LogPaldarkWork` ghi mỗi assignment, queue transition, progress checkpoint, offline reconcile, output request và failure với `corr`, worker stable id, station id, task, before/after cùng policy. Đặc biệt phải phân biệt `simulation=LiveTick`, `OfflineCatchUp` và `Hybrid`.
 
 Command:
 
@@ -165,7 +165,7 @@ Command:
 - `Paldark.Work.QA.Trigger`
 - `Paldark.Pal.CurrentActivity` — command thật để đối chiếu activity.
 
-Test phải có hai phiên: assign worker rồi tick khi player gần; lưu checkpoint, rời relevancy hoặc dừng process theo môi trường test, quay lại và `RequestReconcile`; so sánh output với policy. Đúng là không có duplicate output, không có hai owner ghi quantity, log cho biết live/offline path, và `Paldark.Work.Event.Finished` nối với Inventory transaction cùng correlation.
+Test phải có hai nhịp giống trải nghiệm thật: assign worker và tick khi player còn gần; sau đó lưu checkpoint, rời relevancy hoặc dừng process theo môi trường test, quay lại rồi `RequestReconcile`. Pass nghĩa là output khớp policy, không bị nhân đôi, chỉ Inventory ghi quantity, log nói rõ live/offline path và `Paldark.Work.Event.Finished` nối được tới transaction cùng correlation.
 
 ---
 
@@ -173,7 +173,7 @@ Test phải có hai phiên: assign worker rồi tick khi player gần; lưu chec
 
 ### 29.8 — Slice đã triển khai và giới hạn bằng chứng
 
-Slice native Work dùng đúng `Work.Capable`, `Work.Station` và ba kênh Work
+Slice native thu hẹp bài toán nhưng vẫn giữ đúng ranh giới. Nó dùng `Work.Capable`, `Work.Station` và ba kênh Work
 đã có; không tạo fragment hoặc channel thay thế. `Paldark.Build.Event.StructureReady`
 được nghe qua Core message bus để nhận stable station id. Worker chỉ được lưu
 bằng `FPaldarkEntityId`; QA cố ý ghi `actor_available=false` để chứng minh
@@ -192,3 +192,5 @@ Vì progress được trừ khỏi checkpoint trước khi reconcile, log tổng
 giá trị đó. Slice này không sở hữu Hunger, Sanity, sickness, rest, stuck/AI,
 animation hay UI. Các hệ thống need chưa tồn tại ở thời điểm này nên được hoãn
 có chủ ý; Work chỉ có thể đọc modifier sau này, không ghi need state.
+
+Automation khiến người chơi quay về với nhiều output hơn, nhưng nếu mọi station và recipe đều mở ngay từ đầu thì thành quả ấy không tạo ra hướng đi. Chương 30 bổ sung nhịp dài hơn: một owner duy nhất cho level, point và technology unlock, để mỗi vòng sản xuất mở ra lựa chọn mới thay vì chỉ làm con số lớn lên.

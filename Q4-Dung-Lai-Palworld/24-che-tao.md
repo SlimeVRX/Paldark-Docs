@@ -1,12 +1,12 @@
 # Chương 24 — Chế tạo
 
-Chế tạo làm resource có mục tiêu. Một đống vật liệu trong túi chỉ trở thành tiến bộ khi người chơi biết mình có thể biến nó thành gì, thiếu gì, cần station nào và sẽ nhận được output nào. Cảm giác chính không phải là “bấm nút craft”, mà là nhìn thấy một món đồ ở phía trước rồi tự nối các bước để tới được nó.
+Trong túi đã có vài stack nguyên liệu, nhưng bản thân chúng chưa nói người chơi đang tiến về đâu. Một recipe xuất hiện và bỗng mọi thứ có hướng: còn thiếu ba sợi, cần một station, phải đợi hai giây, rồi món đồ mong muốn sẽ thành hình. Cảm giác chính không nằm ở nút “Craft”. Nó nằm ở việc nhìn thấy một kết quả phía trước và tự nối được con đường để tới đó.
 
-Chương này đứng sau inventory vì recipe phải đọc item definition và transaction input phải đi qua Inventory owner. Crafting không include Inventory; nó dùng interface lõi và channel. Khi người chơi craft vũ khí, item mới đi vào inventory nhưng Combat không cần biết recipe đã tạo nó như thế nào.
+Crafting đứng sau Inventory vì con đường ấy bắt đầu và kết thúc bằng item transaction. Recipe có thể đọc item definition, nhưng chỉ Inventory owner được tiêu input và thêm output. Crafting vì thế không include Inventory; nó dùng interface lõi và channel. Khi output là một vũ khí, item mới đi vào inventory, còn Combat không cần biết recipe nào đã tạo ra nó.
 
 ## 24.1 — Vì sao hệ thống này tồn tại
 
-Recipe biến resource thành lựa chọn. Material requirement tạo mục tiêu ngắn hạn; station requirement làm công trình có chức năng; queue/progress tạo thời gian để người chơi đi làm việc khác; output stack nối ngược về inventory. Một recipe tốt cho người chơi biết thiếu gì và vì sao chưa thể làm, thay vì chỉ từ chối bằng một nút xám.
+Recipe biến resource thành một kế hoạch có thể đọc. Material requirement đặt mục tiêu ngắn hạn; station requirement khiến công trình có chức năng; queue/progress cho người chơi thời gian rời đi làm việc khác; output stack nối thành quả về lại inventory. Một recipe tốt không chỉ bật hoặc tắt nút. Nó cho người chơi biết còn thiếu gì và vì sao chưa thể bắt đầu.
 
 Catalog có nhiều dòng nấu ăn và effect, nhưng chương này chỉ làm lõi craft transaction. Cooking, fuel và buff có thể là feature mở rộng dùng lại `Crafting.Recipe` và `Paldark.Crafting.Event.OutputCreated`, không được tạo một hệ recipe thứ hai.
 
@@ -22,7 +22,7 @@ Catalog có nhiều dòng nấu ăn và effect, nhưng chương này chỉ làm 
 - `F-050` — Cook recipe, ở mức recipe pipeline có thể mở rộng.
 - `F-053` — Food output, khi recipe tạo item food.
 
-`F-051` nhiên liệu và `F-054`/`F-055` effect chưa thuộc lõi chương này. Chúng có thể nghe event output hoặc consume event, nhưng state effect phải do owner khác ghi.
+Danh sách kết thúc ở food output, nhưng lõi của chương chỉ là craft transaction. `F-051` nhiên liệu và `F-054`/`F-055` effect chưa thuộc lõi này. Chúng có thể nghe output hoặc consume event về sau, song state effect vẫn phải do owner khác ghi. Cách cắt ấy cho phép ta chứng minh recipe pipeline trước khi mang cả cooking và buff vào cùng một slice.
 
 ## 24.3 — Trạng thái và chủ sở hữu
 
@@ -36,11 +36,11 @@ Catalog có nhiều dòng nấu ăn và effect, nhưng chương này chỉ làm 
 | Output item entity/quantity | `Inventory` owner | UI, interaction, next recipe | `IPaldarkItemTransaction::AddItems` sau output event |
 | Failure reason | `Crafting` result, không phải state bền | UI, log, QA | kết quả của request craft bị từ chối |
 
-Crafting sở hữu queue và progress; Inventory sở hữu quantity. Slice này tiêu thụ input ngay lúc enqueue vì Inventory chưa có reservation API. Crafting đọc qua `IPaldarkItemRead` và ghi qua `IPaldarkItemTransaction`; nó không tự sửa slot. Nếu Crafting tự giảm input rồi Inventory cũng giảm, một request sẽ trừ hai lần. Khi output bị Inventory từ chối vì `Capacity`, Crafting yêu cầu Inventory hoàn trả toàn bộ input bằng `AddItems`; nếu hoàn trả cũng thất bại, Crafting ghi `Error` với cả correlation và lý do của hai transaction.
+Một job craft đi qua hai owner: Crafting giữ lời hứa “job này đang chờ và đã đi tới đâu”, Inventory giữ sự thật “input đã bị lấy và output đã được thêm chưa”. Slice này tiêu thụ input ngay lúc enqueue vì Inventory chưa có reservation API. Crafting đọc qua `IPaldarkItemRead` và ghi qua `IPaldarkItemTransaction`; nó không tự sửa slot. Nếu cả hai cùng giảm input, một request sẽ bị trừ hai lần. Nếu output bị từ chối vì `Capacity`, Crafting yêu cầu Inventory hoàn trả toàn bộ input bằng `AddItems`; nếu hoàn trả cũng thất bại, Crafting ghi `Error` với cả correlation và lý do của hai transaction.
 
 ## 24.4 — Hợp đồng dữ liệu
 
-Loại mảnh là `Crafting.Recipe`. Definition mô tả một công thức, không chứa queue runtime. Mỗi input tham chiếu item definition bằng id text; output cũng là definition id, để registry và validator kiểm được reference.
+Khi quyền ghi đã tách, recipe có thể trở lại đúng vai trò của data: mô tả điều kiện và kết quả, không giữ một job đang chạy. `Crafting.Recipe` tham chiếu mỗi input bằng item definition id text; output cũng là definition id để registry và validator bắt được reference gãy trước runtime.
 
 ```cpp
 USTRUCT()
@@ -94,7 +94,7 @@ Feature khai báo khối lưu `Paldark.Crafting`, `schema_version` `1`, cho queu
 
 ## 24.5 — Giao diện lập trình
 
-Component là `UCraftingComponent` cho requester và `UCraftingStationComponent` cho station. Crafting chỉ dùng `Paldark.Core.ItemRead`, `Paldark.Core.ItemTransaction`, `Paldark.Core.Authority` và MessageBus; không include `InventoryFeatureComponent.h`, `TechnologyComponent.h` hay `WorkComponent.h`. `ItemRead` chỉ cung cấp truy vấn; `ItemTransaction` cung cấp consume nguyên tử một danh sách input và add nguyên tử output/hoàn trả, đều mang correlation id.
+Từ phía người chơi, enqueue chỉ là một lần bấm; bên trong, nó phải đi qua definition, station, gate và một transaction input nguyên tử. `UCraftingComponent` phục vụ requester, `UCraftingStationComponent` phục vụ station. Crafting chỉ dùng `Paldark.Core.ItemRead`, `Paldark.Core.ItemTransaction`, `Paldark.Core.Authority` và MessageBus; không include `InventoryFeatureComponent.h`, `TechnologyComponent.h` hay `WorkComponent.h`. `ItemRead` chỉ truy vấn, còn `ItemTransaction` consume nguyên tử danh sách input và add nguyên tử output/hoàn trả, tất cả mang correlation id.
 
 ```cpp
 UFUNCTION()
@@ -145,7 +145,7 @@ Kênh `Paldark.Inventory.Event.Changed` là contract đã dùng trong Chương 2
 
 ## 24.6 — Quyền hạn và đồng bộ
 
-Server quyết định recipe tồn tại, station đúng loại, technology/permission, input đủ và queue còn chỗ. Server giữ reservation, progress, completion và output request. Client được tự hiển thị recipe preview, timer dự đoán và failure tooltip; client không tự trừ input hoặc tạo output.
+Một client có thể vẽ timer chạy ngay để UI mượt, nhưng timer ấy không được tự biến thành item. Server quyết định recipe tồn tại, station đúng loại, technology/permission, input đủ và queue còn chỗ. Server giữ reservation, progress, completion và output request. Client chỉ hiển thị recipe preview, timer dự đoán và failure tooltip; nó không tự trừ input hoặc tạo output.
 
 Queue entry, progress và accepted/rejected result replicate cho client liên quan. Recipe definition và icon là static data/presentation. Khi job hoàn tất, Crafting yêu cầu Inventory owner atomically add output hoặc trả failure `Capacity`/`Transaction`, rồi Crafting ghi job result phù hợp. Message bus chỉ là đường thông báo (`JobQueued`, `ProgressChanged`, `OutputCreated`, `Rejected`); interface lõi mới là đường gọi mutation.
 
@@ -153,7 +153,7 @@ Offline progress chưa thuộc chương này; nếu sau này worker hoặc stati
 
 ## 24.7 — Log, console command, và cách biết là chạy đúng
 
-Category là `LogPaldarkCrafting`. Một job phải để lại các dòng nối được: request validate, input reservation, queue accepted, progress/output và transaction result. `corr` duy nhất cho một lần enqueue; `job` và `station` là target rõ ràng.
+Muốn biết một món đồ vì sao chưa xuất hiện, ta cần lần theo job chứ không nhìn nút craft. Category là `LogPaldarkCrafting`. Một job phải để lại các dòng nối được: request validate, input reservation, queue accepted, progress/output và transaction result. `corr` duy nhất cho một lần enqueue; `job` và `station` là target rõ ràng.
 
 Command:
 
@@ -162,11 +162,11 @@ Command:
 - `Paldark.Crafting.QA.Trigger` — enqueue/cancel/complete qua public API.
 - `Paldark.Inventory.List` — đối chiếu input/output container.
 
-Test đúng: setup, status thấy recipe; trigger khi thiếu input nhận failure có reason; add input rồi trigger lại, queue tăng; status trong lúc chạy có progress; complete tạo output qua Inventory transaction. Không chấp nhận test chỉ nhìn UI recipe mà không kiểm quantity và correlation log.
+Test đúng đi cả nhánh thất bại lẫn thành công: setup để status thấy recipe; trigger khi thiếu input phải nhận failure có reason; thêm input rồi trigger lại để queue tăng; đọc progress khi job đang chạy; complete phải tạo output qua Inventory transaction. Chỉ nhìn UI recipe mà không kiểm quantity và correlation log chưa chứng minh được craft.
 
 ### 24.8 — Slice đã triển khai
 
-Vertical slice dùng `Crafting.Recipe.ResonanceBandage`, station
+Đường đi ấy đã được thu hẹp thành một tình huống đủ nhỏ để kiểm chứng. Vertical slice dùng `Crafting.Recipe.ResonanceBandage`, station
 `Crafting.Hand`, thời lượng `2.0` giây và dữ liệu JSON trong
 `Plugins/GameFeatures/Crafting/Data/Crafting.Recipes.json`. Component trên pawn
 đọc phím `C` từ `Crafting.Input.json`, gửi
@@ -194,6 +194,8 @@ thật, không dùng dòng `accepted` đơn độc. Inventory `max_slots` đư�
 `2` lên `3` và thêm `ResonanceFiber`/`ResonanceBandage` vì fixture craft cần
 giữ đủ input và output; đây là thay đổi data của feature Inventory, không phải
 thay đổi logic hay chuyển quyền sở hữu quantity sang Crafting.
+
+Sau chương này, người chơi không chỉ giữ tài nguyên mà đã biến chúng thành công cụ. Công cụ chỉ có trọng lượng khi thế giới có thứ buộc ta phải dùng nó; vì vậy chương tiếp theo đặt output ấy vào combat, nơi animation và âm thanh phải được phân biệt rõ với sự thật rằng một target đã thật sự mất HP.
 
 ---
 

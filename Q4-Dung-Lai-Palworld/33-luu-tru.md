@@ -1,12 +1,14 @@
 # Chương 33 — Lưu trữ
 
-Lưu trữ không bắt đầu bằng câu hỏi “thêm save vào hệ thống nào?”. Theo Chương 14, mỗi feature đã tự khai báo chunk của mình: Inventory có `Paldark.Inventory`, Work có `Paldark.Work`, Progression có `Paldark.Progression` và các hệ thống trước tự chịu trách nhiệm schema. Việc còn lại của chương này là làm cho những chunk độc lập đó cùng đi qua một vòng save/load đáng tin.
+Người chơi đóng game sau một buổi tối dài. Sáng hôm sau, họ không chỉ mong “file save mở được”; họ mong đúng Pal vẫn ở roster, đúng worker còn đứng ở station và đúng structure vẫn nằm nơi đã đặt. Lưu trữ chỉ thành công khi cả mạng quan hệ ấy được dựng lại thành cùng một thế giới.
 
-Nếu process chết sau khi ghi một nửa, người chơi không thể nhận một nửa inventory và một nửa progression. Nếu schema đổi mà không có migration, stable id và relation sẽ gãy. Persistence là orchestration và verification, không phải một struct tổng mới để mọi feature cùng sửa.
+Vì vậy chương này không bắt đầu bằng câu hỏi “thêm save vào hệ thống nào?”. Theo Chương 14, mỗi feature đã có chunk riêng: Inventory có `Paldark.Inventory`, Work có `Paldark.Work`, Progression có `Paldark.Progression`, và từng owner chịu trách nhiệm schema của mình. Persistence phải đưa các chunk độc lập qua một vòng save/load đáng tin. Nó không tạo một struct tổng mới để mọi feature cùng sửa.
+
+Nếu process chết sau khi ghi nửa chừng, người chơi không thể nhận một nửa inventory ghép với một nửa progression. Nếu schema đổi mà không migration, stable id và relation sẽ gãy. Bài toán của Persistence là orchestration, atomicity, recovery và verification — giữ nhiều sự thật độc lập đi cùng một generation.
 
 ## 33.1 — Vì sao hệ thống này tồn tại
 
-Người chơi muốn ngày hôm sau bước vào đúng thế giới của mình: Pal vẫn ở roster, item vẫn nằm trong container, worker vẫn được phân công, node vẫn mở và structure vẫn ở vị trí cũ. Cảm giác này không đến từ việc file có tồn tại; nó đến từ việc quan hệ giữa các entity được dựng lại đúng.
+Ngày hôm sau chỉ “đúng” khi state liên miền khớp nhau: Pal vẫn trong roster, item vẫn ở container, worker còn assignment, node còn mở và structure giữ transform cũ. Cảm giác tiếp tục không đến từ việc một file tồn tại; nó đến từ việc stable identity cùng quan hệ giữa các entity được dựng lại đúng.
 
 Chương 20 từng đặt Persistence ở cuối vì chunk ownership đã được thiết kế trước. Trong triển khai thực tế, Chương 33 được đưa lên trước 31/32: hiện đã có chín hệ thống stateful và việc tắt game làm mất toàn bộ state là rủi ro trực tiếp hơn world/dungeon. Thứ tự tài liệu đã được cập nhật để phản ánh thứ tự triển khai mới. Cần kiểm chứng giả định đó: **không cần sửa ngược các hệ thống 21–32 chỉ để thêm cơ chế container save** nếu các hệ thống thật sự giữ đúng contract `ChunkId`, `SchemaVersion`, stable id, migration và missing-chunk-valid. Nhưng vẫn phải sửa một hệ thống trước nếu API của nó đang lưu actor pointer, dùng id không ổn định hoặc không có transaction boundary. Đây là điều kiện, không phải lời hứa tự động.
 
@@ -17,7 +19,7 @@ Chương 20 từng đặt Persistence ở cuối vì chunk ownership đã đư�
 - `F-120` — Server authority, vì save owner không thể để client tự ghi sự thật.
 - `F-122` — Replicated property, để phân biệt state mạng với state cần lưu.
 
-Các feature khác không được “đẩy” state sang Persistence. Persistence đọc manifest/chunk contract, điều phối thứ tự và atomic commit; owner vẫn serialize/deserialize field của mình.
+Catalog chỉ nêu vài mã trực tiếp, nhưng save chạm mọi state bền đã xuất hiện từ đầu quyển. Điều đó không cho phép feature “đẩy” ownership sang Persistence. Persistence đọc manifest/chunk contract, điều phối thứ tự và atomic commit; owner vẫn serialize/deserialize field của mình.
 
 ## 33.3 — Trạng thái và chủ sở hữu
 
@@ -31,11 +33,11 @@ Các feature khác không được “đẩy” state sang Persistence. Persiste
 | Entity relation resolution | entity/feature owner | all feature readers | stable id lookup |
 | Last known good checkpoint | `Persistence` | recovery, UI, server | accepted atomic commit |
 
-Persistence không ghi HP, inventory quantity, assignment hay unlocked set. Nó gọi owner codec và chỉ ghi generation mới sau khi mọi chunk bắt buộc đã serialize/validate.
+Bảng cho thấy Persistence sở hữu chiếc phong bì, thứ tự và generation; nội dung từng lá thư vẫn thuộc feature. Nó không ghi HP, inventory quantity, assignment hay unlocked set. Nó gọi owner codec và chỉ công bố generation mới sau khi mọi chunk bắt buộc đã serialize/validate.
 
 ## 33.4 — Hợp đồng dữ liệu
 
-Hình dạng chunk vẫn là `FPaldarkSaveChunk` của Chương 14:
+Vì owner không đổi, hình dạng chunk vẫn là `FPaldarkSaveChunk` của Chương 14:
 
 ```cpp
 USTRUCT()
@@ -71,11 +73,11 @@ Container file là wrapper của Persistence, không thay hình dạng chunk:
 }
 ```
 
-JSON này chỉ là manifest minh họa; runtime hiện đã có manifest JSON, payload `.bin`, checksum MD5, payload length, generation directory và commit marker. Ghi atomic dùng temporary manifest rồi publish manifest cuối trước khi ghi marker. Nếu marker thiếu, loader chọn last known good generation. Không có bằng chứng Palworld dùng đúng layout này; đây là thiết kế Paldark.
+Manifest minh họa cách Persistence nhìn các chunk mà không hiểu payload. Runtime hiện đã có manifest JSON, payload `.bin`, checksum MD5, payload length, generation directory và commit marker. Ghi atomic dùng temporary manifest, publish manifest cuối rồi mới ghi marker. Nếu marker thiếu, loader chọn last known good generation. Không có bằng chứng Palworld dùng đúng layout này; đây là thiết kế Paldark.
 
 ## 33.5 — Giao diện lập trình
 
-Component/subsystem là `UPaldarkPersistenceSubsystem`; feature chỉ đăng ký codec qua `UPaldarkSaveChunkRegistry` ở boundary Persistence/Core. Registry có `RegisterCodec`, `FindCodec` và enumeration ổn định theo `ChunkId`; Persistence gọi `Serialize`, `Deserialize` và `Migrate`, không đọc concrete feature component.
+Public boundary phải cho Persistence hỏi từng owner “hãy đóng gói state của bạn” mà không mở implementation. `UPaldarkPersistenceSubsystem` điều phối; feature đăng ký codec qua `UPaldarkSaveChunkRegistry` ở boundary Persistence/Core. Registry có `RegisterCodec`, `FindCodec` và enumeration ổn định theo `ChunkId`; Persistence gọi `Serialize`, `Deserialize`, `Migrate`, không đọc concrete feature component.
 
 ```cpp
 UFUNCTION()
@@ -103,7 +105,7 @@ FPaldarkPersistenceResult UPaldarkPersistenceSubsystem::RequestLoad(
 }
 ```
 
-Thứ tự load:
+Load không thể chỉ đảo ngược thứ tự ghi một cách mù quáng. Nó đi qua sáu bước:
 
 1. Đọc manifest/generation và kiểm checksum, schema range, duplicate chunk id.
 2. Chạy migration riêng từng chunk, không sửa payload gốc tại chỗ.
@@ -129,13 +131,13 @@ Persistence không include concrete component của các feature; registry trả
 
 ## 33.6 — Quyền hạn và đồng bộ
 
-Server hoặc single-player authority là nơi quyết định save generation và load result. Client có thể yêu cầu save hoặc hiển thị progress, nhưng không tự commit file authoritative. Trong multiplayer, save scope/profile phải phân biệt world, guild và player; schema guild cụ thể được chốt ở Chương 34.
+Nút Save có thể nằm trên client, nhưng generation là sự thật của authority. Server hoặc single-player authority quyết định save generation và load result. Client có thể gửi yêu cầu hoặc hiển thị progress; nó không tự commit file authoritative. Trong multiplayer, scope/profile phải phân biệt world, guild và player; schema guild cụ thể được chốt ở Chương 34.
 
 Atomicity tối thiểu là write-ahead generation: ghi chunk tạm, flush/validate, ghi manifest tạm, rồi commit marker. Crash trước marker không được làm mất generation trước. Migration phải tạo generation mới hoặc bản tạm; không mutate file cũ rồi mới hy vọng chạy tiếp.
 
 ## 33.7 — Log, console command, và cách biết là chạy đúng
 
-Dùng `LogPaldarkPersistence`. Mỗi save/load/migrate ghi profile, generation, chunk id, schema before/after, checksum, relation count và result. Khi load relation pending, log stable id và lý do; không gọi đó là “missing entity” nếu entity chỉ chưa relevant.
+Một dòng “Save succeeded” không đủ để chứng minh thế giới có thể quay lại. `LogPaldarkPersistence` ghi profile, generation, chunk id, schema before/after, checksum, relation count và result cho mỗi save/load/migrate. Relation pending phải log stable id cùng lý do; entity chưa relevant không được gọi nhầm là “missing entity”.
 
 Command:
 
@@ -145,7 +147,7 @@ Command:
 - `Paldark.Persistence.QA.Load`
 - `Paldark.Persistence.QA.Migrate`
 
-Test vòng save–load:
+Test vòng save–load phải thay đổi state ở giữa để việc load có thứ thật sự cần khôi phục:
 
 1. Dựng inventory, party, work assignment, structure và unlocked node.
 2. Ghi snapshot A và chụp canonical state theo stable id, không theo thứ tự array.
@@ -161,7 +163,7 @@ thứ hai dùng `-PaldarkPersistenceLoadQA` để load cùng profile và đọc 
 runtime sau load. Chunk thiếu là `pending` hợp lệ; schema ngoài range bị reject
 với `SchemaUnsupported`.
 
-Đúng là state canonical bằng nhau, relation dựng lại qua id, chunk thiếu vẫn hợp lệ, migration idempotent và không có half-commit. Đây là phép chứng minh, không chỉ là “file load không crash”.
+Pass nghĩa là state canonical bằng nhau, relation dựng lại qua id, chunk thiếu vẫn hợp lệ, migration idempotent và không có half-commit. “File load không crash” mới chỉ chứng minh parser sống sót; nó chưa chứng minh thế giới của người chơi trở lại.
 
 ---
 
@@ -178,7 +180,7 @@ với `SchemaUnsupported`.
 | Progression | Unlocked set, XP, level và points do Progression sở hữu; chunk boundary không đẩy state vào Persistence. | Không |
 | Movement/Presentation/Interaction/Crafting/Combat/Health/Capture | Không có con trỏ actor làm durable identity trong Persistence path; các state owner vẫn độc lập. | Không |
 
-Kết luận hiện tại là **phải sửa ngược năm owner feature** để đưa state thật ra
+Kiểm chứng code đã bác bỏ một phần giả định ban đầu theo cách hữu ích. Kết luận hiện tại là **phải sửa ngược năm owner feature** để đưa state thật ra
 qua codec: mỗi component đã thêm codec trong module của chính nó và đăng ký khi
 feature active. Inventory serialize các slot thật; Companion serialize party,
 active id và context; Work serialize station, worker, assignment, progress và
@@ -196,3 +198,5 @@ generation 1. Checksum corruption và schema 99 tạo hai recovery reason riêng
 `ChecksumMismatch` và `SchemaUnsupported`. Save thiếu một chunk feature vẫn load
 hợp lệ. Migration chạy hai lần cho cùng kết quả và không ghi đè source
 generation.
+
+Sau Persistence, một thế giới single-player đã có thể dừng và tiếp tục mà không đổi owner. Chương 34 thêm một áp lực khác: nhiều người cùng nhìn và cùng gửi intent vào thế giới ấy. Save cần nhiều chunk nhất quán qua thời gian; multiplayer cần nhiều client nhất quán trong cùng một khoảnh khắc.

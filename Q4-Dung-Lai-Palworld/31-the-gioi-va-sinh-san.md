@@ -1,12 +1,12 @@
 # Chương 31 — Thế giới và nhịp sống
 
-Một thế giới trống không chỉ là một map lớn. Người chơi quay lại cùng một bờ biển vào ban ngày và ban đêm phải thấy hai lời mời khác nhau; đi qua biome khác phải gặp creature, resource và rủi ro khác; đánh sạch một khu vực không được biến nơi đó thành khoảng đất chết vĩnh viễn. Chu kỳ, thời tiết, spawn và respawn là thứ khiến thế giới có nhịp riêng.
+Người chơi đi qua một bờ biển lúc ban ngày, ghi nhớ những sinh vật và resource ở đó, rồi quay lại vào ban đêm. Nếu mọi thứ đứng nguyên như một bức ảnh, map có thể lớn nhưng thế giới vẫn trống. Time, weather, biome, spawn và respawn phải làm cùng nơi ấy đưa ra một lời mời khác; một vùng bị đánh sạch cũng không thể thành khoảng đất chết vĩnh viễn.
 
-Đây cũng là hệ thống dễ làm vỡ hiệu năng và state nhất. Spawner tạo và hủy entity liên tục, còn population budget phải ngăn một vùng đông dần vô hạn. Nếu spawn chỉ nhìn khoảng cách camera, save và server authority sẽ cho ra các kết quả khác nhau; nếu giữ mọi actor mãi mãi, relevancy và memory sẽ vỡ.
+Nhịp sống đó đổi bằng việc liên tục tạo, dỡ và dựng lại representation, nên World cũng là nơi hiệu năng và identity dễ bị trộn nhất. Population budget phải ngăn một vùng đông lên vô hạn. Nếu spawner chỉ nhìn khoảng cách camera, server và save có thể kể hai thế giới khác nhau; nếu giữ mọi actor mãi mãi, relevancy cùng memory sẽ vỡ. Ta cần một scheduler biết entity nào tồn tại mà không coi mọi actor là vĩnh cửu.
 
 ## 31.1 — Vì sao hệ thống này tồn tại
 
-World tạo lý do để người chơi đi tiếp. Biome đặt lời hứa, time/weather lọc encounter, weighted row tạo hiếm có, level/count range điều chỉnh sức ép, còn respawn làm cho chuyến quay lại vẫn có ý nghĩa. Những thứ này phối hợp với capture, combat, work và economy chứ không tự đứng riêng.
+World tạo lý do để người chơi đi tiếp và quay lại. Biome đặt lời hứa, time/weather lọc encounter, weighted row tạo độ hiếm, level/count range điều chỉnh sức ép, còn respawn giữ cho chuyến trở lại vẫn có ý nghĩa. Mỗi thay đổi ấy trở thành đầu vào cho capture, combat, work và economy; World tạo hoàn cảnh, không sở hữu hậu quả của tất cả hệ kia.
 
 `FPalWildSpawnerDatabaseRow` cho thấy dữ liệu spawn có weight, level/count range, time và weather condition. `PalDungeonSpawnAreaData` cho thấy dungeon cũng có vùng spawn riêng. Đây là evidence về hình dạng data, không phải bằng chứng rằng runtime Paldark phải copy nguyên scheduler.
 
@@ -20,7 +20,7 @@ World tạo lý do để người chơi đi tiếp. Biome đặt lời hứa, ti
 - `F-097` — Weather condition.
 - `F-098` — Nocturnal flag.
 
-Respawn là phần cần thiết để các feature này tạo thành một thế giới chơi được, dù catalog không tách thành một mã riêng. Biome và world clock là state của World; creature entity sau khi spawn thuộc entity/creature owner, không thuộc spawner mãi mãi.
+Catalog mô tả điều kiện của một lần spawn; respawn là mảnh nối để những lần spawn ấy tạo thành thế giới chơi được dù không có mã riêng. Biome và world clock thuộc World. Khi creature entity đã được tạo, nó chuyển sang entity/creature owner; spawner không được giữ quyền sở hữu mãi chỉ vì nó đã khởi đầu sự xuất hiện.
 
 ## 31.3 — Trạng thái và chủ sở hữu
 
@@ -35,11 +35,11 @@ Respawn là phần cần thiết để các feature này tạo thành một th�
 | Respawn checkpoint | `World` | scheduler, save/load, QA | accepted despawn/death result |
 | Player-visible actor | actor/relevancy bridge | relevant clients, presentation | resolve entity into actor |
 
-Spawner chỉ quyết định khi nào tạo hoặc đề nghị dọn entity theo policy. Health, capture và entity owner quyết định death, capture hoặc persistent identity. Không được dùng việc actor bị unload như bằng chứng entity đã chết.
+Bảng tách bốn khái niệm thường bị gom thành “spawn”: điều kiện tĩnh, ngân sách population, entity identity và actor representation. Spawner chỉ quyết định khi nào tạo hoặc đề nghị dọn entity theo policy. Health, Capture và entity owner quyết định death, capture hoặc persistent identity. Actor unload chỉ nói representation không còn relevant; nó không chứng minh entity đã chết.
 
 ## 31.4 — Hợp đồng dữ liệu
 
-Mảnh do World định nghĩa là `World.SpawnProfile`. Nó mô tả nguồn row và điều kiện; không chứa actor pointer hay current population.
+`World.SpawnProfile` vì thế chỉ mô tả nguồn row, biome và điều kiện của scheduler. Actor pointer cùng current population là state runtime, không phải data tĩnh của một profile.
 
 ```cpp
 USTRUCT()
@@ -79,7 +79,7 @@ Definition đã điền:
 
 ## 31.5 — Giao diện lập trình
 
-Component là `UWorldSpawnerComponent` trên vùng spawn và `UWorldEnvironmentComponent` trên world owner. Dungeon có thể cung cấp profile riêng qua contract, không include World spawner implementation.
+Khi clock hoặc weather đổi, nhiều vùng spawn có thể phản ứng nhưng chỉ World owner đổi environment state. `UWorldSpawnerComponent` nằm trên vùng spawn, `UWorldEnvironmentComponent` trên world owner. Dungeon có thể cung cấp profile riêng qua contract mà không include World spawner implementation.
 
 ```cpp
 UFUNCTION()
@@ -126,7 +126,7 @@ World không include Combat, Capture hay Dungeon. Death/capture chỉ thông bá
 
 ## 31.6 — Quyền hạn và đồng bộ
 
-Server quyết định clock, weather, row selection, population budget, respawn timing và entity spawn/despawn. Client có thể dự đoán presentation của mây, mưa hoặc ambient animation; không tự tạo creature thật và không tự sửa world time.
+Mây và mưa có thể chuyển mềm ở client, nhưng encounter không được sinh từ dự đoán presentation. Server quyết định clock, weather, row selection, population budget, respawn timing và entity spawn/despawn. Client chỉ dự đoán mây, mưa hoặc ambient animation; nó không tự tạo creature thật và không sửa world time.
 
 Relevant clients nhận environment snapshot, actor spawn/despawn và state cần nhìn thấy. Static spawn definitions không replicate payload; client đọc cùng registry và nhận id/context. Actor ngoài relevancy có thể unload, nhưng entity và checkpoint chỉ bị xóa bởi owner authority.
 
@@ -134,7 +134,7 @@ Scheduler phải có ngân sách theo biome/world partition, hạn chế số en
 
 ## 31.7 — Log, console command, và cách biết là chạy đúng
 
-Dùng `LogPaldarkWorld`. Mỗi decision cần có biome, row, reason, population before/after, authority và `corr`. Phân biệt `Spawned`, `Respawned`, `DespawnedForBudget`, `UnloadedForRelevancy` và `DestroyedByDeath`.
+Muốn hiểu vì sao một vùng trống, log phải phân biệt “không đủ điều kiện spawn” với “entity vẫn còn nhưng actor đã unload”. `LogPaldarkWorld` ghi mỗi decision với biome, row, reason, population before/after, authority và `corr`; các lifecycle reason phải tách `Spawned`, `Respawned`, `DespawnedForBudget`, `UnloadedForRelevancy` và `DestroyedByDeath`.
 
 Command:
 
@@ -144,11 +144,11 @@ Command:
 - `Paldark.World.QA.SetTime`
 - `Paldark.World.QA.SetWeather`
 
-Test đúng: cố định time/weather, trigger population reconcile, kiểm row/weight/condition; vượt budget để thấy scheduler không tạo vô hạn; despawn một entity rồi đợi policy respawn; unload actor nhưng status entity vẫn tồn tại. Log phải chứng minh actor unload không bị nhầm là death.
+Test đúng chủ động thay đổi hoàn cảnh: cố định time/weather, trigger population reconcile và kiểm row/weight/condition; đẩy population vượt budget để scheduler không tạo vô hạn; despawn một entity rồi chờ policy respawn; cuối cùng unload actor nhưng status vẫn thấy entity. Log phải chứng minh unload không bị nhầm thành death.
 
 ## 31.8 — Slice đã triển khai
 
-World hiện được triển khai bằng native `World` Game Feature và
+Những nhánh ấy đã được đưa vào một slice native có seed và lifecycle reason quan sát được. World hiện được triển khai bằng native `World` Game Feature và
 `UWorldFeatureSubsystem`, không include Combat, Capture, Dungeon, Creature
 hoặc Health. Clock/time, weather, spawn rows, weighted selection, population
 budget và lifecycle policy thuộc subsystem; actor chỉ là representation của
@@ -167,6 +167,8 @@ Lifecycle log phân biệt `Spawned`, `Respawned`, `DespawnedForBudget`,
 `Paldark.World` lưu clock, weather, respawn checkpoint và population budget.
 Population/entity actor runtime không được lưu; actor sẽ được reconcile lại
 từ World scheduler sau load thay vì lưu pointer actor.
+
+World đã tạo ra những chuyến đi có nhịp, nhưng một hành trình mở không luôn cho người chơi cảm giác đã hoàn tất điều gì. Chương 32 thu hẹp không gian thành dungeon: entrance, room, boss và reward, một chuỗi có điểm bắt đầu và kết thúc mà vẫn dùng lại mọi owner đã dựng trước đó.
 
 ---
 

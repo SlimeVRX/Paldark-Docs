@@ -1,12 +1,12 @@
 # Chương 28 — Xây dựng
 
-Người chơi nhìn một khoảng đất trống và hình dung một căn cứ. Xây dựng biến ý định đó thành preview, kiểm tra nền, xoay đặt, trừ vật liệu và cuối cùng là một công trình có identity. Cảm giác thỏa mãn nằm ở khoảnh khắc ghost biến thành thứ thật, nhưng cũng nằm ở việc game nói rõ vì sao một vị trí không hợp lệ.
+Người chơi dừng trước một khoảng đất trống và đã nhìn thấy căn cứ trong đầu: workbench ở đây, kho ở cạnh kia, lối đi quay về cổng. Hệ thống xây dựng phải đưa ý định ấy qua preview, xoay đặt, kiểm tra nền và vật liệu, rồi mới cho ghost trở thành một công trình thật. Cảm giác thỏa mãn nằm ở cú chuyển đó; cảm giác tin cậy nằm ở việc game giải thích được vì sao một vị trí bị từ chối.
 
-Chương này không sở hữu item quantity, technology unlock hay worker assignment. Nó nhận query từ các owner đó và chỉ ghi structure state của mình. Một station sau này có thể được Work hoặc Crafting đọc qua message; Build không include các feature kia.
+Một lần đặt station chạm tới Inventory, Progression, collision và sau này là Work/Crafting, nhưng Build không vì thế sở hữu item quantity, technology unlock hay worker assignment. Nó query các owner đó và chỉ ghi structure state của mình. Khi station đã sẵn sàng, feature khác nhận message; Build không include implementation của họ.
 
 ## 28.1 — Vì sao hệ thống này tồn tại
 
-Building đưa progression ra không gian. Preview cho phép thử mà chưa mất resource; grid/rotation giúp người chơi tạo layout; nền và overlap biến địa hình thành một phần của quyết định; commit biến ý tưởng thành công trình có HP, owner và stable id.
+Building đưa progression ra khỏi menu và đặt nó vào không gian. Preview cho phép thử mà chưa mất resource; grid/rotation giúp người chơi tổ chức layout; nền và overlap khiến địa hình tham gia vào quyết định; commit biến ý tưởng thành công trình có HP, owner và stable id.
 
 Nếu UI tự trừ cost trước khi server chấp nhận, hoặc structure actor là identity duy nhất, multiplayer và save sẽ vỡ. Build cần tách preview phiên khỏi structure entity bền.
 
@@ -20,7 +20,7 @@ Nếu UI tự trừ cost trước khi server chấp nhận, hoặc structure act
 - `F-062` — Technology gate.
 - `F-063` — Commit structure.
 
-`BuildObject HP` là evidence về shape của structure data; exact collision, grid size và authority runtime là UNKNOWN/INFERRED. Technology gate chỉ là query tới Progression, không phải quyền ghi của Build.
+Các mã catalog đi theo đúng hành trình đặt một vật: preview → điều chỉnh → validate → gate → commit. `BuildObject HP` là evidence về shape của structure data; exact collision, grid size và authority runtime vẫn là `UNKNOWN/INFERRED`. Technology gate chỉ là query tới Progression, không phải quyền ghi của Build.
 
 ## 28.3 — Trạng thái và chủ sở hữu
 
@@ -34,11 +34,11 @@ Nếu UI tự trừ cost trước khi server chấp nhận, hoặc structure act
 | Material quantity | `Inventory` | Build validator, UI | `Paldark.Inventory.Request.Remove` |
 | Technology unlock | `Progression` | Build validator, UI | `Paldark.Core.ProgressionRead` |
 
-Preview không phải entity bền và không ghi save. Structure commit chỉ thành công sau khi material, technology, support, overlap và authority checks đã trả kết quả.
+Bảng phân biệt hai thứ trên màn hình trông gần giống nhau: ghost local và structure authoritative. Preview không phải entity bền, không có stable id và không đi vào save. Chỉ khi material, technology, support, overlap cùng authority checks đều trả kết quả, commit mới tạo structure thật.
 
 ## 28.4 — Hợp đồng dữ liệu
 
-Mảnh là `Build.Structure`. Nó mô tả loại công trình và các yêu cầu tĩnh; không chứa transform runtime hoặc HP hiện tại.
+Data contract giữ toàn bộ điều kiện tĩnh ở phía definition. `Build.Structure` mô tả loại công trình cùng placement, cost và technology profile; transform runtime và HP hiện tại thuộc state owner khác.
 
 ```cpp
 USTRUCT()
@@ -76,7 +76,7 @@ Cost, gate, placement và structure definition đều là data; `Build.Structure
 
 ## 28.5 — Giao diện lập trình
 
-Component là `UBuildComponent` trên requester và `UBuildStructureComponent` trên structure representation. Build đọc item/progression qua core interfaces.
+Khi người chơi nhấn xác nhận, requester cần gửi cùng definition và transform vừa preview, còn authority phải kiểm lại từ đầu. `UBuildComponent` nằm trên requester, `UBuildStructureComponent` nằm trên representation của structure; Build đọc item/progression qua core interfaces.
 
 ```cpp
 UFUNCTION()
@@ -126,7 +126,7 @@ Kênh nghe:
 
 ## 28.6 — Quyền hạn và đồng bộ
 
-Client được tự dựng ghost, grid preview, rotation và material màu đỏ/xanh. Server quyết định definition, technology gate, cost, collision, support, owner và commit entity. Client không tự spawn structure thật.
+Preview phải mượt theo từng cú xoay, nhưng commit không thể tin vào màu xanh mà client vừa vẽ. Client được tự dựng ghost, grid preview, rotation và material đỏ/xanh. Server quyết định definition, technology gate, cost, collision, support, owner và commit entity. Client không tự spawn structure thật.
 
 Structure entity id, definition id, transform, owner và relevant HP replicate. Ghost, placement outline, sound và UI error là presentation. Save giữ entity/transform/owner; khi actor unload, structure vẫn được resolve từ entity id.
 
@@ -134,7 +134,7 @@ Health damage của structure đi qua `Paldark.Core.DamageRequest`; Build không
 
 ## 28.7 — Log, console command, và cách biết là chạy đúng
 
-Dùng `LogPaldarkBuild`. Log preview không cần spam mỗi frame; chỉ log validation result đổi hoặc commit request. Commit phải nối material transaction và structure creation bằng `corr`.
+Để giải thích “vì sao không đặt được”, log cần giữ reason mà không spam mỗi frame preview. `LogPaldarkBuild` chỉ ghi khi validation result đổi hoặc khi có commit request. Một commit thành công phải nối material transaction với structure creation bằng cùng `corr`.
 
 Command:
 
@@ -143,11 +143,11 @@ Command:
 - `Paldark.Build.QA.Trigger`
 - `Paldark.Inventory.List` — đối chiếu vật liệu sau commit.
 
-Test đúng: setup player/material/technology, preview vị trí hợp lệ và không hợp lệ, status thấy reason; trigger commit; inventory giảm đúng một transaction; structure entity có stable id; status sau unload/reload vẫn thấy transform và owner.
+Test đúng đi qua cả hai màu của preview: setup player/material/technology, thử vị trí hợp lệ và không hợp lệ, kiểm status có reason; trigger commit; Inventory phải giảm đúng một transaction; structure nhận stable id; sau unload/reload, status vẫn giữ transform và owner.
 
 ## 28.8 — Slice đã triển khai và bằng chứng runtime
 
-Slice native hiện gồm hai Game Feature: `Progression` tối thiểu sở hữu tập
+Contract này đã được ép qua một chuỗi rejection trước khi tới nhánh accepted. Slice native hiện gồm hai Game Feature: `Progression` tối thiểu sở hữu tập
 technology đã mở, và `Build` sở hữu structure state. Build đọc
 `IPaldarkProgressionRead`, `IPaldarkItemRead` và `IPaldarkItemTransaction` qua
 generic interface lookup; không include implementation header của Inventory,
@@ -171,6 +171,8 @@ Correlation của request accepted là
 structure commit và event ready. Client nhận structure/result với cùng id và
 `authority=false`. Preview không được tạo trong QA và không có stable id;
 chỉ structure commit mới được replicate/persist.
+
+Một structure có identity mới chỉ là căn nhà đứng yên. Khi Work nghe `StructureReady`, công trình ấy bắt đầu nhận worker, input và progress. Chương 29 đi tiếp từ khoảnh khắc căn cứ không còn là bố cục, mà trở thành một hệ sản xuất có thể vận hành khi người chơi quay lưng đi.
 
 ---
 

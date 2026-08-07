@@ -1,12 +1,12 @@
 # Chương 32 — Hang động và trùm
 
-Một chuyến đi đáng nhớ thường có điểm hẹn: lối vào hang, chuỗi phòng, một trận trùm và phần thưởng đủ để người chơi muốn chuẩn bị lại lần sau. Hang động gom những hệ thống trước vào một hành trình có bắt đầu, áp lực tăng dần và kết thúc nhìn thấy được.
+Người chơi nhìn thấy lối vào hang và hiểu rằng chuyến đi phía trước sẽ khác overworld: qua cửa là một chuỗi phòng, tài nguyên phải được giữ cho trận cuối, boss là điểm hẹn và reward là lời kết. Dungeon gom những hệ thống đã dựng thành một hành trình có mở đầu, áp lực tăng dần và một khoảnh khắc hoàn tất nhìn thấy được.
 
-Dungeon không nên là một thế giới thứ hai tự định nghĩa lại combat, loot, progression hay spawn. Nó sở hữu run context và encounter flow; các mutation còn lại đi qua owner đã có. Nhờ vậy một dungeon mới chủ yếu là thêm data và room contract, không phải sửa core.
+Nhưng dungeon không phải một thế giới thứ hai được phép định nghĩa lại combat, loot, progression hay spawn. Nó chỉ sở hữu run context cùng encounter flow; mọi mutation còn lại đi qua owner đã có. Nhờ vậy thêm dungeon chủ yếu là thêm data và room contract, không phải chép lại core gameplay trong một nhánh riêng.
 
 ## 32.1 — Vì sao hệ thống này tồn tại
 
-Overworld cho người chơi tự chọn hướng; dungeon tạo một lời hứa hẹp hơn. Người chơi bước qua entrance, đọc tier, đi qua room, giữ tài nguyên cho boss và nhận reward. Boss flag đổi nhịp presentation, còn reward biến chiến thắng thành tiến trình hoặc vật phẩm.
+Overworld cho người chơi tự chọn hướng; dungeon đưa ra một lời hứa hẹp và rõ hơn. Qua entrance, người chơi đọc tier, tiến từng room, giữ tài nguyên cho boss rồi nhận reward. Boss flag đổi nhịp presentation; reward biến chiến thắng thành item hoặc tiến trình mà các vòng chơi khác còn dùng tiếp.
 
 Catalog gọi boss tuning là REFERENCE/INFERRED vì chưa có declaration runtime đủ cụ thể. Paldark nên mô tả encounter bằng definition và event, không giấu multiplier trong một class boss dùng chung.
 
@@ -20,7 +20,7 @@ Catalog gọi boss tuning là REFERENCE/INFERRED vì chưa có declaration runti
 - `F-104` — Treasure reward.
 - `F-105` — First-defeat reward.
 
-Dungeon đọc creature/attack từ Combat, reward definition từ Inventory và unlock state từ Progression. Nó không ghi các state đó. `8-slot drop schema` là reference về hình dạng reward container, không phải yêu cầu mọi dungeon Paldark phải có đúng tám slot.
+Các mã catalog đi theo timeline của một run từ entrance tới first-defeat reward. Dungeon đọc creature/attack từ Combat, reward definition từ Inventory và unlock state từ Progression, nhưng không ghi các state đó. `8-slot drop schema` chỉ là reference về hình dạng reward container, không phải yêu cầu mọi dungeon Paldark phải có đúng tám slot.
 
 ## 32.3 — Trạng thái và chủ sở hữu
 
@@ -34,11 +34,11 @@ Dungeon đọc creature/attack từ Combat, reward definition từ Inventory và
 | Reward definition/container | Inventory/reward owner | Dungeon, player, UI, save | `Paldark.Dungeon.Request.ClaimReward` |
 | First-defeat flag | `Dungeon` | reward validator, UI, save | accepted completion request |
 
-Dungeon giữ run/room state. Boss không bị xem là defeated chỉ vì actor unload; phải có health/death result. Reward không được cấp hai lần khi client retry claim.
+Bảng đặt hai ranh giới ở đúng những khoảnh khắc dễ sai nhất. Dungeon giữ run/room state, nhưng boss chỉ defeated khi Health trả death result — actor unload không phải chiến thắng. Dungeon giữ claim eligibility, nhưng Inventory mới ghi quantity; client retry không được tạo reward lần hai.
 
 ## 32.4 — Hợp đồng dữ liệu
 
-Mảnh là `Dungeon.Encounter`. Nó mô tả tier, room sequence, boss flag và reward profile; không chứa HP hiện tại hoặc inventory quantity.
+Data của dungeon vì thế mô tả cấu trúc hành trình, không chụp state của các owner khác. `Dungeon.Encounter` giữ tier, room sequence, boss flag và reward profile; HP hiện tại cùng inventory quantity nằm ngoài fragment.
 
 ```cpp
 USTRUCT()
@@ -80,7 +80,7 @@ Room count, tier name và reward profile là minh họa. Chunk `Paldark.Dungeon`
 
 ## 32.5 — Giao diện lập trình
 
-Component là `UDungeonRunComponent` trên run owner và `UDungeonEntranceComponent` trên entrance. Dungeon gọi core contracts để spawn entity, đọc health result và tạo reward.
+Một entrance chỉ cần tạo run context; từ đó mọi request đều phải mang run id để room order và claim có thể kiểm tra. `UDungeonRunComponent` nằm trên run owner, `UDungeonEntranceComponent` trên entrance. Dungeon gọi core contracts để spawn entity, đọc health result và tạo reward.
 
 ```cpp
 UFUNCTION()
@@ -127,13 +127,13 @@ Dungeon không include World spawner, Combat, Inventory hay Progression. Nó ngh
 
 ## 32.6 — Quyền hạn và đồng bộ
 
-Server quyết định entrance validity, run creation, room advance, encounter spawn, boss completion, first-defeat eligibility và reward claim. Client được hiển thị minimap, room presentation, boss bar prediction và camera; không tự complete run.
+Client có thể dựng boss bar và mở cửa bằng presentation tức thời, nhưng không được nhảy cóc timeline của run. Server quyết định entrance validity, run creation, room advance, encounter spawn, boss completion, first-defeat eligibility và reward claim. Client hiển thị minimap, room presentation, boss bar prediction cùng camera; nó không tự complete run.
 
 Run id, room index, boss result, completion flag và reward transaction result replicate cho client liên quan. Room mesh, fog, music, camera shake và boss intro là presentation. Nếu run resume được, save chunk là nguồn state; nếu không, missing chunk phải có policy rõ ràng.
 
 ## 32.7 — Log, console command, và cách biết là chạy đúng
 
-Dùng `LogPaldarkDungeon`. Log entrance → run id → room → boss result → reward claim phải dùng cùng `corr`. Một reward log phải có claim id/idempotency key để retry không nhân đôi item.
+Một run chỉ thật sự điều tra được nếu log kể lại đúng thứ tự của nó. `LogPaldarkDungeon` nối entrance → run id → room → boss result → reward claim bằng cùng `corr`. Reward log phải có claim id/idempotency key để một lần retry không nhân đôi item.
 
 Command:
 
@@ -143,13 +143,13 @@ Command:
 - `Paldark.Combat.SpawnDummy` — fixture combat thật.
 - `Paldark.Inventory.List` — đối chiếu reward.
 
-Test đúng: vào encounter, advance room, hoàn tất boss bằng health result, claim reward hai lần và kiểm chỉ một transaction; reload run nếu persistence được bật; kiểm first-defeat chỉ đổi đúng owner.
+Test đúng cố tình thử phá flow: vào encounter, advance room, hoàn tất boss bằng health result, claim reward hai lần và kiểm chỉ có một transaction; nếu persistence bật thì reload run; first-defeat chỉ được đổi ở đúng owner. Đi qua cửa hay unload boss không được tính thay cho completion.
 
 ---
 
 ## 32.8 — Slice đã triển khai và bằng chứng
 
-Dungeon là native Game Feature `Paldark.Dungeon`, dùng `UDungeonFeatureSubsystem`
+Slice đã hiện thực dùng chính các nhánh sai đó làm bằng chứng. Dungeon là native Game Feature `Paldark.Dungeon`, dùng `UDungeonFeatureSubsystem`
 và một actor trạng thái replicated generic. Definition nằm trong
 `Data/Dungeon.Encounters.json` với `Dungeon.Encounter.ResonanceCavern`,
 `Dungeon.Tier.Two`, chuỗi ba room và reward
@@ -195,5 +195,7 @@ PALDARK_HEALTH_RESULT_REPLICATED ... before=100.0 after=0.0 dead=true authority=
 Dungeon có owner codec `Paldark.Dungeon`; codec lưu run context, room index,
 completion flag và reward claim state. Actor boss và pointer runtime không
 được lưu; reward claim state bắt buộc giữ lại để không mở lại duplicate claim.
+
+Một run có thể kéo dài và reward claim phải sống qua retry; đến đây câu hỏi “đóng game rồi chuyện gì còn lại?” không thể tiếp tục trì hoãn. Chương 33 lùi khỏi từng feature để điều phối save/load cho các chunk owner, mà không gom toàn bộ state trở lại một struct chung.
 
 **Bằng chứng cho chương này.** `F-099` tới `F-105`, `PalDungeonSpawnAreaData`, dungeon tier/room/reward references và 8-slot drop schema là EXTRACTED/REFERENCE theo catalog và whitepaper. Native feature, Core capability boundary, Health death gate, idempotent claim, first-defeat ownership, owner codec và packaged evidence là IMPLEMENTED/VERIFIED trong slice này. Actor resume không được giả nhận là persistence state.

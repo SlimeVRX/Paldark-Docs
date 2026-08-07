@@ -1,6 +1,8 @@
 # Chương 13 — Bản đồ module
 
-Đến đây ta có luật (Chương 11) và có danh mục (Chương 12). Chương này vẽ ra cái hộp: dự án gồm những module nào, cái nào được phụ thuộc cái nào.
+Hãy thử một phép kiểm rất thô: xóa plugin Bắt giữ khỏi project. Nếu compiler lập tức báo lỗi trong Work, Runtime hoặc lớp nhân vật chung, thì Bắt giữ chưa phải một tính năng tháo lắp được. Nó chỉ là một thư mục mang tên plugin, còn dây phụ thuộc vẫn chạy xuyên qua cả project.
+
+Đến đây ta có luật ở Chương 11 và có danh mục ở Chương 12. Nhưng luật và tên gọi vẫn chưa cho code một hình dạng vật lý. Chương này vẽ ra cái hộp: dự án gồm những module nào, cái nào được phụ thuộc cái nào, và vì sao phép thử “xóa một feature” phải trở thành một việc bình thường thay vì một cuộc phẫu thuật.
 
 Nguyên tắc dẫn đường rất đơn giản và tôi muốn nói trước, vì mọi quyết định phía sau đều suy ra từ nó:
 
@@ -8,7 +10,7 @@ Nguyên tắc dẫn đường rất đơn giản và tôi muốn nói trước, 
 
 Tính năng ở tầng lá nghĩa là: không có gì phụ thuộc vào một tính năng. Xóa bất kỳ tính năng nào khỏi dự án thì phần còn lại vẫn biên dịch được. Nếu có một tính năng mà xóa đi làm thứ khác gãy, ta đã vi phạm luật L2 ở đâu đó.
 
-Đây cũng là bài kiểm tra nhanh nhất cho toàn bộ kiến trúc, và nó kiểm được bằng máy.
+Đây cũng là bài kiểm tra nhanh nhất cho toàn bộ kiến trúc, và nó kiểm được bằng máy. Sơ đồ dưới đây là hình dạng tối thiểu thỏa điều kiện ấy; hãy đọc mũi tên như “được phép phụ thuộc vào”, không phải “gọi qua lại hai chiều”.
 
 ## 13.1 — Bốn tầng
 
@@ -44,6 +46,8 @@ Module này là chỗ dễ hỏng nhất về mặt kỷ luật. Nó "gần game
 
 **Tầng 4 — các tính năng.** Mỗi tính năng một plugin trong `Plugins/Features/`. Phụ thuộc lên trên được, sang ngang thì không.
 
+Bốn tầng không phải bốn “khu vực cho gọn”. Chúng tạo ra một chiều đi bắt buộc cho mọi dependency: feature có thể nhìn lên các hợp đồng ổn định, nhưng hạ tầng không nhìn xuống feature và hai feature không nắm tay nhau trực tiếp. Chính chiều đi này làm phép thử xóa plugin ở đầu chương có thể thành công.
+
 ## 13.2 — Vì sao chia đúng bốn tầng này
 
 Có thể chia ít hơn hoặc nhiều hơn, nên tôi nói rõ lý do để sau này ai muốn đổi thì biết mình đang đánh đổi cái gì.
@@ -56,9 +60,11 @@ Có thể chia ít hơn hoặc nhiều hơn, nên tôi nói rõ lý do để sau
 
 **Vì sao không có module riêng cho mạng.** Đây là quyết định có chủ ý và tôi biết nó gây tranh cãi. Lý do: quyền hạn mạng không phải một tính năng tách rời được, nó là **tính chất của từng trạng thái**. Máu là quyền của server, camera là chuyện của client. Gom hết vào một module "mạng" sẽ tạo ra một module mà mọi hệ thống đều phải đi qua — đúng cái ngã tư ta đang tránh. Thay vào đó, quyền hạn được ghi trong danh mục quyền ghi ở Chương 12, và mỗi chủ tự chịu trách nhiệm về phần mạng của trạng thái mình sở hữu.
 
+Điểm chung của bốn quyết định trên là vòng đời và trách nhiệm, không phải số lượng file. Core ổn định khác Data đọc cấu hình; Data tĩnh khác Persistence phải giữ tương thích ngược; Runtime gắn với actor khác những cấu trúc có thể kiểm ngoài game. Nếu sau này cần thêm hoặc gộp tầng, câu hỏi phải là “vòng đời và trách nhiệm nào đã thay đổi?”, không phải “cây thư mục trông có dài quá không?”.
+
 ## 13.3 — Luật phụ thuộc, phát biểu để kiểm được bằng máy
 
-Bốn luật, viết ở dạng script có thể kiểm:
+Một sơ đồ đẹp trong tài liệu không ngăn được một dòng include sai ở tuần sau. Muốn bản đồ sống cùng code, ta phải chuyển mũi tên thành những câu mà script có thể trả lời đúng hoặc sai. Bốn luật sau được viết theo đúng mục đích đó:
 
 1. **Không có vòng.** Dựng đồ thị từ khai báo phụ thuộc của mọi module; phải là đồ thị có hướng không chu trình.
 2. **Tính năng không phụ thuộc tính năng.** Không module tính năng nào được có tên một module tính năng khác trong danh sách phụ thuộc của mình.
@@ -79,9 +85,11 @@ Ba câu hỏi mà bất kỳ ai cũng phải trả lời được về một tí
 
 Cả ba câu đều được trả lời trong đúng một file khai báo của tính năng — đây là hiện thực của luật L10, và Chương 16 sẽ định nghĩa chính xác định dạng file đó.
 
-Điều đáng nói là hệ quả: khi ba câu hỏi này trả lời được bằng cách đọc một file văn bản, **máy dựng lại được toàn bộ đồ thị phối hợp của dự án** — ai phát kênh nào, ai nghe kênh nào, kênh nào có người phát mà không ai nghe, kênh nào có người nghe mà không ai phát. Loại lỗi cuối cùng đó là một trong những lỗi khó tìm nhất trong kiến trúc dựa trên thông điệp, và ở đây nó thành một cảnh báo lúc kiểm tra.
+Điều đáng nói là hệ quả: khi ba câu hỏi này trả lời được bằng cách đọc một file văn bản, **máy dựng lại được toàn bộ đồ thị phối hợp của dự án** — ai phát kênh nào, ai nghe kênh nào, kênh nào có người phát mà không ai nghe, kênh nào có người nghe mà không ai phát. Loại lỗi cuối cùng đó là một trong những lỗi khó tìm nhất trong kiến trúc dựa trên thông điệp, và ở đây nó thành một cảnh báo lúc kiểm tra. Chương 16 sẽ biến đúng ba câu hỏi này thành manifest của từng feature.
 
 ## 13.5 — Cây thư mục
+
+Đến đây các tầng vẫn còn là khái niệm. Cây dưới đây đặt chúng vào đúng vị trí để một agent mở repo là thấy ngay đâu là hạ tầng ổn định, đâu là feature mình được phép sửa và đâu là script giữ luật:
 
 ```text
 PaldarkKit/
@@ -108,9 +116,13 @@ Mỗi module theo chuẩn Unreal: có `Public` và `Private`, có file build ri�
 
 ## 13.6 — Cái bản đồ này chưa nói
 
+Một bản đồ tốt cũng phải ghi phần lãnh thổ chưa khảo sát. Bốn tầng giải quyết chiều phụ thuộc; chúng chưa tự trả lời kích thước plugin, chỗ đặt asset hay chi phí build. Ba điểm sau vì vậy vẫn là câu hỏi mở, không phải lời hứa đã được chứng minh:
+
 - **Bao nhiêu tính năng là hợp lý.** Chưa biết. Catalog ở Chương 3 có 126 mục nhưng một plugin có thể gom vài mục liên quan. Chương 20 sẽ chốt khi chia lát cắt.
 - **Nội dung nghệ thuật ở đâu.** Mesh, texture, âm thanh vẫn phải là asset nhị phân và vẫn phải nằm đâu đó. Đề xuất: trong thư mục nội dung của chính tính năng, và **không** tính năng nào tham chiếu nội dung của tính năng khác. Chưa kiểm chứng ở quy mô lớn.
 - **Thời gian biên dịch.** Nhiều module nhỏ thì biên dịch lại nhanh khi sửa một chỗ, nhưng biên dịch sạch thì chậm hơn. Không có số đo.
+
+Vậy chương này chưa cho ta biết mỗi feature phải chứa những file nào; nó chỉ dựng hàng rào để các feature không mọc rễ vào nhau. Trước khi đóng gói một feature ở Chương 16, ta còn cần trả lời một câu sâu hơn: dữ liệu nào là định nghĩa dùng chung, dữ liệu nào là một cá thể đang sống, và phần nào được phép đi vào bản lưu. Đó là việc của Chương 14.
 
 ---
 

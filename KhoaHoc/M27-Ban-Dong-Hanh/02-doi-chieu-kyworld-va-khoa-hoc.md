@@ -10,7 +10,7 @@ Thứ tự này quan trọng. Nếu hỏi ngược lại — "dùng Behavior Tre
 
 ## Đáp án của người đi trước
 
-KYWorld đã tái tạo Palworld thành công, và họ chọn Behavior Tree:
+KYWorld đã dựng được một prototype Palworld có thể nhìn thấy và tương tác, và họ chọn Behavior Tree cho phần hành vi:
 
 - `02.Palworld/Source/Palworld_Base/Public/Character/Pal/PalCharacterBase.h` — Pal actor.
 - `BaseAIController.h/.cpp` — controller C++.
@@ -73,6 +73,6 @@ Giáo trình ở [chương 38](../../Q5-Lo-Trinh/38-giao-trinh-15-khoa-hoc.md) v
 
 ## Bài này kết luận gì
 
-Đáp án có sẵn của người đi trước là thứ để **đối chiếu**, không phải để chép. Chép Behavior Tree về sẽ có một hệ AI đúng chuẩn mà không ai trong dự án này chạy thử được. Đối chiếu rồi từ chối có lý do thì có một hệ AI kém sang hơn nhưng chạy được — và có một điều kiện rõ ràng để biết khi nào phải bỏ nó đi.
+Đáp án có sẵn của người đi trước là thứ để **đối chiếu**, không phải để chép. Chép Behavior Tree về sẽ cho một hệ AI đúng chuẩn công cụ nhưng chưa chắc có ai trong dự án này chạy thử được. Đối chiếu rồi từ chối có lý do tạo ra một hệ nhỏ hơn, phù hợp với gate hiện tại — đồng thời để lại điều kiện rõ ràng cho ngày nó phải được thay thế.
 
 Bài kế tiếp: máy trạng thái đó gồm những trạng thái nào, và **ai được phép làm nó đổi trạng thái?**

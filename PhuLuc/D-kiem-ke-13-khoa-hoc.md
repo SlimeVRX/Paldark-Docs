@@ -1,6 +1,8 @@
 # Phụ lục D — Kiểm kê 13 khoá học và sức nặng của từng loại bằng chứng
 
-Phụ lục này trả lời một câu hỏi hẹp nhưng rất quan trọng: **ta thực sự có thể học và tái sử dụng điều gì từ từng khoá, và điều gì chỉ mới được mô tả?** Nó không thay thế [bản đồ tài liệu](ban-do-tai-lieu.md) hay [giáo trình 15 hệ thống](../Q5-Lo-Trinh/38-giao-trinh-15-khoa-hoc.md). Nó đặt độ tin cậy lên từng nguồn để AI agent không biến tên bài học hoặc sự tồn tại của một Blueprint thành bằng chứng rằng logic đã được đọc và hiểu.
+Giả sử một khóa học có bài mang tên “Inventory System” và trong repo có một Blueprint cùng tên. Ta đã có thể kết luận tới đâu? Có lẽ ta biết chủ đề và biết asset tồn tại, nhưng vẫn chưa biết graph bên trong làm gì, chưa biết code đã chạy trong Paldark, càng chưa biết nó chịu được multiplayer hay save/load.
+
+Phụ lục này giữ đúng khoảng cách giữa những nấc bằng chứng đó. Nó trả lời một câu hỏi hẹp nhưng quan trọng: **ta thực sự có thể học và tái sử dụng điều gì từ từng khóa, và điều gì mới chỉ được mô tả?** Nó không thay thế [bản đồ tài liệu](ban-do-tai-lieu.md) hay [giáo trình 15 hệ thống](../Q5-Lo-Trinh/38-giao-trinh-15-khoa-hoc.md); nhiệm vụ của nó là đặt sức nặng lên từng nguồn để tên bài học hoặc sự tồn tại của một Blueprint không bị đọc thành bằng chứng implementation.
 
 ## D.1 — Bốn nhãn bằng chứng
 
@@ -11,7 +13,7 @@ Phụ lục này trả lời một câu hỏi hẹp nhưng rất quan trọng: *
 | `[Doc]` | Bài giảng hoặc Knowledge mô tả một kỹ thuật/quy trình. | Repo local có source chứng minh kỹ thuật đó. |
 | `[Inference]` | Đây là lựa chọn thiết kế Paldark suy ra sau khi so sánh nguồn. | Palworld, Lyra hoặc khoá học đã chọn đúng y hệt. |
 
-Một claim có thể mang nhiều nhãn, nhưng không được tự nâng từ `[Doc]` hoặc `[Asset]` thành `[C++]`.
+Một claim có thể mang nhiều nhãn vì một hệ thống thường có cả lời giảng, asset và source. Tuy nhiên các nhãn không phải bậc thang tự động: `[Doc]` hoặc `[Asset]` chỉ trở thành `[C++]` khi đã có file implementation đọc được, và `[C++]` vẫn chưa đồng nghĩa với việc code ấy đã tích hợp hoặc chạy đúng trong Paldark.
 
 ## D.2 — Tình trạng 13 khoá
 
@@ -31,11 +33,11 @@ Một claim có thể mang nhiều nhãn, nhưng không được tự nâng từ
 | 16 — UEFN/Verse | **Không** | Interface, module, event, scope, UI và persistence concept | Không được coi Verse lesson là C++ implementation proof. |
 | 17 — Hipernova Lyra Inventory | Có | Lyra source + interaction/inventory/craft fragments/Fast Array; building chỉ có fragment tham chiếu actor class | Nguồn C++ mạnh nhất cho item/equipment/interaction runtime trong Lyra, không phải ranking kiến trúc chung hay full building system; kiểm tra license trước tái sử dụng. |
 
-Kết quả kiểm kê: **9/13 khoá có Source submodule; 12, 14, 15, 16 là doc-only.** Danh sách submodule trong `.gitmodules` là bằng chứng vật lý cho ranh giới này.
+Kết quả kiểm kê tạo ra một ranh giới rõ: **9/13 khóa có Source submodule; 12, 14, 15 và 16 chỉ có tài liệu**. Danh sách submodule trong `.gitmodules` là bằng chứng vật lý cho kết luận đó. Điều này không làm bốn khóa doc-only trở nên vô ích; nó chỉ giới hạn loại câu mà ta được phép dùng chúng để chứng minh.
 
 ## D.2a — Lớp `Knowledge/` đã dùng để định tuyến
 
-Mỗi khoá có một bản synthesized HTML. Khoá 05 có thêm `Knowledge/01-Introduction/04-Character Classes.md`. Knowledge giúp tìm concept/lesson nhanh; claim implementation vẫn phải quay lại `Documents`, `course.yaml` và Source.
+Mỗi khóa có một bản synthesized HTML; khóa 05 còn có `Knowledge/01-Introduction/04-Character Classes.md`. Lớp `Knowledge/` giúp trả lời nhanh “nên tìm ở bài nào?”, chứ không trả lời thay câu hỏi “class này thực sự làm gì?”. Với claim implementation, đường đọc vẫn phải quay về `Documents`, `course.yaml` và Source.
 
 | Khoá | Knowledge synthesis | Dùng để định tuyến tới |
 |---|---|---|
@@ -53,9 +55,11 @@ Mỗi khoá có một bản synthesized HTML. Khoá 05 có thêm `Knowledge/01-I
 | 16 | `Knowledge/Course-16-UEFN-Verse-Programming-Synthesized.html` | interface/module/event/scope/UI/persistence concepts; doc-only |
 | 17 | `Knowledge/Course-17-Lyra-Inventory-Extended-Synthesized.html` | interaction/inventory/craft fragments, `BuildingActorClass` fragment và Lyra integration; không có placement system |
 
-Knowledge synthesis không được dẫn một mình cho claim “class X làm Y”. Nó là index để tìm bài/file chứng minh ở tầng thấp hơn. Code block nằm trong Knowledge là ví dụ sư phạm; compile proof phải quay lại lesson commit/source.
+Vì thế Knowledge synthesis không đứng một mình phía sau claim “class X làm Y”. Nó là tấm bản đồ dẫn tới bài hoặc file ở tầng thấp hơn. Code block trong Knowledge vẫn là ví dụ sư phạm; compile proof phải quay lại lesson commit hoặc source có thể kiểm tra.
 
 ## D.3 — Các bất thường phải được giữ trong hồ sơ
+
+Các bất thường dưới đây không nên bị “dọn sạch” cho tài liệu trông gọn hơn. Chúng cho biết chỗ một đường dẫn nguồn có thể khiến người đọc tin quá mức nếu không thấy điều kiện đi kèm.
 
 1. **Khoá 10:** `course.yaml` chứa 197 SHA dạng hash nhưng clone local chỉ xác minh được 6. Source cuối ở HEAD `88f0f15` vẫn đọc được, nên được dùng làm file-level proof; không được tuyên bố đã tái dựng diff của từng bài.
 2. **Khoá 14:** 57/94 trường `document:` bị cắt. Khi dẫn nguồn phải dùng tên file thật trong `Documents/`, không dùng path bị cắt từ YAML.
@@ -65,7 +69,7 @@ Knowledge synthesis không được dẫn một mình cho claim “class X làm 
 
 ## D.4 — Trình tự học theo từng hệ thống Paldark
 
-Trình tự dưới đây là **đường đọc**, không phải thứ tự copy code. Bài đầu cho khái niệm; bài sau cho implementation; KYWorld ở cuối để đối chiếu cảm giác/scope sau khi đã tự phân rã.
+Một nguồn mạnh ở combat không mặc nhiên là nguồn mạnh ở inventory. Do đó trình tự dưới đây là **đường đọc theo từng hệ thống**, không phải thứ tự copy code. Bài đầu cung cấp khái niệm, bài sau đưa implementation có thể khảo sát, còn KYWorld đặt ở cuối để đối chiếu cảm giác và scope sau khi người đọc đã tự phân rã vấn đề.
 
 | Ch. | Hệ thống | Trình tự nguồn | Phần chưa được nguồn giải quyết |
 |---:|---|---|---|
@@ -87,7 +91,7 @@ Trình tự dưới đây là **đường đọc**, không phải thứ tự cop
 
 ## D.5 — Nguồn ưu tiên theo mục đích
 
-Không có một ranking chung cho mọi bài toán:
+Không có một bảng xếp hạng chung cho mọi bài toán. “Nguồn tốt nhất” chỉ có nghĩa khi ta nói rõ đang cần scope, kiến trúc composition, implementation inventory hay bằng chứng authority:
 
 | Chủ đề | Nguồn ưu tiên |
 |---|---|
@@ -98,15 +102,15 @@ Không có một ranking chung cho mọi bài toán:
 | Networking/authority | 07 (nền) → 13/10 (GAS/combat/session); 08 chỉ ở server/cloud milestone |
 | AI/spawn/save primitive | 11 → 13 → 15 `[Doc]`; Work scheduler/offline vẫn phải first-principles |
 
-**Không dùng trong critical path 12 giờ:** 08, trừ khi một quyết định gameplay thực sự bị server lifecycle chặn. Cloud, matchmaking và deployment không làm vertical loop hiện tại chơi được hơn.
+Trong critical path 12 giờ, khóa 08 chỉ nên xuất hiện nếu một quyết định gameplay thật sự bị server lifecycle chặn. Cloud, matchmaking và deployment có thể quan trọng với sản phẩm hoàn chỉnh, nhưng chúng không làm vertical loop hiện tại chơi được hơn.
 
 ## D.6 — Input cần người dùng cung cấp
 
-Những nguồn còn thiếu không thể được bù bằng cách đoán. Gói hỗ trợ có giá trị nhất từ người dùng là:
+Tới đây, phần còn thiếu không thể được bù bằng cách đọc thêm tên file hoặc đoán từ một asset. Gói hỗ trợ có giá trị nhất từ người dùng là:
 
 1. Export Blueprint graphs của `InventorySystem`, `PalDataComponent`, `GA_Pal_Encounter`, `BP_PalSphere`, `BP_CraftMaster`, `BP_BuildPartMaster`, `SpawnManager` từ KYWorld.
 2. Video một lượt chơi có timestamp cho capture, build snapping, worker assignment/hauling, breeding/incubation và dungeon reset.
 3. Export DataTable từ **một phiên bản Palworld đã chốt** cho technology, build/work suitability, spawner/dungeon và breeding/economy.
 4. Với mỗi video: input đã bấm, state nhìn thấy trước/sau, trường hợp thất bại, và điều gì phải còn đúng sau save/load.
 
-Output mong đợi từ việc khảo sát này là một bảng state transition có nguồn, không phải một danh sách “giống Palworld”.
+Đầu ra mong đợi từ việc khảo sát không phải một danh sách tính từ kiểu “giống Palworld”. Nó phải là bảng state transition có nguồn: input nào xảy ra, state nào đổi, ai có quyền đổi và người chơi nhìn thấy điều gì trước lẫn sau. Chỉ khi ấy, tài liệu tham khảo mới đi hết đường từ cảm giác tới contract.

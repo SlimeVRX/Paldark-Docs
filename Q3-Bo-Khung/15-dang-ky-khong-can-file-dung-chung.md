@@ -11,7 +11,7 @@
 > contract và gameplay data do Paldark sở hữu; chúng không còn là lý do để
 > giữ `PaldarkComponentHost` làm composition runtime.
 
-Trong một project nhỏ, cách đăng ký dễ nghĩ nhất là có một hàm trung tâm:
+Trong một project nhỏ, cách đăng ký dễ nghĩ nhất là có một hàm trung tâm. Người làm Work thêm một dòng, người làm Capture thêm một dòng, và trong vài tuần đầu mọi thứ trông rất rõ ràng:
 
 ```cpp
 void RegisterEverything()
@@ -23,13 +23,19 @@ void RegisterEverything()
 }
 ```
 
-Mỗi khi thêm tính năng, agent phải mở hàm này ra thêm một dòng. Agent thứ hai cũng làm đúng việc đó. Ta vừa dựng lại va chạm 1 và 2 dưới một cái tên mới: một file khởi tạo trung tâm, một thứ tự gọi trung tâm, và một danh sách trung tâm mà mọi người phải nhớ cập nhật. Tách plugin ra không giúp gì nếu tất cả plugin vẫn phải chen vào cùng một hàm.
+Rồi hai agent cùng mở file. Một nhánh thêm `RegisterWorkFragments()`, nhánh kia thêm `RegisterCaptureChannels()`. Cả hai đều làm đúng, nhưng merge vẫn phải dừng lại ở cùng một chỗ; tệ hơn, một agent thứ ba quên thêm dòng thì code feature vẫn có thể tồn tại mà runtime không bao giờ biết tới nó. Ta vừa dựng lại va chạm 1 và 2 dưới một cái tên mới: một file khởi tạo trung tâm, một thứ tự gọi trung tâm, và một danh sách trung tâm mà mọi người phải nhớ cập nhật. Tách plugin ra không giúp gì nếu tất cả plugin vẫn phải chen vào cùng một hàm.
 
 Chương 14 đã giải quyết đăng ký **dữ liệu gameplay** bằng text. Chương này
 giải quyết phần contract, loại mảnh, kênh thông điệp, nhãn, console command
-và khối lưu mà không cần agent sửa file của người khác. Composition actor/
-component không còn nằm trong registry tự viết; nó dùng Game Features native,
-với manifest text làm nguồn cho artifact `GameFeatureData.uasset`.
+và khối lưu mà không cần agent sửa file của người khác. Câu hỏi dẫn đường là:
+owner có thể công bố thứ mình sở hữu ngay tại plugin của mình, để cả máy lẫn
+người đọc tìm thấy, mà không bắt một file trung tâm gọi tên owner đó hay không?
+
+Composition actor/component không còn nằm trong registry tự viết; nó dùng
+Game Features native, với manifest text làm nguồn cho artifact
+`GameFeatureData.uasset`. Ranh giới này quan trọng: chương đang giữ lại phần
+registry thuộc hợp đồng Paldark, không bảo vệ một infrastructure composition
+mà engine đã cung cấp tốt hơn.
 
 ## 15.1 — Tự đăng ký tại nơi khai báo
 
@@ -39,7 +45,7 @@ Một registry đúng phải là **hàm trả về tham chiếu tới biến tĩ
 
 ### Đăng ký một loại mảnh
 
-Tên mô hình vẫn là của Chương 14: mảnh mới kế thừa `FPaldarkFragment`; định nghĩa dữ liệu chỉ chứa tên loại mảnh và payload phù hợp.
+Ta bắt đầu bằng mảnh vì nó nối trực tiếp với định nghĩa ở Chương 14. Mảnh mới kế thừa `FPaldarkFragment`; định nghĩa dữ liệu chỉ chứa tên loại mảnh và payload phù hợp. Owner Work giữ cả cấu trúc lẫn registration trong plugin của mình:
 
 ```cpp
 // WorkCapableFragment.h — Public của plugin Work
@@ -81,7 +87,7 @@ contract của Paldark, không phải lý do để tự thay thế `UGameFramewo
 
 ### Đăng ký một kênh thông điệp
 
-Kênh là một danh từ chung, nên tên phải theo L9. Tính năng làm việc không phát kênh chung như `WorkFinished`; nó phát `Paldark.Work.Event.Finished`.
+Mảnh trả lời “dữ liệu này có hình dạng gì”. Khi hai feature cần biết một việc vừa xảy ra, chúng dùng kênh thông điệp. Kênh là một danh từ chung, nên tên phải theo L9. Tính năng làm việc không phát kênh chung như `WorkFinished`; nó phát `Paldark.Work.Event.Finished`.
 
 ```cpp
 // WorkMessageRegistration.cpp
@@ -118,7 +124,7 @@ Subscriber không cần include `WorkSubsystem.h`. Nó đăng ký nghe chuỗi `
 
 ### Đăng ký một khối lưu
 
-Khối lưu bám đúng Chương 14: mỗi tính năng có khối riêng, có id và version riêng; thiếu khối là hợp lệ.
+Kênh chỉ sống trong phiên; assignment của Work có thể phải sống qua lần thoát game. Khối lưu vì vậy bám đúng Chương 14: mỗi tính năng có khối riêng, có id và version riêng; thiếu khối là hợp lệ.
 
 ```cpp
 // WorkSaveChunkRegistration.cpp
@@ -141,7 +147,9 @@ namespace
 
 ## 15.2 — Những cái bẫy thật
 
-Tự đăng ký làm mất file dùng chung, nhưng nó không làm mất mọi vấn đề. Bẫy đầu tiên là thứ tự khởi tạo tĩnh giữa các translation unit không được đảm bảo. Nếu file A khởi tạo trước file B và A gọi thẳng vào một global registry của B, kết quả phụ thuộc linker. Vì vậy registry phải dùng dạng:
+Tới đây pattern trông gần như miễn phí: đặt một object cạnh declaration và để module tự đăng ký. Nhưng một registration “đã viết trong source” chưa chắc đã xuất hiện trong bản chạy. Nó có thể đến sai thứ tự, bị linker loại hoặc thất bại mà không để lại dấu vết. Vì vậy tự đăng ký làm mất file dùng chung, nhưng không làm mất trách nhiệm quan sát lifecycle.
+
+Bẫy đầu tiên là thứ tự khởi tạo tĩnh giữa các translation unit không được đảm bảo. Nếu file A khởi tạo trước file B và A gọi thẳng vào một global registry của B, kết quả phụ thuộc linker. Vì vậy registry phải dùng dạng:
 
 ```cpp
 FPaldarkFragmentRegistry& FPaldarkFragmentRegistry::Get()
@@ -167,9 +175,9 @@ Nếu một entry bị thiếu, người điều tra cần biết bảng đã th
 
 ## 15.3 — Tự đăng ký hay quét reflection lúc chạy?
 
-Unreal có một đường khác: định nghĩa lớp con của một lớp cơ sở bằng `UCLASS`, rồi dùng reflection để duyệt các lớp đã được đăng ký trong `UClass` system. Ví dụ, mọi loại fragment có thể là một `UObject` subclass; registry khởi động gọi `GetDerivedClasses(UPaldarkFragmentObject::StaticClass(), Classes)` rồi dựng metadata từ từng lớp.
+Những cái bẫy trên dẫn tới một câu hỏi hợp lý: nếu Unreal đã biết mọi `UCLASS`, tại sao không bỏ static registration và để reflection tìm tất cả? Unreal có đúng đường đó: định nghĩa lớp con của một lớp cơ sở bằng `UCLASS`, rồi dùng reflection để duyệt các lớp đã được đăng ký trong `UClass` system. Ví dụ, mọi loại fragment có thể là một `UObject` subclass; registry khởi động gọi `GetDerivedClasses(UPaldarkFragmentObject::StaticClass(), Classes)` rồi dựng metadata từ từng lớp.
 
-Hai cách có trade-off khác nhau:
+Hai cách giải hai nhóm nhu cầu khác nhau. Bảng dưới đây đặt chúng cạnh nhau để lựa chọn dựa trên lifecycle và môi trường kiểm tra, không dựa trên cảm giác “native hơn”:
 
 | Tiêu chí | Static self-registration | Reflection scan |
 |---|---|---|
@@ -213,7 +221,7 @@ trong static library mà không có test xác nhận entry thực sự xuất hi
 
 ## 15.4 — Tên interface và tên kênh không trộn lẫn
 
-Paldark dùng một quy tắc duy nhất để máy và người đọc phân biệt contract gọi trực tiếp với thông điệp bất đồng bộ:
+Registration có thể đúng về lifecycle mà vẫn sai về ngữ nghĩa nếu cùng một chuỗi lúc được dùng như interface, lúc lại được phát như event. Paldark dùng một quy tắc duy nhất để máy và người đọc phân biệt contract gọi trực tiếp với thông điệp bất đồng bộ:
 
 - Interface: `Paldark.<Chủ>.<Tên>`, ví dụ `Paldark.Core.HealthRead`.
 - Kênh sự kiện: `Paldark.<Chủ>.Event.<Tên>`.
@@ -225,7 +233,7 @@ Quy tắc này cho phép validator nhìn một string và biết phải tìm int
 
 ## 15.5 — GameplayTag không còn là file ngã tư
 
-GameplayTag thường bị đặt trong một `.ini` dùng chung. Mỗi agent thêm một tag vào cùng section, và dù Git có thể ghép hai dòng, file đó vẫn là danh mục chung mà mọi tính năng phải chạm. Đó là va chạm 1 dưới dạng mới.
+Sau fragment, channel và save chunk, còn một điểm tập trung rất dễ bị bỏ quên: GameplayTag thường bị đặt trong một `.ini` dùng chung. Mỗi agent thêm một tag vào cùng section, và dù Git có thể ghép hai dòng, file đó vẫn là danh mục chung mà mọi tính năng phải chạm. Đó là va chạm 1 dưới dạng mới.
 
 Paldark nên khai báo tag native trong module sở hữu:
 
@@ -247,6 +255,8 @@ Prefix phải khớp owner: `Paldark.Work.*`, `Paldark.Breeding.*`, `Paldark.Cap
 
 ## 15.6 — Bảng đăng ký và cách máy kiểm
 
+Ta có thể gom kết quả của cả chương thành một câu hỏi cho từng loại extension: owner khai báo nó ở đâu, và máy dựa vào dấu vết nào để biết registration thực sự tồn tại? Bảng sau là bản đối chiếu giữa hai vế ấy:
+
 | Thứ cần đăng ký | Cơ chế | Cách kiểm bằng máy |
 |---|---|---|
 | Loại mảnh | `FPaldarkFragmentRegistry::Get().Add(...)` trong `.cpp` của owner | Quét `TypeId`, owner, struct factory; bắt trùng id và entry không có owner |
@@ -258,6 +268,8 @@ Prefix phải khớp owner: `Paldark.Work.*`, `Paldark.Breeding.*`, `Paldark.Cap
 | Dữ liệu định nghĩa | File `Data/**/*.json`/`csv` của plugin | Schema validator, mã duy nhất, mảnh đã đăng ký, tham chiếu không gãy |
 
 Đăng ký không file chung chỉ có giá trị khi registry là một phần của contract. Mỗi entry phải có id ổn định, owner, schema/version và log kết quả. Nếu không, ta chỉ đổi một file tổng thành một lỗi phân tán khó tìm hơn.
+
+Vì vậy kết luận của chương không phải “hãy dùng static registration cho mọi thứ”. Kết luận là: **thứ gì thuộc feature phải được feature tự công bố, bằng cơ chế phù hợp với lifecycle của nó, và phải có phép kiểm chứng minh công bố ấy đã thành công.** Gameplay data dùng text scan; contract nhẹ có thể dùng registry; lớp `UObject` có thể dùng reflection; actor composition dùng Game Features native. Chương 15b sẽ đi sâu vào đường cuối cùng và giải thích vì sao custom component host đã bị thay thế.
 
 ---
 

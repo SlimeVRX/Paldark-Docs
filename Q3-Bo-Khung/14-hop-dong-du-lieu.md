@@ -1,6 +1,8 @@
 # Chương 14 — Hợp đồng dữ liệu
 
-Chương này là chương kỹ thuật nhất của Quyển 3, và cũng là chương mà một agent sẽ mở ra nhiều lần nhất khi viết code. Nó trả lời: dữ liệu trong Paldark có hình dạng gì.
+Một con Pal tên `Fox_014` đang đi theo người chơi. Ta đóng game, mở lại, và muốn vẫn gặp đúng cá thể ấy: cùng định danh, cùng cấp độ, cùng lượng máu. Nhưng mesh và actor cũ đã bị hủy; animation đang chạy dở không nên sống lại; còn chỉ số gốc của cả loài thì không nên bị chép vào từng file lưu. Nếu không tách được những lớp dữ liệu này, một thao tác save/load đơn giản sẽ trộn “loài nào”, “cá thể nào” và “đang được vẽ ra sao” vào cùng một khối.
+
+Chương này là chương kỹ thuật nhất của Quyển 3, và cũng là chương mà một agent sẽ mở ra nhiều lần nhất khi viết code. Nó trả lời câu hỏi nằm dưới ví dụ đó: dữ liệu trong Paldark có hình dạng gì, và mỗi hình dạng sống bao lâu.
 
 Bốn khái niệm, đi theo đúng thứ tự vòng đời của một mẩu dữ liệu:
 
@@ -8,7 +10,7 @@ Bốn khái niệm, đi theo đúng thứ tự vòng đời của một mẩu d�
 
 Định nghĩa là "loại này là gì", viết bằng tay dưới dạng văn bản. Bảng đăng ký là toàn bộ định nghĩa được gom lại lúc khởi động. Thực thể là một cá thể cụ thể sinh ra lúc chơi. Bản lưu là phần của thực thể sống sót qua lần thoát game.
 
-Hiểu bốn cái này và hiểu ranh giới giữa chúng thì phần lớn quyết định thiết kế sau này tự có câu trả lời.
+Hiểu bốn cái này và hiểu ranh giới giữa chúng thì phần lớn quyết định thiết kế sau này tự có câu trả lời. Ta sẽ đi theo đúng vòng đời ấy, từ file một agent viết trước khi chạy game tới phần còn lại sau khi người chơi thoát.
 
 ## 14.1 — Định nghĩa
 
@@ -18,7 +20,7 @@ Hiểu bốn cái này và hiểu ranh giới giữa chúng thì phần lớn qu
 - **Chia sẻ được giữa mọi thực thể.** Một nghìn con cùng loài dùng chung một định nghĩa.
 - **Kiểm tra được trước khi chạy.** Vì là văn bản, script đọc được toàn bộ và bắt lỗi ngay.
 
-Theo luật L7, định nghĩa là **file văn bản**. Đây là hình dạng của nó:
+Theo luật L7, định nghĩa là **file văn bản**. Thay vì bắt đầu bằng một class chứa sẵn mọi trường mà sinh vật có thể cần, ta chỉ giữ phần nhận dạng và một danh sách mảnh mở rộng. Một định nghĩa cụ thể có hình dạng như sau:
 
 ```json
 {
@@ -58,7 +60,7 @@ Ba tính chất bắt buộc của mã: **duy nhất toàn cục**, **là văn b
 
 ## 14.2 — Mảnh
 
-Một loại mảnh gồm hai phần: một tên, và một cấu trúc dữ liệu.
+Định nghĩa vừa rồi nhắc tới `Work.Capable`, nhưng bản thân file JSON không quyết định payload ấy có nghĩa gì. Quyền giải nghĩa thuộc về feature sở hữu mảnh. Một loại mảnh vì vậy gồm hai phần: một tên để dữ liệu tham chiếu, và một cấu trúc dữ liệu để code đọc có type.
 
 ```cpp
 // Trong plugin của tính năng làm việc
@@ -73,7 +75,7 @@ struct FWorkCapableFragment : public FPaldarkFragment
 };
 ```
 
-Người dùng mảnh không hỏi "định nghĩa này loại gì", mà hỏi "định nghĩa này có mảnh nào tôi quan tâm không":
+Người dùng mảnh không hỏi “định nghĩa này loại gì”, vì câu hỏi đó sẽ kéo ta trở lại enum và switch trung tâm. Nó hỏi “định nghĩa này có mảnh nào tôi quan tâm không”, rồi coi việc không có mảnh là một câu trả lời bình thường:
 
 ```cpp
 // Trả về con trỏ tới mảnh nếu định nghĩa có mang mảnh loại này, ngược lại trả nullptr.
@@ -94,9 +96,9 @@ Ba luật của mảnh:
 
 ## 14.3 — Bảng đăng ký
 
-Bảng đăng ký là kết quả của việc quét toàn bộ dự án lúc khởi động.
+Bây giờ các file định nghĩa nằm rải trong nhiều plugin, còn mỗi loại mảnh do một owner khác đăng ký. Cần một nơi nối tên trong text với cấu trúc trong code, nhưng nơi đó không được biến thành danh sách tổng mà mọi agent cùng sửa. Bảng đăng ký là kết quả được dựng từ việc quét toàn bộ dự án lúc khởi động, không phải một file được viết tay.
 
-Quy trình bốn bước:
+Quy trình đi qua bốn bước, và mỗi bước loại bỏ một lớp mơ hồ trước khi game bắt đầu:
 
 1. **Quét.** Duyệt mọi `Plugins/Features/*/Data/**/*.json`.
 2. **Phân giải.** Đọc từng file, dựng đối tượng định nghĩa; với mỗi mảnh, tra tên loại mảnh trong bảng loại đã đăng ký để biết cần dựng struct nào.
@@ -125,7 +127,7 @@ Ta cũng từng dùng chữ “subsystem” như tên của hai service `UPaldar
 
 ## 14.4 — Thực thể
 
-Thực thể là một cá thể cụ thể. Nó có ba phần dữ liệu và ba phần này phải được phân biệt rạch ròi:
+Khi người chơi bắt được một con, định nghĩa `Creature.Fluffbeast` không đổi. Thứ mới xuất hiện là một cá thể cụ thể có lịch sử riêng. Ta gọi nó là thực thể. Nó có ba phần dữ liệu, tương ứng với ba câu hỏi khác nhau: nó là ai, điều gì của nó phải sống lâu, và điều gì chỉ có nghĩa trong phiên hiện tại. Bảng sau buộc ba phần ấy đứng riêng:
 
 | Phần | Ví dụ | Đồng bộ mạng? | Lưu? |
 |---|---|---|---|
@@ -164,7 +166,7 @@ Nên luật: **mọi tham chiếu tới một cá thể đều đi qua mã đị
 
 ## 14.5 — Bản lưu
 
-Bản lưu chỉ chứa những gì không dựng lại được:
+Khi đã tách actor khỏi thực thể và state phiên khỏi state bền, câu hỏi “lưu gì?” trở nên bớt cảm tính. Bản lưu chỉ chứa những gì không dựng lại được:
 
 - Định danh và mã định nghĩa của mọi thực thể đang tồn tại
 - Trạng thái bền của chúng
@@ -200,9 +202,25 @@ struct FPaldarkSaveChunk
 };
 ```
 
+### Hợp đồng đọc và hợp đồng giao dịch
+
+Tách dữ liệu bền thành các khối riêng vẫn chưa đủ nếu API đọc vô tình trao luôn quyền sửa. Item container cho thấy ranh giới này rõ nhất: nhiều feature cần biết số lượng, nhưng chỉ owner của inventory được phép thay đổi nó.
+
+Item container có hai mặt hợp đồng độc lập. `Paldark.Core.ItemRead` chỉ dành
+cho truy vấn (`ReadItem`, `ReadQuantity`); Combat, Capture hoặc một consumer
+chỉ đọc có thể implement contract này mà không trở thành writer. Các mutation
+đi qua `Paldark.Core.ItemTransaction`, gồm consume nguyên tử một danh sách và
+add item với correlation id và failure reason. Inventory implement cả hai vì
+nó là owner của quantity, còn feature requester chỉ resolve đúng contract mà
+nó cần. Không gộp hai mặt này vào một interface tên “Read”, vì tên contract
+phải phản ánh quyền ghi thực tế và không ép implementer tương lai phụ thuộc
+vào mutation API.
+
+Đây là cùng một nguyên tắc đã dùng cho bản lưu: chia theo quyền sở hữu, không chia theo sự tiện tay của caller. Consumer đọc được sự thật không có nghĩa consumer được phép viết lại sự thật ấy.
+
 ## 14.6 — Đi hết một vòng
 
-Lấy một ví dụ chạy xuyên cả bốn khái niệm, để thấy chúng khớp vào nhau:
+Các khái niệm đứng riêng rất dễ hiểu nhưng chỉ có giá trị khi ghép lại mà không tạo thêm một file điều phối trung tâm. Lấy một ví dụ chạy xuyên cả bốn khái niệm để thấy chúng khớp vào nhau:
 
 1. Agent làm hệ sinh vật viết `Creature.Fluffbeast.json`, đặt trong plugin của mình.
 2. Agent làm hệ làm việc đã định nghĩa loại mảnh `Work.Capable` từ trước, trong plugin của nó.
@@ -218,22 +236,14 @@ Lấy một ví dụ chạy xuyên cả bốn khái niệm, để thấy chúng 
 
 ## 14.7 — Chỗ còn để ngỏ
 
+Hợp đồng trên chốt ranh giới, nhưng chưa giả vờ chốt những quyết định cần benchmark hoặc trải nghiệm pipeline thật. Ba câu hỏi sau được giữ mở có chủ ý:
+
 - **Định dạng cấu hình.** JSON dễ đọc, dễ sinh, dễ kiểm; nhưng với những bảng phẳng hàng nghìn dòng như bảng chỉ số sinh vật thì CSV gọn hơn nhiều và diff dễ nhìn hơn. Đề xuất: cho phép cả hai, CSV cho bảng phẳng và JSON cho dữ liệu có cấu trúc. Chưa chốt.
 - **Nạp lại lúc đang chạy.** Sửa file cấu hình rồi nạp lại mà không khởi động lại game sẽ rút ngắn vòng lặp thử nghiệm rất nhiều, nhưng làm phức tạp lời hứa "bảng đóng băng sau khi nạp". Để lại cho giai đoạn sau.
 - **Tra mảnh có đủ nhanh không.** Mỗi lần tra là một lần duyệt danh sách mảnh. Ở quy mô Palworld gần như chắc chắn không sao, nhưng chưa có số đo.
 
+Điều đã chốt quan trọng hơn định dạng cụ thể: định nghĩa không phải thực thể, thực thể không phải actor, và bản lưu không phải ảnh chụp mọi thứ đang nằm trong bộ nhớ. Khi bốn lớp giữ đúng ranh giới, một feature có thể thêm dữ liệu của mình mà không sửa schema tổng. Chương 15 sẽ giải quyết nửa còn lại của bài toán: làm sao code sở hữu mảnh, channel và save chunk tự xuất hiện trong hệ thống mà không cần một hàm `RegisterEverything()`.
+
 ---
 
 **Bằng chứng cho chương này.** Mô hình định nghĩa – thực thể – mảnh là OBSERVED từ kiến trúc vật phẩm của Lyra và cách plugin ở Chương 10 mở rộng nó, sau đó được tài liệu này áp rộng ra mọi loại dữ liệu (INFERRED). Quyết định dùng file văn bản thay cho asset nhị phân là thiết kế riêng của Paldark, lý do đã nêu ở Chương 8 mục 8.4. Việc Unreal 5.6 không tự cook các file JSON trong `Data/` và manifest `Feature/*.feature.json`, khiến packaging script phải copy tường minh, là OBSERVED từ Movement vertical slice. Việc `UPaldarkDefinitionRegistrySubsystem` và `UPaldarkPersistenceSubsystem` kế thừa `UGameInstanceSubsystem` là EXTRACTED từ code đã biên dịch. Nguyên tắc chỉ lưu dữ liệu bền và dựng lại phần trình bày là OBSERVED từ mô hình persistence của Verse, khảo sát khóa 16. Các trường ví dụ như mức độ thành thạo theo loại việc và hệ số điều chỉnh tỷ lệ bắt phản ánh các trường có thật trong `PalCharacterParameterDatabaseRow.h` và `EPalWorkSuitability.h` (EXTRACTED), nhưng tên và giá trị dùng ở đây là của Paldark, không sao chép dữ liệu gốc. Các đoạn mã C++ còn lại là phác thảo hợp đồng, chưa biên dịch.
-
-### Hợp đồng đọc và hợp đồng giao dịch
-
-Item container có hai mặt hợp đồng độc lập. `Paldark.Core.ItemRead` chỉ dành
-cho truy vấn (`ReadItem`, `ReadQuantity`); Combat, Capture hoặc một consumer
-chỉ đọc có thể implement contract này mà không trở thành writer. Các mutation
-đi qua `Paldark.Core.ItemTransaction`, gồm consume nguyên tử một danh sách và
-add item với correlation id và failure reason. Inventory implement cả hai vì
-nó là owner của quantity, còn feature requester chỉ resolve đúng contract mà
-nó cần. Không gộp hai mặt này vào một interface tên “Read”, vì tên contract
-phải phản ánh quyền ghi thực tế và không ép implementer tương lai phụ thuộc
-vào mutation API.

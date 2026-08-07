@@ -1,12 +1,12 @@
 # Chương 34 — Nhiều người chơi
 
-Co-op chỉ vui khi hai người cùng nhìn thấy một thế giới có quy luật. Người A đặt structure, người B thấy nó; một Pal chết thì không thể chỉ chết trên máy của người A; hai người không được cùng tiêu một item mà server chấp nhận cả hai. Multiplayer vì vậy không phải một module đứng ngoài mọi feature. Quyền mạng là tính chất của từng state, đúng như danh mục quyền ghi ở Chương 12 và bản đồ module ở Chương 13.2.
+Hai người bước vào cùng một căn cứ. Người A đặt structure và người B phải thấy nó; một Pal chết thì không thể chỉ chết trên một máy; hai người cùng mua món cuối trong stock cũng không thể đều được server chấp nhận. Co-op chỉ vui khi hành động riêng tạo ra một sự thật chung có quy luật.
 
-Chương này dựng lớp điều phối: host/server authority, client intent, replication và relevancy. Nó không giành quyền ghi HP, inventory, work hay progression của các chương trước. Nó chỉ cung cấp đường truyền và policy để owner tương ứng thực thi.
+Multiplayer vì vậy không phải lớp “rắc replication” lên game đã xong, cũng không phải module đứng ngoài để sở hữu mọi state. Quyền mạng là tính chất của từng state như danh mục Chương 12 và bản đồ module Chương 13.2 đã chỉ ra. Chương này dựng đường điều phối — host/server authority, client intent, replication, relevancy — nhưng không giành HP, Inventory, Work hay Progression khỏi owner đã có.
 
 ## 34.1 — Vì sao hệ thống này tồn tại
 
-Multiplayer biến thành quả cá nhân thành sự thật chung. Người chơi gửi ý định nhanh, server kiểm tra rồi trả result; người khác nhận delta vừa đủ để hiểu chuyện gì xảy ra. Khi thế giới lớn, không thể gửi mọi actor và mọi field cho mọi client, nên relevancy trở thành một phần của cảm giác: thấy đúng thứ đang liên quan, không thấy những thứ không cần.
+Multiplayer biến hành động cá nhân thành hậu quả được chia sẻ. Người chơi gửi intent nhanh, server kiểm tra rồi trả result; người khác nhận delta vừa đủ để hiểu chuyện gì đã xảy ra. Khi thế giới lớn, “cùng một sự thật” không có nghĩa mọi client nhận mọi actor và mọi field. Relevancy là một phần của trải nghiệm: thấy đúng thứ đang liên quan, không trả băng thông cho những thứ không cần.
 
 Guild và quyền sở hữu chung là design Paldark, không phải evidence đã biết của Palworld. Chương 2 đã đánh dấu schema guild/permission Palworld là UNKNOWN; vì vậy không được viết như fact trích xuất.
 
@@ -19,7 +19,7 @@ Guild và quyền sở hữu chung là design Paldark, không phải evidence đ
 - `F-124` — Relevancy.
 - `F-125` — Stable instance ID.
 
-Các mã này không thay owner table của từng hệ thống. Combat vẫn sở hữu damage request, Inventory vẫn sở hữu quantity, Progression vẫn sở hữu unlock set. Multiplayer chỉ quyết định request đi đâu, snapshot/delta tới ai và session scope nào được phép.
+Sáu mã catalog mô tả đường truyền của state, không thay bảng owner của từng hệ thống. Combat vẫn sở hữu damage request, Inventory sở hữu quantity, Progression sở hữu unlock set. Multiplayer quyết định request đi đâu, snapshot/delta tới ai và session scope nào được phép; nó không quyết định nội dung mutation thay feature owner.
 
 ## 34.3 — Trạng thái và chủ sở hữu
 
@@ -34,11 +34,11 @@ Các mã này không thay owner table của từng hệ thống. Combat vẫn s�
 | Guild membership/permission | `Guild` owner (Paldark design) | authority, relevant members, save | `Paldark.Guild.Request.SetMemberRole` |
 | Shared guild asset permission | Guild policy, asset owner ghi state | feature validator, members | scoped feature request |
 
-Không có một “network state” tổng để mọi feature ghi. `Authority=Server` trong log nói nơi quyết định; nó không biến Net thành owner của HP hay item.
+Bảng cố ý không có một hàng “network state” tổng. Connection và relevancy thuộc lớp mạng; gameplay state vẫn ở feature. `Authority=Server` trong log nói **nơi** quyết định, không đổi **ai** chịu trách nhiệm cho HP hay item.
 
 ## 34.4 — Hợp đồng dữ liệu
 
-Mảnh là `Multiplayer.Replicated`. Nó mô tả policy truyền của một definition/state; không chứa state gameplay thật.
+Nếu cần data policy, `Multiplayer.Replicated` chỉ mô tả cách một definition/state được truyền. Nó không sao chép gameplay state thật vào một fragment mạng thứ hai.
 
 ```cpp
 USTRUCT()
@@ -77,7 +77,7 @@ Definition đã điền:
 
 ## 34.5 — Giao diện lập trình
 
-Component/subsystem là `UMultiplayerSessionSubsystem`. Feature owner đăng ký intent handler và replicated view; không include concrete component của nhau.
+Ở boundary runtime, lớp mạng cần route envelope tới owner rồi lùi lại. `UMultiplayerSessionSubsystem` giữ session; feature owner đăng ký intent handler và replicated view mà không include concrete component của nhau.
 
 ```cpp
 UFUNCTION()
@@ -124,7 +124,7 @@ Net không include Inventory/Combat/Work. Nó route envelope tới owner đã đ
 
 ## 34.6 — Quyền hạn và đồng bộ
 
-Server/host authoritative cho state gameplay. Client tự đọc input, dựng prediction và gửi intent envelope có request id; server trả accepted/rejected/result. Client không được gửi “new HP=0” hay “inventory quantity=99” như một mutation đã tin cậy.
+Prediction cho cảm giác nhanh, request id cho khả năng theo dõi, còn authority giữ một sự thật. Server/host authoritative cho gameplay state. Client đọc input, dựng prediction và gửi intent envelope; server trả accepted/rejected/result. Client không được gửi “new HP=0” hay “inventory quantity=99” như mutation đã đáng tin.
 
 Replicate stable id, definition id và delta state tới connection liên quan. Actor transform/animation có thể dùng frequency khác với inventory transaction hoặc work completion. OnRep chỉ báo presentation/observer; không được dùng OnRep trên client để ghi ngược gameplay state.
 
@@ -134,7 +134,7 @@ Guild/permission schema là thiết kế Paldark: guild có stable id, member id
 
 ## 34.7 — Log, console command, và cách biết là chạy đúng
 
-Dùng `LogPaldarkNet`. Mỗi intent log connection, requester, request id, target entity, routed owner, authority, result và relevancy decision. Dùng cùng `corr` với log feature mutation.
+Khi hai client bất đồng, log phải cho biết intent đã đến owner nào và client nào đáng lẽ nhận result. `LogPaldarkNet` ghi connection, requester, request id, target entity, routed owner, authority, result và relevancy decision cho mỗi intent, đồng thời dùng cùng `corr` với log feature mutation.
 
 Command:
 
@@ -144,7 +144,7 @@ Command:
 - `Paldark.Net.QA.SetRelevancy`
 - `Paldark.Net.QA.DumpConnections`
 
-Test hai client: A gửi build/attack/transfer intent, B chỉ nhận khi relevant; gửi cùng request id hai lần và kiểm idempotent result; disconnect/reconnect rồi kiểm stable id và authoritative state; thử member không có permission và kiểm request bị reject trước mutation. Đúng là client prediction không tạo sự thật thứ hai.
+Test cần ít nhất hai client để relevancy có ý nghĩa: A gửi build/attack/transfer intent, B chỉ nhận khi relevant; lặp request id để kiểm idempotency; disconnect/reconnect rồi đối chiếu stable id cùng authoritative state; thử member thiếu permission để request bị reject trước mutation. Pass nghĩa là prediction không tạo ra sự thật thứ hai.
 
 ---
 
@@ -152,7 +152,7 @@ Test hai client: A gửi build/attack/transfer intent, B chỉ nhận khi releva
 
 ## 34.8 — Trạng thái triển khai và giới hạn bằng chứng
 
-Native feature hiện có `Multiplayer` với `UMultiplayerSessionSubsystem` và
+Contract trên đã được thu hẹp thành một slice đo được bằng hai client. Native feature hiện có `Multiplayer` với `UMultiplayerSessionSubsystem` và
 replicated view actor dùng `FPaldarkEntityId`. Net chỉ nhận `Channel` và
 bytes qua intent bus; nó không include hoặc biết implementation của
 Inventory, Combat, Work, Build, World, Dungeon, Creature hay Health. Gameplay
@@ -205,3 +205,5 @@ segfault; đã cô lập rằng root `PlayerPresentation` và path con
 `PalworldAsset/Character/Player` cook được. Evidence trên dùng package
 manifest-driven với root `PlayerPresentation` tạm thời thu hẹp, không giả
 nhận là đã giải quyết lỗi asset root rộng.
+
+Khi nhiều người đã có thể chia sẻ cùng state, các vòng dài hạn mới đáng xây: nuôi thế hệ kế tiếp, dùng bản sao dư thừa, mua bán và quản lý scarcity. Chương 35 khép Quyển 4 bằng ba miền liên quan chặt trong trải nghiệm nhưng vẫn phải giữ ba owner độc lập.

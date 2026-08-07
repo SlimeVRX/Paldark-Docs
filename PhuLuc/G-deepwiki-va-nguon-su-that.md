@@ -1,8 +1,12 @@
 # Phụ lục G — DeepWiki là lớp trình bày, không phải nguồn sự thật
 
-File `Documents/DeepWiki/Wiki-—-SlimeVRX-Soliz-Devin-PaldarkKit.md` là bản tổng hợp sinh từ snapshot GitHub `638298d1`. Cấu trúc của nó hữu ích cho cách trình bày web: overview → topology → child pages → system pages → diagrams → relevant source files. Nội dung của nó **không còn là baseline kiến trúc hiện tại**.
+DeepWiki trông giống một cuốn wiki hoàn chỉnh: có overview, topology, trang con, sơ đồ và đường về source. Chính vẻ hoàn chỉnh ấy dễ làm người đọc quên rằng mọi trang được sinh ra từ một snapshot và snapshot thì tiếp tục già đi sau mỗi commit.
+
+File `Documents/DeepWiki/Wiki-—-SlimeVRX-Soliz-Devin-PaldarkKit.md` được tổng hợp từ snapshot GitHub `638298d1`. Cấu trúc overview → topology → child pages → system pages → diagrams → relevant source files vẫn là tham chiếu tốt cho cách trình bày web. Nội dung của nó, tuy vậy, **không còn là baseline kiến trúc hiện tại**.
 
 ## G.1 — Các claim đã lỗi thời hoặc cần hạ độ tin cậy
+
+Các dòng dưới đây không nói bản render “sai từ đầu”. Chúng cho thấy điều gì đã thay đổi sau snapshot hoặc claim nào vốn được trình bày chắc hơn bằng chứng mà audit mới tìm thấy.
 
 | Claim trong bản render | Kết quả audit mới |
 |---|---|
@@ -20,11 +24,11 @@ File `Documents/DeepWiki/Wiki-—-SlimeVRX-Soliz-Devin-PaldarkKit.md` là bản 
 4. Course/KYWorld/reference với nhãn nguồn.
 5. DeepWiki/rendered page.
 
-Khi render mâu thuẫn code hoặc ADR, sửa source document/evidence trước rồi regenerate. Không hand-edit một claim chỉ trong file DeepWiki vì lần sinh sau sẽ ghi đè và các agent khác vẫn đọc source cũ.
+Khi bản render mâu thuẫn với code hoặc ADR, đường sửa phải đi ngược về source document và evidence rồi mới regenerate. Hand-edit một claim chỉ trong DeepWiki tạo ra hai sự thật: người đọc thấy bản mới, còn agent vẫn đọc nguồn cũ; lần sinh kế tiếp sẽ lại ghi đè phần sửa tay.
 
 ## G.3 — Cấu trúc page chuẩn khi regenerate
 
-Mỗi page nên có:
+Một trang được sinh lại nên đưa người đọc đi từ câu hỏi tới bằng chứng theo cùng một thứ tự:
 
 1. **Question/Player value** — trang này trả lời gì?
 2. **Current evidence status** — snapshot, E/V/P, confidence.
@@ -36,11 +40,11 @@ Mỗi page nên có:
 8. **Open questions** — input/output cụ thể.
 9. **Related pages** — prerequisite, consumer, owner.
 
-Overview không được tuyên bố “done” từ số plugin, số file hoặc log. Nó phải đọc dashboard ba chiều Engineering/Playable/Parity và evidence chain bảy trạng thái.
+Overview vì thế không được suy chữ “done” từ số plugin, số file hay một dòng log xanh. Nó phải đọc đồng thời ba chiều Engineering, Playable và Parity, rồi đặt feature lên evidence chain bảy trạng thái. Cấu trúc đẹp chỉ có giá trị khi nó không làm mờ độ chắc của claim.
 
 ## G.4 — Điều kiện regenerate
 
-Regenerate DeepWiki sau khi:
+Một lần regenerate chỉ đáng làm khi nguồn phía dưới đã ổn định đủ để bản render không lập tức lỗi thời. Các gate tối thiểu là:
 
 - ADR-001 được approve/reject và source docs cập nhật;
 - Chương 36–42 được commit;
@@ -48,4 +52,4 @@ Regenerate DeepWiki sau khi:
 - snapshot commit mới được ghi vào header;
 - claim runtime không vượt quá human evidence.
 
-Tới lúc đó, file hiện tại chỉ là **reference về layout**, không phải tài liệu ra quyết định.
+Cho tới khi các gate ấy khép, file hiện tại chỉ là **tham chiếu về layout**, không phải tài liệu dùng để ra quyết định. DeepWiki là cửa sổ nhìn vào nguồn sự thật; nó không thay thế căn phòng phía sau cửa sổ.

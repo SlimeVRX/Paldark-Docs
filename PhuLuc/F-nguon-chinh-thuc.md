@@ -1,6 +1,8 @@
 # Phụ lục F — Nguồn Unreal/Lyra/UEFN chính thức và quyết định Paldark được phép suy ra
 
-Phụ lục này tách **điều Epic công bố** khỏi **quyết định Paldark suy ra**. Một URL chính thức không biến thiết kế Paldark thành fact; nó chỉ cho biết engine/framework được thiết kế để giải bài toán nào.
+Khi một quyết định kiến trúc đứng cạnh liên kết tài liệu Epic, người đọc có thể vô thức gộp hai câu thành một: “Epic hỗ trợ cơ chế này, vậy Paldark buộc phải thiết kế như thế”. Thực ra giữa chúng luôn có một bước suy luận.
+
+Phụ lục này làm bước suy luận ấy hiện ra. Cột giữa ghi **điều Epic thực sự công bố**; cột cuối ghi **quyết định Paldark được phép rút ra** trong bối cảnh của mình. Một URL chính thức cho biết engine hoặc framework được thiết kế để giải bài toán nào, nhưng không tự biến lựa chọn của Paldark thành fact.
 
 | Nguồn chính thức | Điều nguồn hỗ trợ | Quyết định Paldark suy ra |
 |---|---|---|
@@ -17,11 +19,15 @@ Phụ lục này tách **điều Epic công bố** khỏi **quyết định Pald
 
 ## F.1 — Ba điều tài liệu chính thức không chứng minh
 
+Tài liệu chính thức là nguồn mạnh cho cơ chế engine, nhưng sức mạnh đó có biên. Ba giới hạn sau ngăn ta dùng uy tín của nguồn để che một khoảng trống trong lập luận:
+
 1. Lyra không chứng minh plugin-per-system hiện tại của PaldarkKit là đúng. ShooterCore cho thấy một feature có thể gom một vertical capability lớn.
 2. GAS không tự giải transaction capture, inventory hay persistence. Nó giải ability/effect/attribute lifecycle.
 3. Game Features không tự giải multi-agent collaboration. Write-set, API approval, schema version và evidence gate vẫn là quy tắc Paldark phải tự định nghĩa.
 
 ## F.2 — Thứ tự ưu tiên nguồn khi có xung đột
+
+Nếu hai nguồn kể hai câu chuyện khác nhau, ta không chọn câu nghe quen hơn. Paldark ưu tiên nguồn theo khoảng cách của nó tới behavior đang cần chứng minh:
 
 1. Behavior thực tế đã quan sát từ phiên bản Palworld mục tiêu.
 2. Unreal/Lyra source hoặc tài liệu chính thức cho cơ chế engine.
@@ -30,4 +36,4 @@ Phụ lục này tách **điều Epic công bố** khỏi **quyết định Pald
 5. Course document/Knowledge.
 6. Suy luận thiết kế Paldark.
 
-Nếu cấp 1–3 chưa đủ, claim phải để `UNKNOWN` hoặc `INFERRED`; không bù khoảng trống bằng một câu chắc chắn hơn bằng chứng.
+Nếu ba cấp đầu chưa đủ, claim phải ở lại dưới nhãn `UNKNOWN` hoặc `INFERRED`. Một khoảng trống được ghi đúng tên vẫn hữu ích cho thiết kế; một câu chắc chắn hơn bằng chứng chỉ khiến lần kiểm toán sau khó tìm ra nơi sai bắt đầu.

@@ -4,7 +4,7 @@
 
 ## Câu hỏi
 
-Bài 00 nói Pal phải tự quyết định. Nhưng quyết định *cái gì*? Nếu không chốt được tập quyết định hữu hạn, máy trạng thái sẽ phình ra theo từng tình huống mới và trở thành một chuỗi `if` không ai đọc nổi.
+Bài 00 kết luận Pal phải có ý định của riêng nó. Nhưng ý định ấy gồm những quyết định nào? Nếu không chốt được một tập hữu hạn từ điều người chơi có thể phân biệt, máy trạng thái sẽ phình ra theo từng tình huống mới và cuối cùng chỉ còn là chuỗi `if` không ai dám sửa.
 
 ## Cách tìm trạng thái: hỏi ngược từ điều người chơi nhìn thấy
 

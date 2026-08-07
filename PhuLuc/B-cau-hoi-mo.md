@@ -1,6 +1,8 @@
 # Phụ lục B — Câu hỏi mở và giả định cần xác nhận
 
-Mỗi mục ghi rõ điều cần làm rõ, input mong đợi và quyết định mà câu trả lời sẽ mở khóa.
+Một kiến trúc đáng tin không chỉ biết mình đã quyết định gì; nó còn biết nơi nào chưa đủ dữ liệu để quyết định. Nếu bỏ quên phần thứ hai, giả định sẽ âm thầm đi vào code rồi trở thành thứ khó gỡ nhất.
+
+Bảng dưới đây giữ các khoảng trống ấy ở trạng thái nhìn thấy được. Mỗi dòng nêu điều cần làm rõ, loại input có thể biến câu hỏi thành bằng chứng và quyết định sẽ được mở khóa sau khi có câu trả lời. Cho tới lúc đó, câu hỏi vẫn là câu hỏi — không phải giấy phép để agent tự điền đáp án thuận tiện nhất.
 
 | # | Cần làm rõ | Input mong đợi từ người dùng | Dùng để quyết định |
 |---:|---|---|---|
@@ -44,14 +46,8 @@ Mỗi mục ghi rõ điều cần làm rõ, input mong đợi và quyết địn
 | 38 | Behavior baseline của capture/work/build/dungeon/breeding là gì? | Video có input, timestamp, success/failure và state trước/sau từ phiên bản mục tiêu. | Viết state machine, human test card và parity acceptance có nguồn. |
 | 39 | Vertical spine ưu tiên kết thúc ở roster/summon hay đi tiếp tới work output trong sprint đầu? | Chọn milestone human-visible tối thiểu; đề xuất đi tới Work nếu thời gian còn, nhưng không mở Work trước khi Capture khép. | Cắt scope PR và phân bổ countdown mà không tạo đoạn dang dở. |
 
-Mục license asset Palworld đã được đóng đúng phạm vi người dùng xác nhận:
-chỉ học tập cá nhân, phi thương mại. Quyết định này không cấp phép, không
-mở rộng sang phân phối thương mại, sản phẩm thương mại hoặc cung cấp asset cho
-bên thứ ba.
+Một câu hỏi đã được đóng cần để lại phạm vi của câu trả lời. Với asset Palworld, phạm vi người dùng xác nhận là **học tập cá nhân, phi thương mại**. Xác nhận này không phải giấy phép mới và không mở rộng sang phân phối, sản phẩm thương mại hay cung cấp asset cho bên thứ ba.
 
-Các mục trên là câu hỏi, không phải tuyên bố thiếu sót của implementation.
-Mục composition native đã được đóng bằng quyết định chuyển sang Game Features +
-ModularGameplay; câu hỏi còn lại là cách đặt content và cách sinh/kiểm artifact
-`.uasset`. Riêng mục 31 được mở ra bởi Movement vertical slice: đường JSON
-feature-owned đã chạy, nhưng chưa phải Data Registry đầy đủ. Khi có câu trả lời,
-cập nhật catalog và contract thay vì sửa ngầm từng feature.
+Các dòng còn lại cũng không phải bản cáo trạng về implementation. Chúng là ranh giới giữa điều đã biết và điều chưa thể kết luận. Chẳng hạn, composition native đã được chốt theo hướng Game Features + ModularGameplay; phần còn mở là vị trí content và cách sinh, kiểm artifact `.uasset`. Mục 31 xuất hiện từ Movement vertical slice: đường JSON do feature sở hữu đã chạy, nhưng vẫn chưa phải một Data Registry đầy đủ.
+
+Khi câu trả lời mới đến, hãy cập nhật catalog và contract ở nơi sở hữu quyết định. Sửa ngầm từng feature có thể làm một bài test xanh hôm nay, nhưng sẽ biến cùng một câu hỏi thành nhiều đáp án vào ngày mai.

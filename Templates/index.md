@@ -5,11 +5,13 @@ description: Task packet và human test card dùng để giao việc, giới h�
 
 # Mẫu làm việc máy đọc được
 
-Hai mẫu YAML dưới đây biến giao việc và kiểm thử thành hợp đồng có cấu trúc. Chúng được dùng cùng [Chương 40 — Giao thức VibeCoding đa tác nhân](../Q6-Kien-Truc-VibeCoding/40-giao-thuc-vibecoding-da-agent.md) và [Chương 43 — Human gate](../Q6-Kien-Truc-VibeCoding/43-human-gate-adr-001-capture-to-work.md).
+Hãy hình dung hai agent cùng nhận một câu ngắn: “làm xong hệ bắt giữ”. Một agent sửa state, agent kia sửa UI, cả hai đều báo hoàn tất — rồi tới lúc ghép mới phát hiện họ hiểu chữ “xong” theo hai nghĩa khác nhau. Vấn đề không nằm ở tốc độ viết code; nó nằm ở hợp đồng bàn giao chưa đủ rõ để máy và người cùng đọc một cách.
+
+Hai mẫu YAML dưới đây biến phần hợp đồng đó thành dữ liệu có cấu trúc. Chúng được dùng cùng [Chương 40 — Giao thức VibeCoding đa tác nhân](../Q6-Kien-Truc-VibeCoding/40-giao-thuc-vibecoding-da-agent.md) và [Chương 43 — Human gate](../Q6-Kien-Truc-VibeCoding/43-human-gate-adr-001-capture-to-work.md).
 
 ## Task packet v1
 
-Task packet mô tả outcome, write-set, read-set, dependency, gate và bằng chứng mà một agent phải bàn giao.
+Task packet không kể agent phải gõ từng dòng code nào. Nó khóa điều quan trọng hơn: outcome cần tạo ra, vùng được phép ghi, vùng chỉ được đọc, dependency phải chờ, gate phải vượt qua và bằng chứng phải bàn giao. Nhờ đó, một nhiệm vụ có ranh giới trước khi công việc bắt đầu.
 
 <<< @/Templates/task-packet.yaml{yaml}
 
@@ -17,7 +19,7 @@ Task packet mô tả outcome, write-set, read-set, dependency, gate và bằng c
 
 ## Human test card v1
 
-Human test card chỉ dẫn một người chơi thật cách kiểm tra outcome quan sát được mà không cần hiểu code hay đọc log nội bộ.
+Nếu task packet giúp agent biết phải bàn giao gì, human test card giúp một người chơi thật biết phải nhìn vào đâu. Tấm thẻ mô tả đường kiểm tra outcome quan sát được mà không yêu cầu người thử hiểu code hay giải nghĩa log nội bộ; nó là cây cầu từ chữ `COMPILED` tới điều thực sự xảy ra trên màn hình.
 
 <<< @/Templates/human-test-card.yaml{yaml}
 

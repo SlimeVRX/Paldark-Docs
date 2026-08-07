@@ -1,6 +1,8 @@
 # Phụ lục C — Trạng thái submodule
 
-Đầu ra thực tế của `git submodule status` tại thời điểm dựng phụ lục:
+Một tài liệu có thể dẫn đúng tên khóa học nhưng vẫn đọc nhầm source nếu submodule đã trôi sang commit khác. Vì vậy phụ lục ngắn này đóng băng điểm tham chiếu vật lý mà quá trình khảo sát đã thực sự nhìn thấy.
+
+Dưới đây là đầu ra nguyên trạng của `git submodule status` tại thời điểm dựng phụ lục:
 
 ```text
 a6eab166bedeb3a48ea1fa6c082e2560e59b8134 02.Palworld/Source (heads/main)
@@ -14,4 +16,4 @@ f170c1986c3bee89f50b4dfc68957d6e2a94cb5a 13.Udemy-ue5-multiplayer-in-unreal-with
 7b390ac14a3a2d6729f7405a8367e6a2c6e5b4 17.Hipernova-Lyra-Inventory/Source (heads/main)
 ```
 
-Không thay đổi hoặc commit nội dung bên trong các submodule; phụ lục chỉ ghi nhận trạng thái tham chiếu.
+Quá trình biên soạn không thay đổi hay commit nội dung bên trong bất kỳ submodule nào. Các hash trên chỉ giúp người kiểm toán quay lại đúng snapshot; chúng không tự chứng minh source đã được tích hợp, build hoặc chạy trong Paldark.

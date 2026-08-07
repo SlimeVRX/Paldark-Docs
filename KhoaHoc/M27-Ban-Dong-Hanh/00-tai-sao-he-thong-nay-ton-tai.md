@@ -4,11 +4,11 @@
 
 ## Câu hỏi
 
-Người chơi vừa ném cầu, cầu rung ba lần rồi đứng yên. Dòng chữ "bắt được" hiện lên. Một bản ghi mới xuất hiện trong danh sách.
+Người chơi vừa ném cầu. Quả cầu rung ba lần rồi đứng yên; dòng chữ “bắt được” hiện lên và một bản ghi mới xuất hiện trong danh sách.
 
 Và rồi… không có gì cả. Nhân vật vẫn đứng một mình giữa rừng.
 
-Người chơi vừa *thắng* một cuộc chiến, nhưng chưa *có* gì. Vì sao?
+Về dữ liệu, giao dịch đã thành công. Về trải nghiệm, người chơi vừa *thắng* một cuộc chiến mà vẫn chưa *có* gì. Khoảng trống nằm ở đâu?
 
 ## Thứ người chơi thật sự muốn
 

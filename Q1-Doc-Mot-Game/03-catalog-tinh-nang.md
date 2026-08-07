@@ -1,12 +1,12 @@
 # Chương 3 — Catalog tính năng
 
-Bạn không nên mở editor rồi hỏi “hôm nay code feature nào?”. Trước đó phải biết feature phục vụ cảm giác nào, nối vào vòng lặp ở đâu và có phải một hệ thống riêng hay chỉ là một biến thể của thứ đã có. Catalog này là bản kiểm kê để trả lời ba câu hỏi đó.
+Sau Chương 2, ta đã có một vòng lặp nghe hợp lý. Nhưng một vòng lặp chưa đủ để giao việc: mở editor lên và hỏi “hôm nay code feature nào?” vẫn là quá sớm. Trước đó phải biết feature ấy phục vụ cảm giác nào, nối vào vòng lặp ở đâu, và nó thật sự cần một hệ thống riêng hay chỉ là biến thể của thứ đã có. Catalog này là bản kiểm kê để trả lời ba câu hỏi đó.
 
-Mã `F-xxx` là ID làm việc của tài liệu, không phải ID trong Palworld gốc. “Linh hồn của game” nghĩa là bỏ nó thì vòng lặp cốt lõi đổi bản chất; “cần thiết” nghĩa là cần cho một vertical slice có thể chơi; “có thì tốt” mở rộng chiều sâu; “bỏ được” chỉ nên làm sau khi lõi đã đứng.
+Mã `F-xxx` là ID làm việc của tài liệu, không phải ID trong Palworld gốc. Cột mức độ cũng không phải điểm chất lượng. “Linh hồn của game” nghĩa là bỏ nó thì vòng lặp cốt lõi đổi bản chất; “cần thiết” nghĩa là cần cho một vertical slice có thể chơi; “có thì tốt” mở rộng chiều sâu; “bỏ được” chỉ nên làm sau khi lõi đã đứng. Đọc theo cách đó, bảng dài phía dưới trở thành một bản đồ ưu tiên thay vì một danh sách phải hoàn thành bằng mọi giá.
 
 ## Di chuyển và khám phá
 
-Người chơi cần một cơ thể có thể đi qua thế giới trước khi collection, combat hay building có ý nghĩa. Nhóm này tồn tại để tạo nhịp “thấy một nơi xa thì muốn tới đó”, chứ không phải để khoe đủ loại locomotion.
+Mọi chuyến đi bắt đầu trước cả encounter: người chơi phải tin rằng cơ thể của mình có thể tới được nơi đang nhìn thấy. Vì thế, di chuyển đứng đầu catalog không phải do nó đặc sắc nhất, mà vì collection, combat hay building đều vô nghĩa nếu thế giới không thể tiếp cận. Nhóm này phục vụ nhịp “thấy một nơi xa thì muốn tới đó”, chứ không nhằm khoe đủ loại locomotion.
 
 Đi bộ, nhảy và sprint là lõi của vertical slice. Leo, bơi và glide mở thêm loại địa hình; cưỡi là điểm nối sang companion. Movement runtime cụ thể của Palworld chưa đủ source trong dossier, nên các dòng không có declaration sẽ được đánh dấu ngắn là INFERRED.
 
@@ -22,7 +22,7 @@ Người chơi cần một cơ thể có thể đi qua thế giới trước khi
 
 ## Sinh vật và encounter
 
-Encounter là đầu vào của collection. Người chơi phải gặp một thứ có identity trước khi có thể muốn bắt, đánh, nuôi hoặc đưa nó về base.
+Khi việc đi lại đã có ý nghĩa, thế giới phải trả lời bằng một cuộc gặp. Encounter là đầu vào của collection: người chơi phải gặp một thứ có identity trước khi có thể muốn bắt, đánh, nuôi hoặc đưa nó về base.
 
 Các field như stat, element, passive, level và nocturnal làm cho hai encounter không chỉ khác model. Những mục còn lại là cách đưa data row vào thế giới; exact AI state và spawn lifecycle chưa được xác minh đầy đủ.
 
@@ -38,7 +38,7 @@ Các field như stat, element, passive, level và nocturnal làm cho hai encount
 
 ## Bắt và sở hữu
 
-Capture là bản lề biến một mối đe dọa ngoài thế giới thành tài sản của người chơi. Nó nối combat với roster, worker, partner và breeding.
+Gặp một sinh vật mới chỉ tạo ra tò mò; capture mới biến tò mò thành sở hữu. Đây là bản lề đổi một mối đe dọa ngoài thế giới thành tài sản của người chơi, đồng thời nối combat với roster, worker, partner và breeding.
 
 Tỉ lệ bắt, HP mục tiêu và loại sphere là các núm có evidence trong tài liệu. Roster/instance persistence là yêu cầu clean-room hợp lý, nhưng không được nhầm với bằng chứng về save runtime Palworld gốc.
 
@@ -54,7 +54,7 @@ Tỉ lệ bắt, HP mục tiêu và loại sphere là các núm có evidence tro
 
 ## Chiến đấu
 
-Combat giữ cho chuyến đi có rủi ro. Nó cho người chơi lý do phải chuẩn bị weapon, Pal, food và resistance trước khi rời căn cứ.
+Chiếc bản lề ấy chỉ có sức nặng nếu chuyến đi thật sự mang rủi ro. Combat tạo ra cái giá phải trả, khiến người chơi có lý do chuẩn bị weapon, Pal, food và resistance trước khi rời căn cứ.
 
 Damage theo element, weapon taxonomy và skill table có evidence; lock-on, dodge timing và hit reaction là các hành vi cần vertical slice nhưng runtime detail chưa có đủ trong dossier.
 
@@ -70,7 +70,7 @@ Damage theo element, weapon taxonomy và skill table có evidence; lock-on, dodg
 
 ## Đồng hành và cưỡi
 
-Sau capture, Pal phải tiếp tục sống trong quyết định của người chơi. Party và partner biến collection thành thứ được gọi ra, trang bị và sử dụng trong một tình huống cụ thể.
+Nếu capture là điểm kết, collection sẽ nhanh chóng biến thành một album. Sau capture, Pal phải tiếp tục sống trong quyết định của người chơi. Party và partner làm điều đó bằng cách biến thứ đã sở hữu thành thứ có thể gọi ra, trang bị và sử dụng trong một tình huống cụ thể.
 
 MountType có bốn giá trị và partner row có buff/work fields. Party slot, summon lifecycle và quyền điều khiển chưa có số runtime chắc chắn; các mục đó là INFERRED clean-room.
 
@@ -86,7 +86,7 @@ MountType có bốn giá trị và partner row có buff/work fields. Party slot,
 
 ## Vật phẩm và inventory
 
-Inventory là nơi encounter, loot, craft, shop và equipment gặp nhau. Nếu item chỉ là một tên trong array, những hệ thống phía sau sẽ không có state chung để phối hợp.
+Từ chuyến đi, người chơi mang về nhiều hơn Pal: họ còn mang resource, loot và equipment. Inventory là nơi encounter, loot, craft, shop và equipment gặp nhau. Nếu item chỉ là một cái tên trong array, những hệ thống phía sau sẽ không có state chung để phối hợp.
 
 Definition/instance, stack, weight và item taxonomy là các contract được tài liệu KYWorld/whitepaper mô tả. Durability, sorting và discard là feature mở rộng; chỉ ghi evidence khi có field/bảng cụ thể.
 
@@ -102,7 +102,7 @@ Definition/instance, stack, weight và item taxonomy là các contract được 
 
 ## Chế tạo
 
-Crafting biến resource thành hướng đi. Nó không chỉ trả một output; nó đặt ra câu hỏi người chơi đang thiếu gì, cần station nào và nên dành nguyên liệu cho việc nào.
+Một túi đồ đầy chưa phải tiến bộ; resource phải đổi được thành một hướng đi. Crafting thực hiện phép đổi đó. Nó không chỉ trả một output, mà còn buộc người chơi hỏi mình đang thiếu gì, cần station nào và nên dành nguyên liệu cho việc nào.
 
 Recipe/material/required station là các khái niệm có trong DataTable analysis. Queue, cancel và rollback là yêu cầu giao dịch clean-room; source Palworld hiện chưa đưa runtime contract đủ chi tiết.
 
@@ -118,7 +118,7 @@ Recipe/material/required station là các khái niệm có trong DataTable analy
 
 ## Nấu ăn và tiêu hao
 
-Nấu ăn tạo một khoảng chuẩn bị trước chuyến đi và làm food trở thành lựa chọn thay vì vật phẩm hồi máu đơn giản. Nhóm này nối inventory với attribute và nhịp thời gian.
+Không phải mọi phép biến đổi resource đều có nhịp giống nhau. Nấu ăn tạo một khoảng chuẩn bị trước chuyến đi và làm food trở thành lựa chọn thay vì một vật phẩm hồi máu đơn giản. Nhóm này nối inventory với attribute và với nhịp thời gian.
 
 Các recipe/item/effect cụ thể chưa được trích đầy đủ trong dossier, nên chỉ những dòng bám vào item/effect contract mới có reference; runtime cook timer và failure state là INFERRED.
 
@@ -134,7 +134,7 @@ Các recipe/item/effect cụ thể chưa được trích đầy đủ trong doss
 
 ## Xây dựng
 
-Building biến progression thành một thứ nhìn thấy được trong không gian. Người chơi không chỉ mở một recipe; họ chọn vị trí, hình dạng và cách căn cứ sẽ vận hành.
+Crafting cho người chơi đồ vật; building cho họ một nơi chốn. Nó biến progression thành thứ nhìn thấy được trong không gian: người chơi không chỉ mở một recipe, mà còn chọn vị trí, hình dạng và cách căn cứ sẽ vận hành.
 
 BuildObject tables có cost, HP, work type, capacity và grid-related data được phân tích. Preview/validate/commit là mô hình clean-room; exact snap distance và collision rule chưa có evidence.
 
@@ -150,7 +150,7 @@ BuildObject tables có cost, HP, work type, capacity và grid-related data đư�
 
 ## Thợ và tự động hóa
 
-Automation là lý do Pal có giá trị sau khi capture. Một con Pal có thể biến thành output của căn cứ, nhưng chỉ khi hệ thống biết năng lực nào phù hợp với station nào.
+Một căn cứ chỉ có hình dạng vẫn chưa thành vòng lặp Palworld. Automation là lý do Pal tiếp tục có giá trị sau capture. Một con Pal chỉ có thể biến thành output của căn cứ khi hệ thống biết năng lực nào phù hợp với station nào.
 
 13 loại work suitability là declaration thật; các field `WorkSuitability_*` được extracted. Scheduler priority, queue fairness và offline simulation chưa được xác minh, nên không giả vờ ghi chúng là Palworld fact.
 
@@ -166,7 +166,7 @@ Automation là lý do Pal có giá trị sau khi capture. Một con Pal có th�
 
 ## Nhu cầu và năng suất
 
-Căn cứ chỉ đáng quản lý nếu có lúc nó hoạt động tốt và có lúc nó trục trặc. Hunger, sanity và output tạo ra feedback để người chơi chăm worker thay vì bỏ mặc một dây chuyền tự chạy.
+Đến đây xuất hiện câu hỏi đã gặp từ Chương 1: điều gì xảy ra khi cỗ máy không chạy hoàn hảo? Căn cứ chỉ đáng quản lý nếu có lúc hoạt động tốt và có lúc trục trặc. Hunger, sanity và output tạo feedback để người chơi chăm worker thay vì bỏ mặc một dây chuyền tự chạy.
 
 Tài liệu design có các núm WorkOutput và nguyên tắc tuning, nhưng full hunger/sanity runtime chưa nằm trong evidence register. Các dòng về nhu cầu được ghi INFERRED nơi cần.
 
@@ -182,7 +182,7 @@ Tài liệu design có các núm WorkOutput và nguyên tắc tuning, nhưng ful
 
 ## Tiến trình người chơi
 
-Progression biến những hành động lặp lại thành cảm giác đang đi đâu đó. Nó cần phản hồi sớm để người mới hiểu game, nhưng cũng phải để khoảng trống cho mục tiêu dài.
+Khi những vòng đi–bắt–sản xuất bắt đầu lặp lại, progression phải trả lời câu hỏi “mình đang đi tới đâu?”. Nó cần phản hồi sớm để người mới hiểu game, đồng thời phải chừa khoảng trống cho mục tiêu dài.
 
 Player level, EXP ratio, curve principle và status point là các phần được tài liệu progression nhắc tới. Giá trị XP cụ thể và save owner chưa được xác minh đầy đủ.
 
@@ -198,7 +198,7 @@ Player level, EXP ratio, curve principle và status point là các phần đư�
 
 ## Technology và mở khóa
 
-Technology tree là bản đồ lựa chọn. Nó nối resource và level với recipe, structure, equipment và station, nên UI chỉ là phần trình bày của một graph data.
+Level cho biết người chơi đã đi được bao xa; technology tree cho họ chọn hướng đi tiếp. Nó nối resource và level với recipe, structure, equipment và station, nên UI chỉ là phần trình bày của một graph data.
 
 150+ technology nodes và tier cost 1→10 là số reference. Prerequisite schema chi tiết và unlock persistence là yêu cầu tái tạo, không nên trình bày như declaration gốc nếu chưa có.
 
@@ -214,7 +214,7 @@ Technology tree là bản đồ lựa chọn. Nó nối resource và level với
 
 ## Thế giới và spawn
 
-Spawn tạo nhịp cho exploration: cùng một khu vực có thể khác đi theo giờ, thời tiết, level range và mật độ. Không có spawn variation, map nhanh chóng thành danh sách cố định.
+Progression chỉ kéo người chơi trở lại thế giới nếu thế giới còn điều mới để trả lời. Spawn tạo nhịp cho exploration: cùng một khu vực có thể khác đi theo giờ, thời tiết, level range và mật độ. Không có spawn variation, map nhanh chóng biến thành một danh sách cố định.
 
 Spawner header có nhóm Pal/NPC, level/number ranges, Weight, OnlyTime, OnlyWeather, SpawnerType và randomizer flag. Respawn timer cụ thể chưa có evidence.
 
@@ -230,7 +230,7 @@ Spawner header có nhóm Pal/NPC, level/number ranges, Weight, OnlyTime, OnlyWea
 
 ## Hầm ngục và encounter lớn
 
-Dungeon gom exploration, combat và reward thành một chuyến có mục tiêu. Nó tồn tại để người chơi chuẩn bị rồi bước vào một không gian có nhịp khác overworld.
+Khi những encounter rời rạc cần được nâng thành một thử thách có mở đầu và kết thúc, dungeon gom exploration, combat và reward vào cùng một chuyến có mục tiêu. Người chơi chuẩn bị rồi bước vào một không gian có nhịp khác overworld.
 
 Evidence hiện có dungeon tier ranges và drop schema tám slot; exact room graph, boss runtime và reset rule chưa có. Các dòng không có declaration được ghi UNKNOWN hoặc INFERRED.
 
@@ -246,7 +246,7 @@ Evidence hiện có dungeon tier ranges và drop schema tám slot; exact room gr
 
 ## Kinh tế và cửa hàng
 
-Economy làm cho item có giá trị tương đối. Khi người chơi có thể đổi vật phẩm hoặc currency, họ phải cân nhắc giữ, dùng hay bán output của mình.
+Phần thưởng từ những chuyến đi cần một thước đo để so sánh. Economy cho item giá trị tương đối: khi có thể đổi vật phẩm hoặc currency, người chơi phải cân nhắc giữ, dùng hay bán output của mình.
 
 Item/economy tables và shop header family là nguồn chính. Offer rotation, stock limit và permission là feature cần thiết kế thêm, không có số gốc trong dossier.
 
@@ -262,7 +262,7 @@ Item/economy tables và shop header family là nguồn chính. Offer rotation, s
 
 ## Nhân giống và nâng cấp Pal
 
-Breeding cho collection một đường đầu tư dài hạn; condenser cho phép những bản sao dư thừa trở thành tiến bộ. Hai hệ thống này giữ cho việc bắt thêm Pal còn ý nghĩa sau khi roster đã đầy.
+Rồi sẽ đến lúc roster gần đầy và một encounter quen thuộc không còn hấp dẫn như trước. Breeding mở cho collection một đường đầu tư dài hạn; condenser cho phép những bản sao dư thừa trở thành tiến bộ. Nhờ đó, việc bắt thêm Pal vẫn còn ý nghĩa sau giai đoạn khám phá ban đầu.
 
 Combo key→child ID, BreedCombiRank 1–9, condenser rank 1–5, sacrifice 1→100+ và replicated breeding progress đều có evidence. Trait inheritance chi tiết chưa có full table.
 
@@ -278,7 +278,7 @@ Combo key→child ID, BreedCombiRank 1–9, condenser rank 1–5, sacrifice 1→
 
 ## Multiplayer và lưu trữ
 
-Co-op chỉ có giá trị khi thành quả của một người có thể trở thành input của người khác mà không làm hỏng state. Multiplayer và save vì vậy là nền bảo vệ cho mọi feature, không phải phần thêm sau cùng.
+Tất cả các dòng phía trên đều trở nên khó hơn khi có người chơi thứ hai hoặc một lần thoát game. Co-op chỉ có giá trị khi thành quả của một người có thể trở thành input của người khác mà không làm hỏng state. Multiplayer và save vì vậy là nền bảo vệ cho mọi feature, không phải phần trang trí thêm sau cùng.
 
 Replication declarations, `FPalInstanceID` và `FGuid` là evidence. Guild schema, permissions, save slots, migration và reconnect behavior vẫn UNKNOWN trong dossier.
 
@@ -294,9 +294,9 @@ Replication declarations, `FPalInstanceID` và `FGuid` là evidence. Guild schem
 
 ## Cách đọc catalog này
 
-Đừng biến 126 dòng thành 126 task độc lập. Một dòng thường là mặt ngoài của nhiều hệ thống: cưỡi cần movement, creature instance, partner data và camera; một item instance lại được loot, craft, equipment, shop và save dùng chung. Bước tiếp theo là gom các dòng có chung owner và chung mutation thành hệ thống `S-xxx`.
+Sau một catalog dài, cám dỗ lớn nhất là biến 126 dòng thành 126 task độc lập. Đừng làm vậy. Mỗi dòng thường chỉ là mặt ngoài của nhiều hệ thống: cưỡi cần movement, creature instance, partner data và camera; một item instance lại được loot, craft, equipment, shop và save dùng chung. Bước tiếp theo phải là gom những dòng có chung owner và chung mutation thành hệ thống `S-xxx`.
 
-Các số neo trong catalog đến từ evidence đã có: `DT_PalMonsterParameter` có 663+ entries; `EPalWorkSuitability` có 13 loại việc; drop schema có tám slot; technology có 150+ nodes; `DT_ItemDataTable` có 1984+ rows theo tài liệu phân tích; build objects 300+; player level 1–55+; Pal khoảng 50. Những con số này nói về source/data scope, không tự động nói rằng người chơi sẽ gặp đúng từng entry trong một lượt chơi.
+Các số neo trong catalog đến từ evidence đã có: `DT_PalMonsterParameter` có 663+ entries; `EPalWorkSuitability` có 13 loại việc; drop schema có tám slot; technology có 150+ nodes; `DT_ItemDataTable` có 1984+ rows theo tài liệu phân tích; build objects 300+; player level 1–55+; Pal khoảng 50. Chúng mô tả source/data scope, không tự động nói rằng người chơi sẽ gặp đúng từng entry trong một lượt chơi. Chương 4 sẽ bỏ cột “người chơi làm gì” sang một bên và hỏi sâu hơn: phía sau mỗi hành động ấy, trạng thái nào tồn tại, ai giữ nó và ai được phép thay đổi nó?
 
 ---
 

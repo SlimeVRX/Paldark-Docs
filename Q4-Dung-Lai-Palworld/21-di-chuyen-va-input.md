@@ -1,14 +1,14 @@
 # Chương 21 — Di chuyển và input
 
-Người chơi bấm phím, nhân vật phải đi ngay. Không cần một hệ thống di chuyển phức tạp mới tạo được cảm giác này; chỉ cần input bị trễ, hướng camera sai hoặc sprint đổi tốc độ không rõ ràng là thế giới lập tức có cảm giác nặng nề. Hệ thống này tồn tại để người chơi có một cơ thể đáng tin cậy: nhìn đâu đi đó, nhảy khi cần, và biết mình đang tiêu hao điều gì khi chạy.
+Bạn đẩy cần tiến, nhân vật bước lên; xoay camera, cơ thể đổi hướng; giữ sprint, khoảng đất trước mặt ngắn lại. Những phản hồi ấy diễn ra quá tự nhiên nên người chơi chỉ chú ý khi chúng sai. Một nhịp input trễ, camera lệch khỏi hướng di chuyển hoặc sprint đổi tốc độ mà không cho thấy cái giá phải trả là đủ khiến cả thế giới bỗng nặng và xa lạ.
 
-Đây là lát cắt đầu tiên của Quyển 4. Sau chương này, người chơi chưa có gì để nhặt hay đánh, nhưng đã có thể bước vào thế giới và kiểm tra cảm giác nền. Mọi hệ thống sau đều dựa vào vị trí, hướng nhìn và intent từ đây.
+Vì vậy lát cắt đầu tiên của Quyển 4 không bắt đầu bằng một tính năng hào nhoáng. Nó bắt đầu bằng một cơ thể đáng tin cậy: nhìn đâu đi đó, nhảy khi cần và biết mình đang tiêu hao điều gì khi chạy. Sau chương này chưa có vật để nhặt hay kẻ địch để đánh, nhưng người chơi đã có thể bước vào thế giới. Quan trọng hơn với các chương sau, ta đã có vị trí, hướng nhìn và intent làm điểm xuất phát chung.
 
 ## 21.1 — Vì sao hệ thống này tồn tại
 
-Di chuyển nối người chơi với địa hình. Đi bộ tạo nhịp thăm dò; nhảy làm vật cản thấp có ý nghĩa; sprint biến khoảng cách thành một quyết định; glide, bơi và mount mở các cách đọc khác nhau về cùng một bản đồ. Không phải tất cả đều phải có trong vertical slice đầu tiên. Điều phải có trước là input đi qua một boundary rõ ràng và movement state có một owner.
+Di chuyển là cách người chơi đọc địa hình bằng chính cơ thể mình. Đi bộ tạo nhịp thăm dò; nhảy khiến một bậc đá thấp trở thành câu hỏi; sprint đổi stamina lấy thời gian; glide, bơi và mount mở những cách khác nhau để đi qua cùng một bản đồ. Vertical slice đầu tiên chưa cần trả lời hết mọi cách đi. Nó cần chứng minh điều căn bản hơn: input đi qua một boundary rõ ràng và movement state có đúng một owner.
 
-Input cũng cần được tách khỏi logic di chuyển. Một phím có thể đổi sau này, một thiết bị có thể gửi intent khác, và một bot có thể điều khiển cùng movement interface. Nếu code di chuyển biết trực tiếp phím nào được bấm, mỗi thay đổi mapping lại kéo theo thay đổi gameplay.
+Ranh giới ấy quan trọng vì phím bấm chỉ là một trong nhiều cách phát sinh ý định. Người chơi có thể đổi binding, gamepad có thể gửi axis khác, và một bot vẫn phải dùng được cùng movement interface. Nếu logic di chuyển biết trực tiếp phím nào đang được bấm, thay một mapping sẽ kéo theo thay gameplay. Nếu nó nhận intent, thiết bị có thể đổi mà luật di chuyển vẫn đứng yên.
 
 ## 21.2 — Nó chạm những gì trong catalog
 
@@ -20,7 +20,7 @@ Input cũng cần được tách khỏi logic di chuyển. Một phím có thể
 - `F-006` — Lướt / glide.
 - `F-007` — Cưỡi.
 
-Catalog đánh dấu leo, bơi và glide là `INFERRED`, còn `MountType` và taxonomy `Glider` là evidence về hình dạng. Vì vậy chương này định nghĩa contract cho các mode đó nhưng không tự đặt tốc độ, stamina cost hay điều kiện unlock. Những giá trị đó phải nằm trong definition của feature hoặc feature companion tương ứng.
+Danh sách này trải từ bước chân đầu tiên tới mount, nhưng evidence không đồng đều. Catalog đánh dấu leo, bơi và glide là `INFERRED`, còn `MountType` và taxonomy `Glider` chỉ là evidence về hình dạng. Vì vậy ta có thể chuẩn bị contract cho các mode đó mà chưa được phép điền hộ tốc độ, stamina cost hay điều kiện unlock. Những giá trị ấy phải nằm trong definition của feature hoặc feature companion tương ứng.
 
 ## 21.3 — Trạng thái và chủ sở hữu
 
@@ -33,11 +33,11 @@ Catalog đánh dấu leo, bơi và glide là `INFERRED`, còn `MountType` và ta
 | Mount entity đang gắn | `Movement` không sở hữu Pal instance | companion/mount feature, server, relevant clients | interface lõi `Paldark.Core.Mount`; Movement phát `Paldark.Movement.Event.MountChanged` |
 | Input binding và action tag | `Input` | local player, input debug command | cấu hình input text/asset theo policy, không phải gameplay state |
 
-`Movement` không sở hữu identity của Pal cưỡi. Nó chỉ giữ mode và liên kết tạm thời tới stable instance id; feature companion là nơi quyết định Pal nào có mount capability. Đây là ranh giới để chương 21 không nuốt mất chương 27 sau này.
+Bảng trên tách hai thứ người chơi cảm thấy như một hành động duy nhất. Khi bấm cưỡi, Companion phải quyết định Pal có capability hay không; Movement chỉ nhận kết quả, giữ mode và liên kết tạm thời tới stable instance id. `Movement` không sở hữu identity của Pal cưỡi. Ranh giới này giữ chương 21 không nuốt mất chương 27 chỉ vì cả hai cùng tham gia vào một khoảnh khắc gameplay.
 
 ## 21.4 — Hợp đồng dữ liệu
 
-Loại mảnh của hệ thống là `Movement.Capable`, chứa các mode và tuning mà một definition có thể cung cấp. Một creature có `Movement.Capable` không có nghĩa là nó đang cưỡi hay đang bơi; đó là dữ liệu tĩnh. Trạng thái hiện tại thuộc thực thể và do Movement làm chủ.
+Khi ownership đã rõ, ta có thể tách “có khả năng làm gì” khỏi “đang làm gì”. Loại mảnh `Movement.Capable` chứa các mode và tuning mà một definition có thể cung cấp. Một creature có mảnh này không có nghĩa là nó đang cưỡi hay đang bơi; đó là dữ liệu tĩnh. Mode hiện tại là state của thực thể và do Movement làm chủ.
 
 ```cpp
 USTRUCT()
@@ -80,13 +80,13 @@ Movement không khai báo khối lưu `Paldark.Movement` cho vertical slice đ�
 
 ### Hợp đồng đã hiện thực trong Movement slice
 
-Ta từng tin rằng phần input của chương này có thể được mô tả bằng một definition/fragment trừu tượng rồi chờ Data Registry hoàn chỉnh cung cấp `InputProfileId`. Code thật của Movement cho thấy lát cắt đầu tiên cần một bước trung gian để chứng minh được đường đi end-to-end: component đọc file text feature-owned `Data/Movement.Input.json`, parse các action và mapping, rồi tạo `UInputAction` cùng `UInputMappingContext` lúc runtime. Input không nằm hard-code trong pawn và mapping có thể thay đổi bằng dữ liệu, nên đã thoát khỏi cách PaldarkV3 tạo input object không có nguồn dữ liệu rõ ràng.
+Đến đây contract nói điều ta muốn ổn định; code slice cho biết bước nào đã thật sự đi được. Ta từng tin rằng input có thể chờ Data Registry hoàn chỉnh cung cấp `InputProfileId`. Code thật của Movement cho thấy lát cắt đầu tiên cần một bước trung gian để chứng minh đường đi end-to-end: component đọc file text feature-owned `Data/Movement.Input.json`, parse các action và mapping, rồi tạo `UInputAction` cùng `UInputMappingContext` lúc runtime. Input không nằm hard-code trong pawn và mapping có thể thay đổi bằng dữ liệu, nên đã thoát khỏi cách PaldarkV3 tạo input object không có nguồn dữ liệu rõ ràng.
 
 Nhưng đây chưa phải Data Registry đầy đủ như Chương 14 mô tả. File input được load trực tiếp bởi `UMovementFeatureComponent`; nó chưa đi qua một registry definition/fragment có schema đóng băng, owner index và lifecycle nạp chung. Quyết định mới là coi đây là trạng thái trung gian có chủ ý của vertical slice: giữ JSON text và đường copy packaging để kiểm chứng kiến trúc trước, đồng thời không gọi nó là registry hoàn chỉnh. Câu hỏi có nên nâng input profile thành definition/fragment trong Data Registry đã được ghi ở Phụ lục B.
 
 ## 21.5 — Giao diện lập trình
 
-Component chính là `UMovementRuntimeComponent`, gắn vào lớp actor nền của player hoặc entity có movement. `UInputIntentComponent` chỉ chuyển input local thành intent; nó không được gọi thẳng setter state.
+Từ góc nhìn caller, toàn bộ đường đi ấy phải thu lại thành một giao diện nhỏ. `UMovementRuntimeComponent` gắn vào lớp actor nền của player hoặc entity có movement. `UInputIntentComponent` đứng ở mép local, chuyển input thành intent; nó không được đi vòng qua authority bằng cách gọi thẳng setter state.
 
 ```cpp
 USTRUCT()
@@ -139,7 +139,7 @@ Không có include từ Movement sang Inventory, Combat hay Companion. Nếu spr
 
 ## 21.6 — Quyền hạn và đồng bộ
 
-Client tự đọc input, đổi camera local và dự đoán presentation ngắn hạn. Server quyết định vị trí authoritative, mode hợp lệ, collision result, stamina mutation và quyền mount. Client không được gửi “vị trí mới”; client gửi intent.
+Hãy đặt đường chạy ấy vào multiplayer: client cần phản hồi ngay khi người chơi đẩy cần, nhưng không thể được quyền tuyên bố mình đã đứng ở đâu. Vì vậy client tự đọc input, đổi camera local và dự đoán presentation ngắn hạn. Server quyết định vị trí authoritative, mode hợp lệ, collision result, stamina mutation và quyền mount. Client không gửi “vị trí mới”; client gửi intent.
 
 Vị trí, vận tốc, mode và stamina cần replicate theo relevancy. Camera boom, blend animation, hiệu ứng bụi và âm thanh bước chân chỉ là hình ảnh local hoặc presentation đọc replicated state. Input binding không cần replicate; server nhận action intent đã được kiểm tra.
 
@@ -147,7 +147,7 @@ Leo, bơi và glide là vùng `UNKNOWN` về runtime Palworld cụ thể. Trong 
 
 ## 21.7 — Log, console command, và cách biết là chạy đúng
 
-Category của feature là `LogPaldarkMovement`, được khai báo trong `MovementLog.h` và define ở module Movement; không thêm vào `PaldarkCoreLog.h`. Mỗi accepted mode change và mỗi authority rejection phải có `PD|...` với `field=MovementMode`, `before`, `after`, `requester`, `target`, `reason` và `corr`.
+Người chơi chỉ cần thấy nhân vật chạy; chúng ta cần thấy cả con đường khiến nó chạy. Category của feature là `LogPaldarkMovement`, được khai báo trong `MovementLog.h` và define ở module Movement; không thêm vào `PaldarkCoreLog.h`. Mỗi accepted mode change và mỗi authority rejection phải có `PD|...` với `field=MovementMode`, `before`, `after`, `requester`, `target`, `reason` và `corr`.
 
 Command:
 
@@ -157,11 +157,11 @@ Command:
 - `-PaldarkMovementQA` — cờ packaged headless, chạy bộ kiểm chứng sau khi pawn được possess và component đã attach.
 - `Paldark.Input.ListBindings` — command đã có thật trong PaldarkLab, không phải command của Movement slice.
 
-Một phiên kiểm tối thiểu: setup player, dump status, trigger move trong một giây, trigger jump, trigger sprint, dump lại. Đúng nghĩa là client không tự đổi position, server có log accepted/rejected, mode đổi đúng, và camera/animation chỉ phản ứng sau snapshot hoặc prediction đã quy định.
+Một phiên kiểm tối thiểu kể lại đúng một chuỗi hành động: setup player, dump status, cho nhân vật đi trong một giây, nhảy, sprint rồi dump lại. “Đi được” chưa đủ. Đúng nghĩa là client không tự đổi position, server có log accepted/rejected, mode đổi đúng, và camera/animation chỉ phản ứng sau snapshot hoặc prediction đã quy định.
 
 ## 21.8 — Player setup đã đối chiếu với PaldarkV2
 
-PaldarkV2 là reference đã được package và debug thực tế. Các giá trị quan
+Contract ở trên cho biết ai được làm gì; reference PaldarkV2 giúp cơ thể đầu tiên không xuất hiện với framing và hình học tùy tiện. PaldarkV2 là reference đã được package và debug thực tế. Các giá trị quan
 trọng được giữ trong PlayerPresentation data của PaldarkKit: body mesh scale
 `0.01`, relative location `(0, 0, -90)`, relative rotation `(0, -90, 0)`,
 capsule `radius=34`, `half-height=88`, spring arm `length=360`, target offset
@@ -189,6 +189,8 @@ Head mesh là component con của body mesh, dùng relative transform identity
 một vị trí hard-code trong C++. Spawn fixture ghi riêng `PlayerStart`, mặt sàn
 và kích thước capsule để kiểm tra chân không lún sàn; vị trí spawn chỉ là điểm
 khởi đầu cao hơn mặt sàn, sau đó collision đưa capsule về độ cao đứng hợp lệ.
+
+Khi chuỗi input → intent → authority → movement snapshot đã đứng vững, người chơi có thể đi tới một vật trong thế giới. Chương tiếp theo bắt đầu đúng ở khoảng cách cuối cùng ấy: làm sao từ việc nhìn thấy một hòn đá, game xác định được người chơi đang chọn gì và có thật sự được phép nhặt nó hay không.
 
 ---
 

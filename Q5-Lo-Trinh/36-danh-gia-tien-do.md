@@ -4,15 +4,19 @@
 > Snapshot hiện tại để so sánh: `09e9b5e7` (sau PR #178).
 > Phương pháp: Git/GitHub metadata, first-parent diff và static source audit. Không chạy game; điểm playable/parity có sai số khoảng ±5% cho tới khi người dùng nghiệm thu runtime.
 
-Chương này tách ba câu hỏi thường bị trộn thành một:
+Một buổi làm việc có thể tạo ra hàng trăm file, hàng chục plugin và một dãy check xanh. Đứng trước khối lượng ấy, chữ “tiến độ” nghe như chỉ cần một con số. Nhưng người viết code, người chơi thử và người so sánh với Palworld đang đo ba thứ khác nhau.
+
+Vì vậy chương này tách ba câu hỏi thường bị trộn thành một:
 
 1. **Engineering:** đã có contract/state/authority/data/persistence tới đâu?
 2. **Playable:** người chơi có thể đi vào đường đó bằng input bình thường, không dùng QA flag/console, tới đâu?
 3. **Palworld parity:** catalog hành vi/content của Palworld đã được phủ tới đâu?
 
-Một hệ thống có engineering 60% nhưng playable 0% là chuyện hoàn toàn có thể xảy ra. Đó chính là hình dạng của phần lớn PR #135–#157.
+Một hệ thống đạt 60% engineering nhưng vẫn có 0% playable là điều hoàn toàn có thể xảy ra. Phần lớn PR #135–#157 mang đúng hình dạng ấy: nền móng đã có, nhưng người chơi chưa có con đường bình thường để bước lên nền móng đó.
 
 ## 36.1 — “11 giờ” thực tế là bao lâu
+
+Trước khi đánh giá hiệu quả, ta phải biết chiếc đồng hồ nào đang được dùng. “Mười một giờ” có thể là thời gian code, thời gian PR mở, khoảng giữa hai merge hoặc chỉ là cách làm tròn một phiên làm việc. Git chỉ cho phép chứng minh một vài trong số đó.
 
 | Mốc | Giờ merge UTC+7 | Khoảng cách |
 |---|---:|---:|
@@ -30,9 +34,11 @@ Không được biến merge gap thành “thời gian code”. Với #157:
 - PR body tự báo full-root cook năm nhánh, package 1,6 GB và listen/client;
 - repo/CI không lưu artifact hoặc log có timestamp để tách chính xác phút cook, package và chờ merge.
 
-Kết luận được phép nói: **#157 là time sink wall-clock lớn nhất; hơn bốn giờ sau CI chắc chắn không phải thời gian chạy CI.** Phân bổ chi tiết bên trong khoảng đó là `UNKNOWN`.
+Vì thế kết luận có thể bảo vệ chỉ là: **#157 chiếm nhiều wall-clock nhất; hơn bốn giờ sau CI chắc chắn không phải thời gian chạy CI.** Ta không biết chính xác phần còn lại được dùng cho cook, package hay chờ merge, nên phân bổ chi tiết phải ở lại dưới nhãn `UNKNOWN`.
 
 ## 36.2 — Khối lượng tạo ra
+
+Nếu nhìn bằng khối lượng, cửa sổ #135–#157 rất ấn tượng. Nhưng đây cũng là nơi cần phân biệt “nhiều vật liệu xây dựng” với “nhiều căn phòng người chơi đã bước vào”.
 
 Range diff trước #135 tới sau #157:
 
@@ -43,7 +49,7 @@ Range diff trước #135 tới sau #157:
 - 273 lời gọi `UE_LOG`; 512 dòng code thêm có token QA;
 - **không có C++ Automation Test/Spec mới**; #145 còn xoá hai Python test Work cũ.
 
-Khối lượng này chứng minh rất nhiều source đã được tạo. Nó không chứng minh tương ứng rất nhiều gameplay đã được tạo.
+Các con số chứng minh một lượng source lớn đã được tạo trong thời gian ngắn. Chúng không cho phép suy ra lượng gameplay nhìn thấy tăng theo cùng tỷ lệ; số file và số dòng không biết người chơi có bấm được một phím hay không.
 
 Các phần Git có thể tái tạo bằng:
 
@@ -58,7 +64,7 @@ Thời gian `created→merged`, review và check-run lấy từ GitHub API cho t
 
 ## 36.3 — Từng PR thực sự mang lại gì
 
-`Open` là thời gian GitHub từ created tới merged, không phải giờ lao động. `ROI` chấm theo mục tiêu người dùng: gameplay nhìn thấy + nền móng cần thiết, với compile là gate kỹ thuật.
+Muốn biết khối lượng ấy đi đâu, ta phải hạ mắt từ tổng diff xuống từng PR. Cột `Open` chỉ là thời gian GitHub tính từ lúc tạo tới lúc merge, không phải giờ lao động; cột `ROI` được chấm theo mục tiêu người dùng: gameplay nhìn thấy cộng với nền móng thực sự cần thiết, trong đó compile là gate kỹ thuật chứ chưa phải đích đến.
 
 | PR | Open | Diff | Kết quả thực tế | ROI |
 |---|---:|---:|---|---|
@@ -88,6 +94,8 @@ Thời gian `created→merged`, review và check-run lấy từ GitHub API cho t
 
 ## 36.4 — CI không phải nơi 11/15 giờ đã đi
 
+Một lời giải thích dễ chấp nhận là “CI Unreal quá chậm”. Dữ liệu check-run lại kể câu chuyện khác: pipeline trong cửa sổ này chưa hề chạy Unreal compile, cook, package hay gameplay test.
+
 Cả 23 PR chạy đúng năm check Python/static, tổng 115 lượt:
 
 - 92 success;
@@ -96,9 +104,11 @@ Cả 23 PR chạy đúng năm check Python/static, tổng 115 lượt:
 - không có Unreal compile, cook, package hay gameplay check;
 - không có human review/review comment; comment duy nhất là bot báo CI failure.
 
-Do đó không có bằng chứng để nói “CI Unreal tốn phần lớn thời gian”. Có bằng chứng rằng **nhiều công sức code đi vào QA harness, log và cook/package ngoài CI**, và #157 là khoảng wall-clock lớn nhất.
+Do đó không có bằng chứng cho câu “CI Unreal đã lấy phần lớn thời gian”. Điều có thể thấy là **nhiều công sức code đi vào QA harness, log và cook/package nằm ngoài CI**, còn #157 tạo ra khoảng wall-clock dài nhất. Hai kết luận ấy hẹp hơn, nhưng chính vì hẹp nên dùng được cho quyết định tiếp theo.
 
 ## 36.5 — Rework cho thấy ta đã tối ưu sai nhịp
+
+Rework tự nó không phải lãng phí. Một lần sửa sau feedback có thể là giá của việc học đúng. Vấn đề xuất hiện khi feedback chủ yếu đến từ scaffold và QA của nhiều hệ thống mở ngang, trong khi chưa có một vertical loop bình thường buộc chúng gặp nhau trong cùng phiên chơi.
 
 - RPC của #136 bị #137 thay.
 - #138, #139, #147, #154 và #156 đều sửa lại player/input.
@@ -108,9 +118,11 @@ Do đó không có bằng chứng để nói “CI Unreal tốn phần lớn th�
 - Capture #142 phải tới #157 mới sửa scalar modifier; các lỗ authority lớn hơn vẫn còn.
 - Crafting và Combat cùng bind phím `C` ở priority 0 tại #157.
 
-Rework không tự nó là lãng phí; feedback làm lộ thiết kế sai là có giá trị. Vấn đề là phần lớn feedback đến từ scaffold/QA của nhiều hệ thống ngang, trong khi chưa có một vertical loop bình thường buộc chúng tích hợp thật.
+Danh sách trên cho thấy nhịp tối ưu đã đặt breadth trước integration. Mỗi hệ thống có thể tiến thêm một đoạn trên giấy, nhưng những xung đột như hai feature cùng chiếm phím `C` chỉ lộ ra khi người chơi đi qua cả hai. Đó là lý do lát cắt dọc phải đến sớm hơn, không phải muộn hơn.
 
 ## 36.6 — Chấm tiến độ đúng cách
+
+Một con số duy nhất sẽ thưởng quá mức cho source chưa có entry point hoặc phạt sạch phần kiến trúc chỉ vì tutorial đang hỏng ở bước đầu. Ba cột `E/V/P` giữ ba loại tiến bộ tách biệt, để mỗi lần tăng điểm đều nói rõ điều gì vừa trở nên đúng hơn.
 
 | Ch. | Hệ thống | #157 `E/V/P` | HEAD #178 `E/V/P` | Sau `61c3aaac` `E/V/P` | Khoảng trống quyết định |
 |---:|---|---:|---:|---:|---|
@@ -138,13 +150,13 @@ Rework không tự nó là lãng phí; feedback làm lộ thiết kế sai là c
 | Sau `61c3aaac` / PR #182 | **65,9%** | **25,7%** | **14,2%** |
 | Delta #178→`61c3aaac` | +4,0 | +10,7 | +2,2 |
 
-Các số là static estimate ±5, dùng để so sánh và ra quyết định, không phải phép đo khoa học tuyệt đối. `E` cao vì contract/state có thật. `V` và `P` thấp vì UI/AI/content/normal entry point còn ít.
+Các số là ước lượng tĩnh với sai số khoảng ±5%, dùng để so sánh snapshot và ra quyết định chứ không phải phép đo khoa học tuyệt đối. `E` cao vì contract và state có thật; `V` và `P` thấp hơn vì UI, AI, content và entry point bình thường vẫn còn thưa.
 
 Commit hardening `cfa7bdf2` tăng độ an toàn kỹ thuật của chính spine nhưng **không được tự cộng điểm V/P trước Human Gate**. Snapshot **65,9/25,7/14,2** là static estimate về lượng source hiện có, không phải điểm gameplay đã được người chơi xác nhận.
 
 ### Kết quả runtime #182 ngày 2026-08-04
 
-Ảnh test của Soliz buộc hạ verdict `PLAYER_OBSERVABLE` xuống **FAIL** ngay tại entry: resource sai tỷ lệ, ground sai transform, fixture chồng lấn, nhãn screen-space phủ màn hình và HUD không nói rõ nên bắt đầu từ đâu. Đây không phải lỗi thao tác của người test.
+Rồi người chơi thật bước vào bản build. Ảnh test của Soliz khiến verdict `PLAYER_OBSERVABLE` phải hạ xuống **FAIL** ngay ở entry: resource sai tỷ lệ, ground sai transform, fixture chồng lấn, nhãn screen-space phủ màn hình và HUD không nói rõ nên bắt đầu từ đâu. Đây là lỗi của đường trải nghiệm được bàn giao, không phải lỗi thao tác của người test.
 
 Để không tiếp tục tạo độ chính xác giả, tiến độ được báo theo hai trục tách biệt:
 
@@ -160,12 +172,12 @@ Commit `4dfdf16e` sửa đúng blocker quan sát được: scale visual tách kh
 
 ## 36.7 — #178 đi đúng hướng; `61c3aaac` đóng các blocker static của spine
 
-#158–#178 thêm HUD, PalBehavior, projectile/shake, world content và presentation. Đó là delta có giá trị hơn cho playable path. Tại snapshot #178, static source cho thấy hai blocker tích hợp cụ thể:
+#158–#178 bắt đầu dịch trọng tâm về thứ người chơi có thể chạm tới: HUD, PalBehavior, projectile, shake, world content và presentation. Delta ấy có giá trị hơn cho playable path, nhưng cũng buộc các seam gặp nhau. Tại snapshot #178, source tĩnh làm lộ hai blocker tích hợp cụ thể:
 
 1. **Interaction kind không khớp.** Interaction giữ target gần nhất nhưng đọc kind từ fixture `qa_target` là `Harvest`; world pickup yêu cầu `Pickup` và target kiểm kind tuyệt đối. Xem [InteractionFeatureComponent.cpp](https://github.com/SlimeVRX/Soliz-Devin-PaldarkKit/blob/main/PaldarkKit/Plugins/GameFeatures/Interaction/Source/Interaction/Private/InteractionFeatureComponent.cpp), [InteractionQATarget.cpp](https://github.com/SlimeVRX/Soliz-Devin-PaldarkKit/blob/main/PaldarkKit/Plugins/GameFeatures/Interaction/Source/Interaction/Private/InteractionQATarget.cpp) và [WorldFeatureSubsystem.cpp](https://github.com/SlimeVRX/Soliz-Devin-PaldarkKit/blob/main/PaldarkKit/Plugins/GameFeatures/World/Source/World/Private/WorldFeatureSubsystem.cpp).
 2. **PalBehavior và Work nói hai schema khác nhau.** Producer phát `TargetCorrelationId`/`NavigationTarget`; consumer đọc `CorrelationId`/`ArrivalLocation`. Vì reader thất bại, `bWorkerAtStation` không bật; QA che lỗi bằng cách tự set state. Xem [PalBehaviorComponent.cpp](https://github.com/SlimeVRX/Soliz-Devin-PaldarkKit/blob/main/PaldarkKit/Plugins/GameFeatures/PalBehavior/Source/PalBehavior/Private/PalBehaviorComponent.cpp) và [WorkFeatureComponent.cpp](https://github.com/SlimeVRX/Soliz-Devin-PaldarkKit/blob/main/PaldarkKit/Plugins/GameFeatures/Work/Source/Work/Private/WorkFeatureComponent.cpp).
 
-Hai lỗi này là bằng chứng trực tiếp cho lý do cần typed/versioned domain contract và integration slice trước khi mở thêm hệ thống. Commit `61c3aaac` đã sửa cả hai:
+Hai lỗi không nằm trong logic riêng của producer hay consumer; chúng nằm ở ngôn ngữ hai bên dùng để gặp nhau. Đó là bằng chứng trực tiếp cho typed, versioned domain contract và cho việc khép integration slice trước khi mở thêm hệ thống. Commit `61c3aaac` đã sửa cả hai:
 
 - Interaction camera-trace target thật, lấy `InteractionKind` từ target và để server resolve có giới hạn; pickup skeletal giữ collision query ổn định.
 - PalBehavior và Work dùng chung `FPalBehaviorArrivedMessage` version 2, cùng correlation/location; Work kiểm lại actor và khoảng cách authority.
@@ -185,6 +197,8 @@ Những blocker còn lại không được che bằng điểm số:
 
 ## 36.8 — 11 giờ có đáng không?
 
+Câu hỏi “có đáng không?” không có nghĩa nếu ta chưa nói đáng theo mục tiêu nào. Cùng một cửa sổ công việc có thể là proof-of-concept nền tảng khá, nhưng là kết quả gameplay yếu.
+
 Phán quyết phải phụ thuộc KPI:
 
 - **Foundation/modular proof-of-concept:** khoảng **5/10**. Ta có 19 plugin tổng, owner contracts, state machines, intent path, persistence shell và một số va chạm thật làm lộ lỗi thiết kế.
@@ -193,9 +207,11 @@ Phán quyết phải phụ thuộc KPI:
 
 Vì mục tiêu được người dùng nhắc lại là gameplay, **ROI tổng không tương xứng**. Phần đáng tiền nhất là Interaction → Inventory → Crafting/Combat/Capture và các sửa Movement. Phần ROI thấp trong cửa sổ này là Dungeon, Multiplayer harness, Economy/Breeding/Condenser và phần lớn World/Persistence QA chưa có đường chơi.
 
-Không xoá nền móng đã làm. Ta đổi cách sử dụng nó: **ngừng mở rộng ngang, khép một vertical spine, rồi mới mở hệ thống tiếp theo.**
+Phán quyết ấy không dẫn tới việc xóa nền móng đã làm. Nó dẫn tới một thay đổi nhịp sử dụng nền móng: **ngừng mở rộng ngang, khép một vertical spine, rồi mới mở hệ thống tiếp theo**. Source cũ chỉ bắt đầu sinh lợi khi người chơi có một đường xuyên qua nó.
 
 ## 36.9 — Quy tắc có hiệu lực sau design gate
+
+Một bài kiểm toán chỉ có ích khi nó thay đổi cách phiên sau được tổ chức. Sáu quy tắc dưới đây biến các lỗi của cửa sổ #135–#157 thành gate cụ thể cho công việc kế tiếp:
 
 1. Agent chịu trách nhiệm ADR/contract, C++, compile, dữ liệu, log kỹ thuật và test card; người dùng chỉ mở Editor, chơi, quan sát và gửi ảnh/video gameplay nếu có lỗi. Không giao command line, tag hay log cho người dùng.
 2. Không cook/package/listen-client/CI babysitting trong sprint gameplay trừ khi người dùng đổi scope hoặc compiler/linker bắt buộc.
@@ -205,6 +221,8 @@ Không xoá nền móng đã làm. Ta đổi cách sử dụng nó: **ngừng m�
 6. Countdown dùng thời gian tuyệt đối lúc tạo PR/commit; không làm tròn thành một con số đẹp và không reset giữa sprint.
 
 ## 36.10 — Khoảng cách tới một lát cắt chơi được kiểu KYWorld
+
+Sau `61c3aaac`, câu hỏi không còn là “có đủ subsystem chưa?” mà là “người chơi còn vấp ở đâu trên một đường cụ thể?”. Commit `4dfdf16e` đóng các blocker presentation mà test #182 đã làm lộ, nhưng compile chỉ biến nó thành ứng viên retest — chưa thành bằng chứng người chơi.
 
 Commit `4dfdf16e` đóng thêm các blocker presentation mà test #182 làm lộ. Đây là thay đổi source đã compile, **chưa phải bằng chứng người chơi**:
 
@@ -234,7 +252,7 @@ KYWorld chứng minh outcome chủ yếu bằng Blueprint/GAS/UI binary; C++ c�
 
 ## 36.11 — Hiệu chỉnh sau gameplay feedback tại `1e384ea8`
 
-Khoảng `61c3aaac → 1e384ea8` có 22 commit, 139 file, `+4568/−1071`; riêng C++ `+3938/−577`. Sản lượng code lớn nhưng Human Gate cho thấy benchmark chính vẫn **0/1 PASS**:
+Khoảng `61c3aaac → 1e384ea8` lại tạo ra 22 commit, 139 file, `+4568/−1071`; riêng C++ là `+3938/−577`. Nếu chỉ nhìn production volume, dự án đã tiến một bước lớn. Human Gate lại trả về benchmark chính **0/1 PASS**, buộc toàn bộ khối lượng ấy được đọc dưới ánh sáng khác:
 
 - F pickup chạy, nhưng prompt từng còn ghi E;
 - attack animation chạy, nhưng người chơi quan sát thấy locomotion chưa đạt;
@@ -252,7 +270,7 @@ Vì vậy phải hạ normal-play từ static estimate `25,7%` xuống **16–18
 | ROI tổng | khoảng 3/10 |
 | Full vertical loop | 0/1 PASS |
 
-Kết luận: phiên đó **không đáng theo mục tiêu bản chơi được**, dù một phần code nền có thể tái sử dụng. Nguyên nhân chính không phải compile hay CI; đó là mở rộng source trước khi đóng state model và kiểm chứng các seam người chơi thật sự đi qua.
+Theo mục tiêu “bản chơi được”, phiên đó **không đáng**, dù một phần code nền vẫn có thể tái sử dụng. Compile và CI không phải nguyên nhân chính; vấn đề là source tiếp tục mở rộng trước khi state model và những seam người chơi thật sự đi qua được khép lại.
 
 Ứng viên kế tiếp sửa đúng một lát cắt duy nhất:
 
@@ -269,7 +287,7 @@ Source ứng viên đã nối equipment contract, Inventory UI, context arbitrat
 
 ## 36.12 — Hiệu chỉnh từ gameplay feedback kế tiếp
 
-Feedback mới xác nhận thêm ba outcome thật: F pickup chạy, Tab/Equip đưa đúng Gậy/Cầu lên tay, và LMB gây 40 damage authority-side; ba đòn đưa Wild Pal `100 → 60 → 20 → 0` rồi death lifecycle loại actor khỏi world. Đây là tiến bộ observable, nhưng full loop vẫn **0/1 PASS** vì bước Capture chặn Summon và Work.
+Lần feedback kế tiếp cho ba mảnh bằng chứng thật: F pickup chạy; Tab/Equip đưa đúng Gậy hoặc Cầu lên tay; LMB gây 40 damage ở authority, để ba đòn đưa Wild Pal `100 → 60 → 20 → 0` rồi death lifecycle loại actor khỏi world. Đó là tiến bộ quan sát được, nhưng full loop vẫn **0/1 PASS** vì Capture còn đứng chắn trước Summon và Work.
 
 Static audit tìm thấy nguyên nhân cụ thể thay vì quy lỗi cho tester:
 
@@ -283,7 +301,7 @@ Static audit tìm thấy nguyên nhân cụ thể thay vì quy lỗi cho tester:
 
 ## 36.13 — Bằng chứng runtime mới: Capture → Party → E Summon đã đi được
 
-Feedback gameplay mới nhất thay đổi một kết luận cục bộ quan trọng: Soliz đã **bắt thành công Wild Pal** và nhấn **E** để summon đúng Pal từ Party ra world. Pal xuất hiện và di chuyển tự do/follow. Vì vậy Capture success settlement, roster handoff và Companion summon không còn chỉ là bằng chứng static; đoạn `Capture → Party → E Summon` đã có bằng chứng người chơi trực tiếp.
+Cuối cùng, feedback gameplay mới nhất thay đổi một kết luận cục bộ quan trọng. Soliz đã **bắt thành công Wild Pal**, rồi nhấn **E** để summon đúng Pal từ Party ra world; Pal xuất hiện và có thể di chuyển tự do hoặc follow. Capture settlement, roster handoff và Companion summon vì thế không còn chỉ tồn tại trong source audit. Đoạn `Capture → Party → E Summon` đã đi qua tay người chơi thật.
 
 Không được suy rộng kết quả này thành PASS toàn ADR-001:
 
@@ -303,4 +321,4 @@ Bằng chứng mới làm giảm bất định ở chương Capture/Companion, n
 4. chờ Pal tới station, quan sát station feedback, rồi chờ thêm khoảng **10 giây**;
 5. chỉ PASS khi thấy `Nhiên liệu 1 → 0` và `Ore 0 → 1`.
 
-Crafting không phải phần còn lại của gate này. Recipe/queue/UI Crafting hiện chưa có normal-play path để giao người chơi test; nhãn/prompt từng khiến Workstation trông như một bàn Crafting là lỗi hướng dẫn, không phải một chức năng mà người test đã bỏ sót.
+Crafting không phải phần còn lại của gate này. Recipe, queue và UI Crafting chưa có normal-play path để giao người chơi test; nhãn hoặc prompt từng khiến Workstation trông giống bàn Crafting là lỗi hướng dẫn, không phải chức năng người test đã bỏ sót. Đường kiểm chứng phải hẹp đến mức một lần PASS hoặc FAIL trả lời được đúng câu hỏi đang đặt ra.

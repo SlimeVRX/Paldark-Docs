@@ -1,12 +1,17 @@
 # Chương 19 — CI là trọng tài
 
-Chương 9 và Chương 11 đã nói cùng một câu theo hai cách: luật không kiểm được bằng máy chỉ là lời khuyên. Một người có thể rất kỷ luật trong tuần đầu, nhưng một nghìn agent sẽ tạo ra một nghìn cách hiểu “chắc là vẫn đúng”. CI không thay thế review; nó làm phần review lặp đi lặp lại trở thành một phép kiểm có kết quả giống nhau.
+Một pull request thêm feature mới. Code compile, video chạy được, reviewer nhìn manifest thấy hợp lý. Nhưng trong `Public/` có một include sang plugin khác, một GameplayTag nằm sai owner và save chunk quên tăng version. Không lỗi nào trong ba lỗi ấy nhất thiết làm demo hôm nay hỏng; chúng chỉ biến lần thay đổi kế tiếp thành một cuộc ghép dây khó hiểu.
 
-Paldark không nên chờ đến lúc build game mới phát hiện hai plugin include thẳng vào nhau, một tag nằm sai namespace hoặc một feature quên khai báo save chunk. Những lỗi đó phải bị chặn khi chưa cần mở Unreal. Càng đưa phép kiểm xuống sớm, feedback càng rẻ.
+Nếu việc phát hiện phụ thuộc vào một reviewer nhớ đủ mười hai luật, kết quả sẽ thay đổi theo người và theo mức mệt mỏi. Chương 9 và Chương 11 đã nói cùng một câu theo hai cách: luật không kiểm được bằng máy chỉ là lời khuyên. Một người có thể rất kỷ luật trong tuần đầu, nhưng một nghìn agent sẽ tạo ra một nghìn cách hiểu “chắc là vẫn đúng”. CI không thay thế review; nó làm phần review lặp đi lặp lại trở thành một phép kiểm có kết quả giống nhau.
+
+Paldark không nên chờ đến lúc build game mới phát hiện hai plugin include thẳng vào nhau, một tag nằm sai namespace hoặc một feature quên khai báo save chunk. Những lỗi đó phải bị chặn khi chưa cần mở Unreal. Càng đưa phép kiểm xuống sớm, feedback càng rẻ. Chương này sẽ đi từ những script repo đã có, ánh xạ chúng vào luật L1–L12, rồi tách pipeline thành ba tầng theo chi phí chạy.
 
 ## 19.1 — Những script repo đang có
 
-Đây là các script thật đang nằm trong `scripts/ci/`, không phải danh sách tưởng tượng:
+Ta không bắt đầu từ một pipeline lý tưởng trên giấy. Repo đã có những validator
+với quy mô khác nhau, và chính chúng cho biết loại contract nào đọc được mà
+không cần mở engine. Bảng dưới đây là các script thật đang nằm trong
+`scripts/ci/`, không phải danh sách tưởng tượng:
 
 | Script | Điều đang kiểm | Có thể tái dùng cho Paldark? |
 |---|---|---|
@@ -21,6 +26,11 @@ Paldark không nên chờ đến lúc build game mới phát hiện hai plugin i
 Ngược lại, `validate_paldarkv3.py` đang kiểm topology cố định của PaldarkV3, như Engine 5.6, module set, target và các tài liệu G-001/F5/F6. Tái dùng cách viết `require`, parse JSON/INI và duyệt DAG thì được; tái dùng nguyên danh sách module cho plugin Work thì sai. Script phải kiểm luật, không được biến kiến trúc hiện tại của một project thành luật vĩnh viễn.
 
 ## 19.2 — Bảng trọng tài L1–L12
+
+Các script hiện có chứng minh phương pháp, nhưng chưa phủ đủ luật của kiến trúc
+mới. Muốn biết cần viết gì tiếp, ta đặt từng luật cạnh một phép kiểm và một
+dấu hiệu fail cụ thể. Bảng này không khẳng định mọi script đã tồn tại; cột tên
+script là thiết kế cho trọng tài cần có.
 
 | Luật | Script kiểm | Thuật toán đủ để viết | Vi phạm |
 |---|---|---|---|
@@ -37,9 +47,14 @@ Ngược lại, `validate_paldarkv3.py` đang kiểm topology cố định của
 | L11 — C++ tối đa, Blueprint presentation | `check_blueprint_policy.py` | Asset audit parent class, replicated variable, forbidden state nodes và node budget; fail Blueprint không có C++ parent | Lỗi/cảnh báo node |
 | L12 — mutation có log chuẩn | `check_mutation_logging.py` + test runtime | AST tìm owner mutation, kiểm log/correlation trong cùng function; runtime test tái hiện và parse `PD|...` | Lỗi |
 
-Không phải mọi phép kiểm đều nên là regex. `check_feature_includes.py` có thể bắt đầu bằng text scanner, nhưng `validate_ownership.py` cần hiểu declaration, function và field write đủ để không báo giả. Còn Blueprint policy bắt buộc có một bước đọc asset registry/Unreal metadata; Python ngoài engine chỉ kiểm được những metadata đã export.
+Không phải mọi phép kiểm đều nên là regex. `check_feature_includes.py` có thể bắt đầu bằng text scanner, nhưng `validate_ownership.py` cần hiểu declaration, function và field write đủ để không báo giả. Còn Blueprint policy bắt buộc có một bước đọc asset registry/Unreal metadata; Python ngoài engine chỉ kiểm được những metadata đã export. Trọng tài tốt không chỉ nghiêm; nó phải biết giới hạn của giác quan mình đang dùng.
 
 ## 19.3 — Các quy tắc từ Chương 12–18
+
+L1–L12 là bộ xương. Các chương sau đó đã thêm nội dung sống: catalog, stable
+id, chunk version, registration, command và log correlation. Nếu CI chỉ giữ
+bộ xương mà bỏ các hợp đồng này, kiến trúc vẫn có thể trôi khỏi thực tế. Bảng
+sau mở rộng phạm vi kiểm từ hình dạng module sang dữ liệu và bằng chứng:
 
 | Quy tắc | Script kiểm | Cách kiểm | Vi phạm |
 |---|---|---|---|
@@ -62,6 +77,11 @@ Các script có thể dùng chung parser. Ví dụ `check_namespaces.py` không 
 
 ## 19.4 — Ba tầng kiểm tra
 
+Không nên nhét mọi phép kiểm vào một job rồi bắt agent chờ engine khởi động để
+biết JSON trùng id. Ta chia pipeline theo câu hỏi mỗi tầng cần môi trường nào
+mới trả lời được. Tầng càng thấp chạy càng nhanh; tầng càng cao cho bằng chứng
+gần gameplay hơn.
+
 ### Tầng 1 — Không cần Unreal, chạy mỗi commit
 
 Đây là tầng có feedback nhanh nhất và nên bắt càng nhiều càng tốt:
@@ -79,7 +99,8 @@ Các script hiện có `check_markdown_links.py`, `check_paldarkv2_headers.py`, 
 
 ### Tầng 2 — Cần compile hoặc Unreal commandlet
 
-Tầng này kiểm những điều text không đủ biết:
+Khi text contract đã hợp lệ, tầng hai hỏi implementation có thật sự trở thành
+thứ Unreal nhận ra hay không. Tầng này kiểm những điều text không đủ biết:
 
 - C++ registration thật sự link và module load;
 - `UCLASS` parent, reflection metadata và Blueprint parent;
@@ -93,7 +114,7 @@ Tầng này kiểm những điều text không đủ biết:
 
 ### Tầng 3 — Chạy game, PIE, dedicated server hoặc packaged build
 
-Chỉ runtime mới trả lời được:
+Compile xanh vẫn chưa chứng minh authority, replication và lifecycle. Chỉ runtime mới trả lời được:
 
 - authority có thật sự là server không;
 - hai client có cùng state sau replication không;
@@ -107,6 +128,7 @@ Chỉ runtime mới trả lời được:
 
 ## 19.5 — CI không bắt được mọi thứ
 
+Một trọng tài chỉ thực thi được luật đã được diễn đạt thành dấu hiệu quan sát.
 CI không biết hai khái niệm khác tên nhưng cùng nghĩa. Nó có thể thấy `Work.Assignment` và `Worker.Job` đều unique, nhưng không hiểu hai agent vừa tạo hai từ cho cùng một state. Chỗ này cần danh mục khái niệm và mắt người.
 
 CI cũng không biết thiết kế sai nhưng hoàn toàn tuân luật. Một feature có plugin riêng, manifest đúng, owner duy nhất và log đủ, nhưng chọn sai authority hoặc tạo vòng lặp gameplay tệ — máy vẫn xanh. Tương tự, schema có thể hợp lệ nhưng progression vô nghĩa, drop rate mất cân bằng hoặc worker làm quá nhanh.
@@ -117,7 +139,7 @@ Cuối cùng, CI không biết evidence có nói thật về runtime hay không 
 
 ## 19.6 — Một pipeline đề xuất
 
-Mỗi pull request Paldark nên đi qua thứ tự:
+Giữ các giới hạn ấy, ta có thể xếp phép kiểm theo thứ tự từ rẻ tới đắt. Mỗi pull request Paldark nên đi qua thứ tự:
 
 1. `check_markdown_links.py` và format/document checks.
 2. Data/manifest/namespace/ownership/registry checks.
@@ -129,6 +151,14 @@ Mỗi pull request Paldark nên đi qua thứ tự:
 Nếu tầng 1 fail, không chạy tầng 3 để che mất lỗi rẻ hơn. Nếu tầng 2 pass nhưng compile fail, báo đúng loại lỗi là contract đã hợp lệ nhưng implementation chưa dựng được. Nếu runtime fail, log correlation và playtest record phải đi cùng failure report.
 
 Đây là ý nghĩa của “CI là trọng tài”: nó không quyết định game có hay không, cũng không thay người thiết kế. Nó chỉ đảm bảo mọi người đang chơi theo cùng một hình dạng, và khi hình dạng đó bị phá thì báo ngay cho đúng người.
+
+Quyển 3 bắt đầu bằng ba danh mục để mọi người dùng cùng một ngôn ngữ, dựng
+đồ thị module để dependency chỉ đi một chiều, tách định nghĩa khỏi thực thể và
+bản lưu, rồi đóng gói mỗi feature cùng contract và bằng chứng của nó. CI là
+điểm khép vòng: các quyết định ấy không còn nằm yên trong sách mà trở thành
+điều kiện để code được ghép vào project. Từ Quyển 4 trở đi, từng hệ thống
+Palworld sẽ phải đi qua chính các cửa này; không hệ thống nào được miễn chỉ vì
+demo của nó trông thuyết phục.
 
 ---
 

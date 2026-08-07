@@ -64,6 +64,10 @@ body {
   background: var(--vp-c-bg);
 }
 
+.sidebar-toggle {
+  display: none;
+}
+
 .VPSidebarItem.level-0 {
   padding-bottom: 8px;
 }
@@ -386,6 +390,201 @@ body {
 
   .reading-paths {
     grid-template-columns: 1fr;
+  }
+}
+
+@media (min-width: 960px) {
+  .VPSidebar,
+  .VPContent.has-sidebar,
+  .VPNavBar.has-sidebar .title,
+  .VPNavBar.has-sidebar .content,
+  .VPNavBar.has-sidebar .divider {
+    transition-duration: 0.24s;
+    transition-property: opacity, padding, transform, width;
+    transition-timing-function: ease;
+  }
+
+  .sidebar-toggle {
+    position: fixed;
+    top: 19px;
+    left: calc(var(--vp-sidebar-width) - 17px);
+    z-index: 101;
+    display: grid;
+    place-items: center;
+    width: 34px;
+    height: 34px;
+    border: 1px solid var(--vp-c-divider);
+    border-radius: 8px;
+    background: var(--vp-c-bg-elv);
+    color: var(--vp-c-text-2);
+    box-shadow: 0 4px 14px rgba(15, 23, 42, 0.08);
+    cursor: pointer;
+    transition: left 0.24s ease, border-color 0.16s ease, color 0.16s ease,
+      background-color 0.16s ease, box-shadow 0.16s ease;
+  }
+
+  .sidebar-toggle:hover {
+    border-color: color-mix(in srgb, var(--vp-c-brand-1) 48%, var(--vp-c-divider));
+    color: var(--vp-c-brand-1);
+    box-shadow: 0 6px 18px rgba(15, 23, 42, 0.13);
+  }
+
+  .sidebar-toggle:focus-visible {
+    outline: 2px solid var(--vp-c-brand-1);
+    outline-offset: 2px;
+  }
+
+  .sidebar-toggle__icon {
+    position: relative;
+    display: block;
+    width: 17px;
+    height: 15px;
+    border: 1.5px solid currentColor;
+    border-radius: 3px;
+  }
+
+  .sidebar-toggle__icon::before {
+    position: absolute;
+    top: -1px;
+    bottom: -1px;
+    left: 5px;
+    border-left: 1.5px solid currentColor;
+    content: '';
+  }
+
+  .sidebar-toggle__icon::after {
+    position: absolute;
+    top: 4px;
+    right: 2px;
+    width: 4px;
+    height: 4px;
+    border-bottom: 1.5px solid currentColor;
+    border-left: 1.5px solid currentColor;
+    content: '';
+    transform: rotate(45deg);
+    transition: transform 0.2s ease;
+  }
+
+  .paldark-sidebar-collapsed .sidebar-toggle {
+    left: 16px;
+  }
+
+  .paldark-sidebar-collapsed .sidebar-toggle__icon::after {
+    transform: rotate(225deg);
+  }
+
+  .paldark-sidebar-collapsed .VPSidebar {
+    opacity: 0;
+    visibility: hidden;
+    pointer-events: none;
+    transform: translateX(-100%);
+  }
+
+  .paldark-sidebar-collapsed .VPContent.has-sidebar {
+    padding-left: 0;
+  }
+
+  .paldark-sidebar-collapsed .VPNavBar.has-sidebar .title {
+    padding-left: 58px;
+    width: 224px;
+  }
+
+  .paldark-sidebar-collapsed .VPNavBar.has-sidebar .content {
+    padding-left: 224px;
+  }
+
+  .paldark-sidebar-collapsed .VPNavBar.has-sidebar .divider {
+    padding-left: 0;
+  }
+
+  .paldark-sidebar-collapsed .VPDoc.has-aside .content-container {
+    max-width: 940px;
+  }
+}
+
+@media (min-width: 1440px) {
+  /*
+   * VitePress starts centering at 1440px, while this theme uses a wider
+   * 1640px layout. Clamp the intermediate values so the sidebar and nav do
+   * not shrink between those two widths.
+   */
+  .Layout .VPSidebar,
+  .Layout .VPNavBar.has-sidebar .title {
+    width: max(
+      var(--vp-sidebar-width),
+      calc(
+        (100% - (var(--vp-layout-max-width) - 64px)) / 2 +
+          var(--vp-sidebar-width) - 32px
+      )
+    );
+  }
+
+  .Layout .VPContent.has-sidebar {
+    padding-right: max(0px, calc((100vw - var(--vp-layout-max-width)) / 2));
+    padding-left: max(
+      var(--vp-sidebar-width),
+      calc(
+        (100vw - var(--vp-layout-max-width)) / 2 +
+          var(--vp-sidebar-width)
+      )
+    );
+  }
+
+  .Layout .VPNavBar.has-sidebar .content {
+    padding-right: max(
+      32px,
+      calc((100vw - var(--vp-layout-max-width)) / 2 + 32px)
+    );
+    padding-left: max(
+      var(--vp-sidebar-width),
+      calc(
+        (100vw - var(--vp-layout-max-width)) / 2 +
+          var(--vp-sidebar-width)
+      )
+    );
+  }
+
+  .Layout .VPNavBar.has-sidebar .divider {
+    padding-left: max(
+      var(--vp-sidebar-width),
+      calc(
+        (100vw - var(--vp-layout-max-width)) / 2 +
+          var(--vp-sidebar-width)
+      )
+    );
+  }
+
+  .sidebar-toggle {
+    left: max(
+      calc(var(--vp-sidebar-width) - 17px),
+      calc(
+        (100vw - (var(--vp-layout-max-width) - 64px)) / 2 +
+          var(--vp-sidebar-width) - 49px
+      )
+    );
+  }
+
+  .paldark-sidebar-collapsed .sidebar-toggle {
+    left: max(16px, calc((100vw - var(--vp-layout-max-width)) / 2 + 16px));
+  }
+
+  .paldark-sidebar-collapsed .VPContent.has-sidebar {
+    padding-right: max(0px, calc((100vw - var(--vp-layout-max-width)) / 2));
+    padding-left: max(0px, calc((100vw - var(--vp-layout-max-width)) / 2));
+  }
+
+  .paldark-sidebar-collapsed .VPNavBar.has-sidebar .title {
+    padding-left: max(58px, calc((100vw - var(--vp-layout-max-width)) / 2 + 58px));
+    width: max(224px, calc((100vw - var(--vp-layout-max-width)) / 2 + 224px));
+  }
+
+  .paldark-sidebar-collapsed .VPNavBar.has-sidebar .content {
+    padding-right: max(32px, calc((100vw - var(--vp-layout-max-width)) / 2 + 32px));
+    padding-left: max(224px, calc((100vw - var(--vp-layout-max-width)) / 2 + 224px));
+  }
+
+  .paldark-sidebar-collapsed .VPNavBar.has-sidebar .divider {
+    padding-left: 0;
   }
 }
 

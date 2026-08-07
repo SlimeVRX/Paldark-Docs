@@ -5,13 +5,17 @@ description: Cuốn sách trực tuyến về cách đọc một game, thiết k
 
 # Paldark — Thiết kế game cho nhiều người và AI cùng xây
 
-Paldark là một cuốn sách kỹ thuật đi từ câu hỏi rất gần người chơi — *điều gì khiến Palworld vui?* — tới câu hỏi kiến trúc khó hơn: **làm sao để hàng trăm người hoặc AI agent cùng dựng một game lớn mà phần việc của họ vẫn ghép được vào nhau?**
+Hãy bắt đầu ở một khoảnh khắc rất bình thường trong Palworld: bạn rời căn cứ, bắt một sinh vật mới, nhặt thêm tài nguyên rồi quay về chế tạo. Với người chơi, đó là một chuyến đi liền mạch. Với người làm game, vài phút ấy là lúc input, chiến đấu, bắt giữ, túi đồ, AI, xây dựng và lưu trữ cùng chạm vào một thế giới chung.
+
+Paldark đi ngược từ trải nghiệm đó. Cuốn sách bắt đầu bằng câu hỏi gần gũi — *điều gì khiến Palworld vui?* — rồi lần tới câu hỏi kiến trúc khó hơn: **làm sao để hàng trăm người hoặc AI agent cùng dựng một game lớn mà phần việc của họ vẫn ghép được vào nhau?**
 
 ::: tip Một mạch lập luận, không phải một kho bài rời
-Sáu quyển, 46 chương và các phụ lục dùng lại kết luận của nhau. Bạn có thể tra cứu từng trang, nhưng đọc tuần tự sẽ cho thấy vì sao mỗi luật kiến trúc tồn tại.
+Sáu quyển, 46 chương và các phụ lục nối thành một đường suy luận. Bạn vẫn có thể tra cứu từng trang, nhưng đọc tuần tự sẽ cho thấy một luật kiến trúc sinh ra từ va chạm nào và nó bảo vệ trải nghiệm người chơi ra sao.
 :::
 
 ## Sáu quyển của Paldark
+
+Đường đi của cuốn sách có chủ ý: nhìn game trước, nhìn sự cộng tác sau, rồi mới đóng những quan sát ấy thành kiến trúc. Sáu quyển dưới đây là sáu chặng của cùng một câu hỏi, không phải sáu bộ tài liệu độc lập.
 
 <div class="book-grid">
   <a class="book-card" href="./Q1-Doc-Mot-Game/01-nhin-mot-game-thi-nhin-cai-gi">
@@ -48,9 +52,9 @@ Sáu quyển, 46 chương và các phụ lục dùng lại kết luận của nh
 
 ## Luận đề trung tâm
 
-Một game lớn không vỡ chỉ vì có nhiều code. Nó vỡ khi nhiều người cùng thay đổi một trạng thái nhưng không rõ ai sở hữu, khi hợp đồng chỉ tồn tại trong trí nhớ, và khi chữ “xong” không gắn với bằng chứng người chơi có thể quan sát.
+Một game lớn hiếm khi vỡ chỉ vì nó có nhiều code. Nó vỡ ở những đường nối: hai hệ thống cùng tin rằng mình được quyền đổi một trạng thái; một hợp đồng chỉ còn tồn tại trong trí nhớ của người viết đầu tiên; hoặc cả đội gọi một tính năng là “xong” trong khi người chơi chưa thể nhìn thấy kết quả.
 
-Paldark giải bài toán đó bằng một chuỗi nhất quán:
+Vì thế Paldark không bắt đầu bằng tên module. Nó bắt đầu từ điều người chơi cảm nhận, hỏi điều kiện nào phải đúng để cảm giác ấy xuất hiện, rồi mới lần xuống trạng thái chuẩn, chủ sở hữu và bằng chứng. Chuỗi suy luận ấy có thể đọc gọn như sau:
 
 ```mermaid
 flowchart LR
@@ -62,9 +66,11 @@ flowchart LR
   F --> G[Bằng chứng người chơi]
 ```
 
-Mỗi chương trả lời một đoạn của chuỗi. Mỗi phụ lục giữ nguồn, độ tin cậy và các câu hỏi chưa thể kết luận.
+Mỗi chương làm rõ một đoạn của chuỗi; mỗi phụ lục giữ lại nguồn, độ tin cậy và những câu hỏi chưa đủ bằng chứng để kết luận. Nhờ vậy, kiến trúc không còn là một tập sở thích của tác giả mà trở thành lập luận người khác có thể kiểm tra.
 
 ## Chọn đường đọc
+
+Không phải ai mở cuốn sách này cũng đang đứng ở cùng một nơi. Bạn có thể đi từ đầu để theo trọn lập luận, hoặc chọn một đường ngắn hơn nếu đang cần giải quyết một vấn đề cụ thể.
 
 <div class="reading-paths">
   <div><strong>Đọc như một cuốn sách</strong><span>Bắt đầu ở Chương 1 và đi tuần tự qua sáu quyển.</span></div>
@@ -73,6 +79,8 @@ Mỗi chương trả lời một đoạn của chuỗi. Mỗi phụ lục giữ 
 </div>
 
 ## Bắt đầu
+
+Nếu đây là lần đầu bạn đến với Paldark, hãy vào Chương 1. Chương ấy chưa yêu cầu bạn tin vào một framework nào; nó chỉ đề nghị bạn nhìn lại một phiên chơi và hỏi đúng câu hỏi đầu tiên.
 
 - [Đọc Chương 1 — Nhìn một game thì nhìn cái gì](./Q1-Doc-Mot-Game/01-nhin-mot-game-thi-nhin-cai-gi.md)
 - [Mở mục lục đầy đủ](./00-MucLuc.md)

@@ -1,8 +1,8 @@
 # Chương 5 — Bản đồ hệ thống và thứ tự dựng
 
-Sau catalog, chúng ta có một vấn đề mới: hơn một trăm tính năng không phải hơn một trăm hệ thống. Nếu biến mỗi dòng `F-xxx` thành một module, project sẽ có một rừng tên mà không ai biết module nào giữ state, module nào chỉ đọc dữ liệu, module nào là điểm giao.
+Sau catalog, ta có hơn một trăm thứ người chơi có thể làm hoặc nhìn thấy. Nhưng hơn một trăm tính năng không có nghĩa là hơn một trăm hệ thống. Nếu biến mỗi dòng `F-xxx` thành một module, project sẽ mọc thành một rừng tên mà không ai biết module nào giữ state, module nào chỉ đọc dữ liệu, và module nào đang âm thầm trở thành điểm giao của cả game.
 
-Chương này gom catalog thành các hệ thống có owner rõ hơn. Mỗi `S-xxx` dưới đây không nhất thiết là một Unreal module; nó là một boundary kiến trúc. Khi triển khai, một boundary có thể là component, subsystem, service, data domain hoặc plugin. Điều quan trọng là biết nó giữ state gì và những hệ thống nào được phép đi qua nó.
+Vì vậy chương này không tiếp tục thêm feature; nó gấp catalog lại theo đường ownership. Mỗi `S-xxx` dưới đây không nhất thiết là một Unreal module mà là một boundary kiến trúc. Khi triển khai, boundary ấy có thể trở thành component, subsystem, service, data domain hoặc plugin. Tên hình thức chưa phải điều quan trọng. Điều quan trọng là nó giữ state gì, cho ai đọc, và những mutation nào được phép đi qua nó.
 
 ## 5.1 — Danh sách hệ thống
 
@@ -43,13 +43,13 @@ Chương này gom catalog thành các hệ thống có owner rõ hơn. Mỗi `S-
 | S-033 | Save/load | Schema version, stable IDs, serialization and migration |
 | S-034 | UI/presentation messages | Widget state, prompts, HUD snapshots, gameplay messages |
 
-Con số 34 là một cách gom để làm việc, không phải số module đã được extracted từ Palworld. Một số hệ thống có thể gộp khi prototype; một số khác nên tách sớm vì nhiều agent cùng chạm vào. Ví dụ `S-015 Inventory` và `S-023 Base storage` có thể dùng chung item contract, nhưng không nên để mọi container gọi thẳng vào player inventory.
+Con số 34 là một cách gom để làm việc, không phải số module đã được extracted từ Palworld. Trong prototype, vài boundary có thể dùng chung implementation; ngược lại, vài boundary nên được tách sớm vì nhiều agent sẽ cùng đi qua. Chẳng hạn, `S-015 Inventory` và `S-023 Base storage` có thể chia sẻ item contract, nhưng nếu mọi container đều gọi thẳng vào player inventory thì một chi tiết dùng chung đã biến thành một owner dùng chung.
 
-Các nút dùng chung nhất là `S-012 Health & attributes`, `S-015 Inventory`, `S-016 Loot/drop`, `S-017 Recipe/crafting`, `S-021 Work suitability`, `S-025 Technology progression`, `S-032 Multiplayer authority` và `S-033 Save/load`. Chúng nằm trên nhiều đường đi khác nhau, nên một thay đổi nhỏ ở đây có bán kính ảnh hưởng lớn. Đây chính là các “ngã tư” mà Chương 6 sẽ mổ xẻ khi nhiều agent cùng làm.
+Đọc bảng từ góc độ đó, vài “ngã tư” hiện ra ngay: `S-012 Health & attributes`, `S-015 Inventory`, `S-016 Loot/drop`, `S-017 Recipe/crafting`, `S-021 Work suitability`, `S-025 Technology progression`, `S-032 Multiplayer authority` và `S-033 Save/load`. Chúng nằm trên nhiều đường đi khác nhau, nên một thay đổi nhỏ có bán kính ảnh hưởng lớn. Chương 6 sẽ quay lại chính những ngã tư này khi đặt thêm biến số khó nhất: nhiều agent cùng làm một lúc.
 
 ## 5.2 — Quan hệ phụ thuộc
 
-Sơ đồ dưới đây cố tình dùng quan hệ dữ liệu và intent, không giả vờ rằng mọi arrow là một `#include`. Một arrow nghĩa là hệ thống bên trái cần contract của hệ thống bên phải để hoàn thành trách nhiệm của mình.
+Một danh sách cho biết những boundary nào tồn tại, nhưng chưa cho biết áp lực đi qua chúng theo hướng nào. Sơ đồ dưới đây vì thế dùng quan hệ dữ liệu và intent; nó không giả vờ rằng mọi arrow là một `#include`. Một arrow chỉ có nghĩa hệ thống bên trái cần contract của hệ thống bên phải để hoàn thành trách nhiệm của mình.
 
 ```mermaid
 flowchart LR
@@ -113,33 +113,33 @@ flowchart LR
     S034 --> S025
 ```
 
-Có hai loại arrow cần phân biệt. `S-001 → S-011` là intent: input yêu cầu combat ability. `S-011 → S-012` là mutation: ability sau khi validate có thể làm health đổi. `S-034` thường là observer/presentation, không nên trở thành owner của state. Nếu UI bắt đầu quyết định inventory hay technology, boundary đã bị đảo.
+Nhìn cùng một mũi tên mà không hỏi ý nghĩa của nó sẽ dẫn tới thiết kế sai. `S-001 → S-011` là intent: input yêu cầu combat ability. `S-011 → S-012` là mutation: ability sau khi validate có thể làm health đổi. `S-034` thường chỉ observer/presentation, không nên trở thành owner của state. Nếu UI bắt đầu quyết định inventory hay technology, boundary đã bị đảo dù sơ đồ vẫn trông “có kết nối”.
 
 ## 5.3 — Hệ thống nào dễ vỡ nhất?
 
-**Inventory** là một ứng viên rõ ràng. Capture tạo item hoặc captured instance; loot đưa item vào; craft tiêu item; cooking biến item; shop đổi item/currency; equipment đọc item; building dùng item làm cost; save phải serialize item. Một field như stack count, weight hoặc stable ID thay đổi không chỉ ảnh hưởng một màn hình.
+**Inventory** là ứng viên rõ ràng nhất. Capture tạo item hoặc captured instance; loot đưa item vào; craft tiêu item; cooking biến item; shop đổi item/currency; equipment đọc item; building dùng item làm cost; save phải serialize item. Vì thế một thay đổi tưởng nhỏ ở stack count, weight hoặc stable ID không bao giờ chỉ ảnh hưởng một màn hình.
 
-**Health/attributes và authority** cũng là nút thắt. Combat, capture, hunger, boss, status effect và UI đều muốn biết health. Nếu mỗi feature tự tạo một đường trừ máu, ta có nhiều nguồn sự thật cho cùng một state. `S-032 Multiplayer authority` làm vấn đề rộng hơn: mọi mutation cần biết client đang gửi intent hay đã tự ý sửa state.
+**Health/attributes và authority** là nút thắt theo một kiểu khác. Combat, capture, hunger, boss, status effect và UI đều muốn biết health, nhưng không phải bên nào muốn biết cũng được quyền sửa. Nếu mỗi feature tự tạo một đường trừ máu, ta có nhiều nguồn sự thật cho cùng một state. `S-032 Multiplayer authority` làm câu hỏi rộng hơn: ở mỗi mutation, client đang gửi intent hay đã tự ý sửa state?
 
 **Work suitability, assignment và storage** là nút thắt của automation. `EPalWorkSuitability` có 13 loại việc, nhưng con số đó chỉ là taxonomy tĩnh; runtime còn phải biết station, capacity, queue, hunger, output và blocker. Chỉ cần một agent hiểu “worker level” khác agent khác, base sẽ có hai cách tính năng suất mà không có lỗi compile nào bắt được.
 
-**Save/load** là nút thắt âm thầm nhất. Nó không nằm trên màn hình khi game đang chạy, nhưng mọi state persistent cuối cùng đều phải đi qua nó. Stable ID, schema version, migration và ownership không được để đến cuối project mới quyết định. Evidence hiện có `FPalInstanceID`/`FGuid`, breeding progress replicated và nhiều data rows; full save schema Palworld/guild chưa có, nên bản đồ này chỉ ghi boundary cần có, không tuyên bố runtime gốc. (EXTRACTED; UNKNOWN ở phần schema đầy đủ).
+**Save/load** là nút thắt âm thầm nhất vì nó hiếm khi xuất hiện trong khoảnh khắc đang chơi. Dù vậy, mọi state persistent cuối cùng đều phải đi qua đây. Stable ID, schema version, migration và ownership không thể chờ đến cuối project mới quyết định. Evidence hiện có `FPalInstanceID`/`FGuid`, breeding progress replicated và nhiều data rows; full save schema Palworld/guild chưa có, nên bản đồ này chỉ ghi boundary cần có, không tuyên bố runtime gốc. (EXTRACTED; UNKNOWN ở phần schema đầy đủ).
 
 ## 5.4 — Thứ tự dựng: luôn có một bản chơi được
 
-Thứ tự dưới đây không phải danh sách “làm hết hệ thống nền rồi mới làm game”. Mỗi lát cắt phải tạo ra một vòng chơi có thể chạy, quan sát và sửa.
+Biết hệ thống nào dễ vỡ không có nghĩa là phải xây hết nền móng rồi mới cho người chơi chạm vào game. Thứ tự dưới đây là các lát cắt dọc: mỗi lát cắt phải tạo ra một vòng chơi có thể chạy, quan sát và sửa, đồng thời ép vài boundary phải chứng minh chúng phối hợp được với nhau.
 
 ### Lát cắt 1 — Đi, nhìn, nhặt
 
-Dựng `S-001`, `S-002`, `S-003`, `S-004`, một actor creature tối giản từ `S-005` và item pickup tối giản từ `S-015`. Definition of Done: người chơi di chuyển, nhìn camera, trace target và nhặt một item; UI hiển thị prompt; log có thể nói vì sao interaction fail.
+Lát đầu tiên cần ít nội dung nhưng phải có một hành động trọn vẹn. Dựng `S-001`, `S-002`, `S-003`, `S-004`, một actor creature tối giản từ `S-005` và item pickup tối giản từ `S-015`. Definition of Done: người chơi di chuyển, nhìn camera, trace target và nhặt một item; UI hiển thị prompt; log có thể nói vì sao interaction fail.
 
 ### Lát cắt 2 — Đánh, bị đánh, có kết quả
 
-Thêm `S-011`, `S-012`, `S-013` và `S-032` ở mức authority tối thiểu. Chưa cần đủ weapon catalog. Một attack có thể gửi intent, server validate, target mất health, client thấy reaction và death. Nếu lát cắt này không chạy trong hai client, đừng thêm breeding hay dungeon.
+Lát thứ hai thêm hậu quả và vì vậy buộc authority phải xuất hiện. Thêm `S-011`, `S-012`, `S-013` và `S-032` ở mức tối thiểu; chưa cần đủ weapon catalog. Một attack có thể gửi intent, server validate, target mất health, client thấy reaction và death. Nếu lát cắt này không chạy trong hai client, breeding hay dungeon chỉ làm vùng lỗi rộng thêm.
 
 ### Lát cắt 3 — Bắt một creature
 
-Nối `S-008` với một capture item, `S-006` và `S-009`. Người chơi làm target yếu đi, thử capture, thấy success/failure và đưa instance vào roster. Chưa cần toàn bộ party UI; cần stable identity và một đường save/load giả lập để chứng minh instance không biến thành một dòng chữ.
+Lát thứ ba biến hậu quả ngắn thành sở hữu dài hạn. Nối `S-008` với một capture item, `S-006` và `S-009`. Người chơi làm target yếu đi, thử capture, thấy success/failure và đưa instance vào roster. Chưa cần toàn bộ party UI; cần stable identity và một đường save/load giả lập để chứng minh instance không biến thành một dòng chữ.
 
 ### Lát cắt 4 — Một item, một recipe, một station
 
@@ -159,13 +159,13 @@ Thêm `S-027`, `S-028`, `S-029`, rồi economy/breeding ở mức một vertical
 
 ### Lát cắt 8 — Co-op và persistence thật
 
-Cuối cùng làm sâu `S-032`, `S-033`, `S-034`: reconnect, relevancy, save version, migration, UI messages và permission. “Cuối cùng” không có nghĩa bỏ qua từ đầu; contract của authority/save phải được ghi ở lát cắt 2–3, nhưng implementation đầy đủ chỉ đến khi vertical slice đã chứng minh game có gì để lưu và đồng bộ.
+Lát cuối làm sâu `S-032`, `S-033`, `S-034`: reconnect, relevancy, save version, migration, UI messages và permission. “Cuối cùng” ở đây nói về độ sâu implementation, không phải thời điểm bắt đầu suy nghĩ. Contract của authority/save phải có từ lát cắt 2–3; chỉ đến lúc vertical slice chứng minh game thật sự có gì để lưu và đồng bộ, ta mới hoàn thiện toàn bộ cơ chế.
 
 ## 5.5 — Nguyên tắc kiểm tra trước khi sang Quyển 2
 
-Một hệ thống chỉ được coi là sẵn sàng để nhiều agent dùng khi trả lời được năm câu: state owner là ai, mutation entry point là gì, read API nào được phép dùng, event/message nào phát ra, và test nào chứng minh failure case. Nếu thiếu một câu, agent tiếp theo sẽ tự đoán. Tự đoán là cách nhanh nhất để tạo hai contract song song.
+Trước khi rời Quyển 1, hãy đặt một gate rất cụ thể. Một hệ thống chỉ sẵn sàng cho nhiều agent sử dụng khi trả lời được năm câu: state owner là ai, mutation entry point là gì, read API nào được phép dùng, event/message nào phát ra, và test nào chứng minh failure case. Thiếu một câu, agent tiếp theo buộc phải tự đoán; hai lần tự đoán độc lập là đủ để sinh ra hai contract song song.
 
-Bản đồ này cũng chỉ ra vì sao Quyển 2 không thể chỉ nói “dùng module cho gọn”. Những hệ thống dùng chung nhất cần ownership, dependency direction và quy tắc phối hợp. Chúng là nơi nhiều tính năng đi qua, vì vậy cũng là nơi một thay đổi nhỏ có thể làm vỡ cả vòng chơi.
+Bản đồ cũng giải thích vì sao Quyển 2 không thể dừng ở lời khuyên “dùng module cho gọn”. Những hệ thống dùng chung nhất cần ownership, dependency direction và quy tắc phối hợp; chúng là nơi nhiều tính năng đi qua, nên cũng là nơi một thay đổi nhỏ có thể làm vỡ cả vòng chơi. Sang Chương 6, ta sẽ đặt mười agent quanh những ngã tư ấy và xem codebase hỏng theo những cách nào.
 
 ---
 

@@ -2,7 +2,11 @@
 
 > **Trạng thái 2026-08-04:** inventory lịch sử, **không phải danh sách task đang được phép code**. ADR-001 đang `PROPOSED`; mọi cột người/agent để trống cho tới khi Soliz duyệt design gate. Claim package/listen cũ là evidence của snapshot cũ, không phải acceptance cho HEAD #178.
 
-Bảng này liệt kê domain/feature đã xuất hiện ở Quyển 4 để không mất dấu owner state. Sau ADR-001, “system” không mặc nhiên tương đương “GameFeature plugin”; bảng sẽ được tách thành domain owner, capability pack và Experience contribution. Task mới phải dùng task packet/write-set ở [Chương 40](../Q6-Kien-Truc-VibeCoding/40-giao-thuc-vibecoding-da-agent.md), không tự nhận việc chỉ bằng cách điền tên vào một dòng.
+Một bảng phân công rất dễ bị đọc nhầm thành lời mời nhận việc: thấy ô trống, điền tên, rồi bắt đầu sửa code. Snapshot này không vận hành theo cách đó. Nó giữ lại bản đồ domain/feature đã xuất hiện ở Quyển 4 để ta không mất dấu chủ sở hữu state tại mốc 2026-08-04; nó không cấp quyền sửa bất kỳ file nào ở hiện tại.
+
+Sau ADR-001, “system” cũng không còn mặc nhiên đồng nghĩa với một `GameFeature` plugin. Bản đồ tương lai phải tách domain owner, capability pack và Experience contribution. Vì thế task mới đi qua task packet và write-set ở [Chương 40](../Q6-Kien-Truc-VibeCoding/40-giao-thuc-vibecoding-da-agent.md), thay vì được tạo ra chỉ bằng việc điền tên vào một dòng.
+
+Khi đọc bảng, hãy nhìn hai cột cuối trước. “Owner state chính” trả lời feature chịu trách nhiệm cho điều gì; “Contract/chunk chính” cho biết phần còn lại của hệ thống được phép chạm tới trách nhiệm ấy bằng đường nào. Hai cột người và agent để trống là một ranh giới có chủ ý của snapshot, không phải dữ liệu bị thiếu.
 
 | Feature | Chương | Người | Agent | Owner state chính | Contract/chunk chính |
 |---|---:|---|---|---|---|
@@ -31,3 +35,5 @@ Bảng này liệt kê domain/feature đã xuất hiện ở Quyển 4 để kh�
 | Breeding | 35 |  |  | parent pairing, progress, combination resolution, egg result; không trừ Inventory trực tiếp | `Paldark.Breeding`, `LogPaldarkBreeding` |
 | Condenser | 35 |  |  | sacrifice transaction và rank; rollback khi Inventory contract fail | `Paldark.Condenser`, `LogPaldarkCondenser` |
 | Economy/Merchant | 35 |  |  | offer, price, stock, buy/sell transaction; không ghi quantity trực tiếp | `Paldark.Economy`, `LogPaldarkEconomy` |
+
+Điều quan trọng nhất bảng này giữ lại không phải tên plugin, mà là lời hứa ownership. Dù một domain sau đó được đóng gói lại thành capability hay được nhiều Experience cùng kích hoạt, state của nó vẫn phải có một nơi ra quyết định cuối cùng; mọi agent tham gia chỉ an toàn khi write-set của họ tôn trọng lời hứa đó.

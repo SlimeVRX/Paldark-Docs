@@ -1,16 +1,20 @@
 # Giáo trình tổng — 15 khoá Paldark dựa trên 13 nguồn học
 
-Tài liệu này là **curriculum contract/mục lục bài giảng**, chưa phải nội dung hoàn chỉnh của từng bài. Mười lăm khoá tương ứng hệ thống 21–35; chúng dùng 13 course repository làm nguồn. Mỗi bài được đặt theo một câu hỏi bắt buộc phải trả lời trước khi bài kế tiếp xuất hiện. Nguồn tham chiếu được đối chiếu trong [bản đồ tài liệu](../PhuLuc/ban-do-tai-lieu.md) và được chấm độ tin cậy trong [kiểm kê 13 khoá](../PhuLuc/D-kiem-ke-13-khoa-hoc.md).
+Mười lăm hệ thống ở Quyển 4 có thể được dạy như mười lăm danh sách API. Cách đó giúp người học biết tên nhiều thứ, nhưng không giúp họ tự tìm ra vì sao một state cần owner hay vì sao một transaction phải đi qua server. Giáo trình này chọn con đường ngược lại: mỗi bài bắt đầu bằng một câu hỏi người làm game buộc phải trả lời trước khi câu hỏi kế tiếp có nghĩa.
 
-Mỗi source citation khi triển khai bài thật phải mang một nhãn: `[C++]`, `[Asset]`, `[Doc]`, `[Inference]` hoặc `[Unknown]`. `KYWorld` có thể là đường dẫn C++ **hoặc** asset binary; tên một `.uasset` chỉ chứng minh asset tồn tại, không chứng minh graph bên trong đã được đọc. Khoá 12/14/15/16 là doc-only trong workspace hiện tại. Course 10 và 14 có bất thường mapping được ghi ở Phụ lục D; không dùng SHA/path chưa xác minh để tuyên bố source proof.
+Đây là **curriculum contract và mục lục bài giảng**, chưa phải nội dung hoàn chỉnh của từng bài. Mười lăm khóa tương ứng với hệ thống 21–35 và dùng 13 course repository làm nguồn đối chiếu. [Bản đồ tài liệu](../PhuLuc/ban-do-tai-lieu.md) chỉ ra nên tìm ở đâu; [kiểm kê 13 khóa](../PhuLuc/D-kiem-ke-13-khoa-hoc.md) cho biết mỗi nguồn chịu được sức nặng của loại claim nào.
 
-Điểm phức tạp trong từng mục dùng mô hình bảy trục `S/N/A/U/C/R/I` ở Chương 37; không xem số bài là estimate giờ. Các khoá có AI, UI, mạng, content, luật hoặc integration có nhiều bài hơn vì đó là phần còn thiếu thực sự.
+Khi một bài được viết đầy đủ, mọi trích dẫn source phải mang nhãn `[C++]`, `[Asset]`, `[Doc]`, `[Inference]` hoặc `[Unknown]`. `KYWorld` có thể dẫn tới C++ đọc được, nhưng cũng có thể chỉ dẫn tới asset binary; tên một `.uasset` chứng minh asset tồn tại chứ không mở được graph bên trong. Khóa 12/14/15/16 là doc-only trong workspace hiện tại, còn bất thường mapping của course 10 và 14 được giữ ở Phụ lục D. SHA hoặc path chưa xác minh không được mượn để làm source proof.
 
-Một bài chỉ được đánh dấu hoàn chỉnh sau chuỗi `DESIGNED → SOURCE_PRESENT → COMPILED → INTEGRATED → PLAYER_OBSERVABLE → USER_VERIFIED`; bài giảng được viết sau feedback để lý thuyết và code không chạy lệch nhau.
+Điểm phức tạp của từng khóa dùng bảy trục `S/N/A/U/C/R/I` ở Chương 37. Số bài không phải estimate giờ; nó chỉ phản ánh số câu hỏi độc lập phải được trả lời. Một khóa có nhiều bài vì AI, UI, mạng, content, rule hoặc integration của nó thực sự rộng — không phải vì ta muốn giáo trình trông dày.
+
+Một bài chỉ hoàn chỉnh sau chuỗi `DESIGNED → SOURCE_PRESENT → COMPILED → INTEGRATED → PLAYER_OBSERVABLE → USER_VERIFIED`. Bài giảng cuối cùng được viết sau feedback, để lý thuyết kể lại con đường code đã thật sự đi qua thay vì mô tả một implementation lý tưởng chưa từng gặp người chơi.
 
 ## Khoá 21 — Di chuyển và input
 
-**Người học làm được gì:** Từ một phím và một chuyển động camera, người học tạo được locomotion third-person theo hướng camera, có presentation tách khỏi authority và sẵn sàng mở rộng sang cưỡi, lượn, leo và bơi.
+Bạn xoay camera sang phải rồi bấm W, nhưng nhân vật vẫn chạy về hướng cũ. Lỗi nhỏ ấy là cửa vào toàn bộ bài toán input: intent nằm ở đâu, hướng được tính từ ai, authority quyết định gì và presentation chỉ nên phản ánh điều gì.
+
+**Sau khóa học:** Từ một phím và một chuyển động camera, người học tạo được locomotion third-person theo hướng camera, có presentation tách khỏi authority và sẵn sàng mở rộng sang cưỡi, lượn, leo và bơi.
 
 **Độ phức tạp:** **17 điểm** (S2/N3/A1/U2/C4/R2/I3) — **6 bài giảng**.
 
@@ -25,7 +29,9 @@ Một bài chỉ được đánh dấu hoàn chỉnh sau chuỗi `DESIGNED → S
 
 ## Khoá 22 — Tương tác và thu thập
 
-**Người học làm được gì:** Người học tạo được vòng lặp nhìn thấy vật thể, nhận prompt, trace, tương tác có authority và nhận phản hồi thu thập qua một contract generic.
+Một vật nằm ngay trước mặt nhưng không phát sáng, không có prompt và bấm F cũng không đem lại phản hồi. Người chơi gọi đó là “không tương tác được”; kiến trúc phải tách câu ấy thành target, query, intent, validation, mutation và feedback.
+
+**Sau khóa học:** Người học tạo được vòng lặp nhìn thấy vật thể, nhận prompt, trace, tương tác có authority và nhận phản hồi thu thập qua một contract generic.
 
 **Độ phức tạp:** **20 điểm** (S3/N3/A1/U3/C4/R2/I4) — **5 bài giảng**.
 
@@ -39,7 +45,9 @@ Một bài chỉ được đánh dấu hoàn chỉnh sau chuỗi `DESIGNED → S
 
 ## Khoá 23 — Vật phẩm và túi đồ
 
-**Người học làm được gì:** Người học xây được inventory authoritative có item definition, slot/stack, replicated delta, equipment, container và UMG grid mà UI không trở thành owner của state.
+Nhặt một món đồ không kết thúc ở việc cộng một số. Người chơi mong thấy nó nằm đúng ô, gộp đúng stack, xuất hiện trên tay khi trang bị và vẫn còn đó sau khi tải lại. Mỗi kỳ vọng ấy kéo inventory qua một ranh giới khác.
+
+**Sau khóa học:** Người học xây được inventory authoritative có item definition, slot/stack, replicated delta, equipment, container và UMG grid mà UI không trở thành owner của state.
 
 **Độ phức tạp:** **26 điểm** (S4/N4/A1/U5/C4/R3/I5) — **11 bài giảng**.
 
@@ -59,7 +67,9 @@ Một bài chỉ được đánh dấu hoàn chỉnh sau chuỗi `DESIGNED → S
 
 ## Khoá 24 — Chế tạo
 
-**Người học làm được gì:** Người học biến recipe và nguyên liệu thành một workstation có queue, thời gian, thiếu nguyên liệu, output và UI quan sát được.
+Một recipe trên DataTable chưa tạo ra cảm giác chế tạo. Người chơi phải đứng trước đúng trạm, biết mình thiếu gì, chấp nhận thời gian chờ và nhận được output đúng một lần — kể cả khi túi đầy hoặc phiên chơi bị ngắt.
+
+**Sau khóa học:** Người học biến recipe và nguyên liệu thành một workstation có queue, thời gian, trạng thái thiếu nguyên liệu, output và UI quan sát được.
 
 **Độ phức tạp:** **25 điểm** (S4/N3/A1/U4/C4/R4/I5) — **9 bài giảng**.
 
@@ -77,7 +87,9 @@ Một bài chỉ được đánh dấu hoàn chỉnh sau chuỗi `DESIGNED → S
 
 ## Khoá 25 — Chiến đấu
 
-**Người học làm được gì:** Người học chuyển combat từ input tới target, ability/effect, hit feedback và damage rule thành một vòng lặp chiến đấu authoritative có thể mở rộng theo nguyên tố và vũ khí.
+Một đòn đánh chỉ thật sự “trúng” khi nhiều lớp cùng đồng ý: input mở ability, hit window tìm đúng target, authority áp damage, animation phản ứng và UI cho người chơi hiểu điều vừa xảy ra. Bỏ một lớp, combat có thể đúng số nhưng vẫn sai cảm giác.
+
+**Sau khóa học:** Người học chuyển combat từ input tới target, ability/effect, hit feedback và damage rule thành một vòng lặp chiến đấu authoritative có thể mở rộng theo nguyên tố và vũ khí.
 
 **Độ phức tạp:** **33 điểm** (S5/N5/A4/U4/C5/R5/I5) — **12 bài giảng**.
 
@@ -98,7 +110,9 @@ Một bài chỉ được đánh dấu hoàn chỉnh sau chuỗi `DESIGNED → S
 
 ## Khoá 26 — Bắt giữ
 
-**Người học làm được gì:** Người học xây được khoảnh khắc ném sphere vào Pal, tính xác suất từ state thật, phát animation/feedback và commit capture một lần trên server.
+Khoảnh khắc quả cầu rời tay chỉ kéo dài vài giây, nhưng phía sau nó là Health, projectile, xác suất, Inventory, Creature identity, world actor và roster cùng tham gia một giao dịch. Nếu một bên commit sớm hơn, người chơi có thể mất cầu mà không có Pal — hoặc có cùng một Pal ở hai nơi.
+
+**Sau khóa học:** Người học xây được khoảnh khắc ném sphere vào Pal, tính xác suất từ state thật, phát animation/feedback và commit capture đúng một lần trên server.
 
 **Độ phức tạp:** **30 điểm** (S5/N4/A3/U4/C4/R5/I5) — **11 bài giảng**.
 
@@ -118,7 +132,9 @@ Một bài chỉ được đánh dấu hoàn chỉnh sau chuỗi `DESIGNED → S
 
 ## Khoá 27 — Bạn đồng hành
 
-**Người học làm được gì:** Người học khiến Pal đã bắt được xuất hiện, đi theo, nhận lệnh và chiến đấu hỗ trợ bằng AI state có thể quan sát và có owner rõ ràng.
+Một Pal đã nằm trong Party nhưng chưa phải là bạn đồng hành. Nó còn phải xuất hiện đúng cá thể, hiểu khi nào follow hay stay, nhận mục tiêu mà không giành quyền của Combat và tiếp tục tồn tại ngay cả lúc actor bị dỡ khỏi world.
+
+**Sau khóa học:** Người học khiến Pal đã bắt được xuất hiện, đi theo, nhận lệnh và chiến đấu hỗ trợ bằng AI state có thể quan sát và có owner rõ ràng.
 
 **Độ phức tạp:** **31 điểm** (S4/N4/A5/U4/C5/R4/I5) — **11 bài giảng dự kiến**. Sáu bài nền `00–05` đã được biên soạn trong [Khóa 27 — Bạn đồng hành](../KhoaHoc/M27-Ban-Dong-Hanh/00-tai-sao-he-thong-nay-ton-tai.md).
 
@@ -138,7 +154,9 @@ Một bài chỉ được đánh dấu hoàn chỉnh sau chuỗi `DESIGNED → S
 
 ## Khoá 28 — Xây dựng
 
-**Người học làm được gì:** Người học đặt, snap, xác nhận, phá dỡ và hiển thị các building part theo lưới, với chi phí tài nguyên và authority tách khỏi UI preview.
+Khi một bức tường ma chuyển từ đỏ sang xanh, người chơi tin rằng cú click kế tiếp sẽ đặt đúng vị trí và trừ đúng vật liệu. Preview chỉ là lời hứa; structure authoritative mới là điều thế giới phải giữ qua save, damage và multiplayer.
+
+**Sau khóa học:** Người học đặt, snap, xác nhận, phá dỡ và hiển thị các building part theo lưới, với chi phí tài nguyên và authority tách khỏi UI preview.
 
 **Độ phức tạp:** **30 điểm** (S5/N4/A2/U5/C5/R4/I5) — **10 bài giảng**.
 
@@ -157,7 +175,9 @@ Một bài chỉ được đánh dấu hoàn chỉnh sau chuỗi `DESIGNED → S
 
 ## Khoá 29 — Làm việc và tự động hoá
 
-**Người học làm được gì:** Người học khiến Pal được giao tới đúng trạm, chọn công việc theo suitability, xử lý hunger/interrupt và tạo output mà người chơi quan sát được.
+Người chơi thả một Pal ở căn cứ rồi quay lưng đi khai phá. Khi trở về, họ mong thấy Pal đã chọn đúng việc, tìm được đường, tiêu đúng input và tạo output có thể nhận. Để cảm giác “căn cứ tự sống” xuất hiện, AI không được tự mình bịa ra canonical job state.
+
+**Sau khóa học:** Người học khiến Pal được giao tới đúng trạm, chọn công việc theo suitability, xử lý hunger/interrupt và tạo output mà người chơi quan sát được.
 
 **Độ phức tạp:** **33 điểm** (S5/N4/A5/U4/C5/R5/I5) — **12 bài giảng**.
 
@@ -178,7 +198,9 @@ Một bài chỉ được đánh dấu hoàn chỉnh sau chuỗi `DESIGNED → S
 
 ## Khoá 30 — Tiến trình và công nghệ
 
-**Người học làm được gì:** Người học xây được progression có level, điểm, tech unlock, điều kiện recipe/build và UI phản ánh đúng state owner.
+Một tiếng báo lên cấp chỉ có ý nghĩa khi thế giới mở thêm khả năng thật: recipe xuất hiện, công trình được phép đặt hoặc ability trở nên khả dụng. Progression vì thế không chỉ là thanh XP; nó là nguồn quyết định mà nhiều hệ thống cùng đọc nhưng không được tự ý sửa.
+
+**Sau khóa học:** Người học xây được progression có level, điểm, tech unlock, điều kiện recipe/build và UI phản ánh đúng state owner.
 
 **Độ phức tạp:** **26 điểm** (S4/N3/A1/U5/C5/R3/I5) — **8 bài giảng**.
 
@@ -195,7 +217,9 @@ Một bài chỉ được đánh dấu hoàn chỉnh sau chuỗi `DESIGNED → S
 
 ## Khoá 31 — Thế giới và nhịp sống
 
-**Người học làm được gì:** Người học tạo được world scheduler có ngày đêm, weather, biome/spawn data, respawn checkpoint và actor reconciliation sau load.
+Ngay cả khi người chơi đứng yên, một thế giới sống vẫn phải tiếp tục: ánh sáng đổi, thời tiết trôi, quần thể được bù và những entity ngoài tầm nhìn vẫn giữ identity của mình. Nếu tất cả chỉ nằm trong actor đang spawn, thế giới sẽ quên chính nó mỗi lần stream hoặc load.
+
+**Sau khóa học:** Người học tạo được world scheduler có ngày đêm, weather, biome/spawn data, respawn checkpoint và actor reconciliation sau load.
 
 **Độ phức tạp:** **30 điểm** (S5/N4/A4/U3/C5/R4/I5) — **10 bài giảng**.
 
@@ -214,7 +238,9 @@ Một bài chỉ được đánh dấu hoàn chỉnh sau chuỗi `DESIGNED → S
 
 ## Khoá 32 — Hang động và trùm
 
-**Người học làm được gì:** Người học tạo được dungeon run có cổng vào, room generation, encounter/boss state, reward claim một lần và UI tiến trình.
+Qua một cánh cổng, người chơi bước vào một run có đầu, giữa và kết thúc. Hệ thống phải nhớ seed, căn phòng hiện tại, encounter nào đã clear, boss đang ở phase nào và phần thưởng đã được claim chưa — kể cả khi có người rời rồi quay lại.
+
+**Sau khóa học:** Người học tạo được dungeon run có cổng vào, room generation, encounter/boss state, reward claim một lần và UI tiến trình.
 
 **Độ phức tạp:** **31 điểm** (S5/N4/A4/U4/C5/R4/I5) — **10 bài giảng**.
 
@@ -233,7 +259,9 @@ Một bài chỉ được đánh dấu hoàn chỉnh sau chuỗi `DESIGNED → S
 
 ## Khoá 33 — Lưu trữ
 
-**Người học làm được gì:** Người học thiết kế persistence generic với owner codec, chunk schema, missing-chunk recovery, migration và restart-safe state mà Persistence không biết feature names.
+Nút Save thường chỉ mất một khoảnh khắc, nhưng lời hứa của nó kéo dài qua restart, phiên bản schema mới và cả lần ghi dở vì crash. Persistence không thể giữ lời bằng cách biết hết mọi field gameplay; mỗi owner phải tự nói state nào của mình đáng sống tiếp.
+
+**Sau khóa học:** Người học thiết kế persistence generic với owner codec, chunk schema, missing-chunk recovery, migration và restart-safe state mà Persistence không cần biết tên từng feature.
 
 **Độ phức tạp:** **28 điểm** (S5/N5/A1/U3/C4/R5/I5) — **7 bài giảng**.
 
@@ -249,7 +277,9 @@ Một bài chỉ được đánh dấu hoàn chỉnh sau chuỗi `DESIGNED → S
 
 ## Khoá 34 — Nhiều người chơi
 
-**Người học làm được gì:** Người học biến các intent gameplay thành server-authoritative multiplayer có replication, ownership, session flow, late join và rejection quan sát được.
+Hai người có thể cùng nhìn một Pal, nhưng điều đó không trao cho cả hai cùng quyền đổi HP hay roster của nó. Multiplayer bắt đầu ở khác biệt giữa quyền quan sát và quyền quyết định; session, replication và late join chỉ hoạt động ổn khi khác biệt ấy được giữ cho từng state.
+
+**Sau khóa học:** Người học biến các intent gameplay thành server-authoritative multiplayer có replication, ownership, session flow, late join và rejection quan sát được.
 
 **Độ phức tạp:** **29 điểm** (S5/N5/A2/U4/C3/R5/I5) — **9 bài giảng**.
 
@@ -267,7 +297,9 @@ Một bài chỉ được đánh dấu hoàn chỉnh sau chuỗi `DESIGNED → S
 
 ## Khoá 35 — Nhân giống và kinh tế
 
-**Người học làm được gì:** Người học xây được vòng lặp breeding–egg–hatch và economy–shop–trade với parent data, công thức di truyền, claim state và authority rõ ràng.
+Đặt hai Pal vào farm, chờ một quả trứng rồi mang kết quả đi bán trông như hai hệ thống tách biệt. Thực ra cả hai cùng chạm stable identity, thời gian, dữ liệu nguồn, giao dịch một lần và câu hỏi ai được sở hữu kết quả. Đây là nơi một công thức bị đoán có thể làm lệch cả vòng kinh tế.
+
+**Sau khóa học:** Người học xây được vòng lặp breeding–egg–hatch và economy–shop–trade với parent data, công thức di truyền, claim state và authority rõ ràng.
 
 **Độ phức tạp:** **32 điểm** (S5/N4/A3/U5/C5/R5/I5) — **11 bài giảng**.
 
@@ -287,6 +319,8 @@ Một bài chỉ được đánh dấu hoàn chỉnh sau chuỗi `DESIGNED → S
 
 ## Bảng thứ tự phụ thuộc giữa 15 khoá
 
+Các khóa không xếp theo độ khó từ thấp tới cao. Chúng xếp theo câu hỏi nào phải có đáp án trước để câu hỏi sau không phải giả định state hoặc contract chưa tồn tại.
+
 ```text
 21 → 22 → 23 → 24
                  ↘
@@ -299,4 +333,4 @@ Một bài chỉ được đánh dấu hoàn chỉnh sau chuỗi `DESIGNED → S
 33 là nền persistence cho 27, 29, 31, 32, 35
 ```
 
-Đây là thứ tự của **câu hỏi và contract**, không phải thứ tự PR. Một implementation có thể mở nhiều feature cùng lúc, nhưng bài giảng không được dùng state, AI, UI hoặc message channel trước khi bài trước tạo ra nhu cầu của nó.
+Đây là thứ tự của **câu hỏi và contract**, không phải thứ tự PR. Một implementation có thể mở nhiều feature trong cùng lát cắt, nhưng bài giảng không được lén dùng state, AI, UI hoặc message channel trước khi bài trước tạo ra nhu cầu của nó. Học theo thứ tự này, người đọc không chỉ biết cách dựng mười lăm hệ thống; họ thấy mỗi ranh giới được sinh ra từ một va chạm đã gặp trên đường đi.

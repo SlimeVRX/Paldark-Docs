@@ -1,12 +1,12 @@
 # Chương 26 — Bắt giữ
 
-Một creature đang tấn công người chơi là một mối đe dọa. Sau một cú đánh vừa đủ, cùng creature đó có thể trở thành thứ người chơi mang về, đặt vào đội hoặc giao cho một công việc. Cảm giác của bắt giữ nằm ở cú chuyển này: không chỉ thắng trận, mà biến một cá thể ngoài thế giới thành “con của mình”.
+Vài giây trước, creature trước mặt còn lao vào người chơi. Sau một chuỗi đòn vừa đủ và một lần ném đúng lúc, cũng cá thể ấy có thể xuất hiện trong roster, được gọi ra chiến đấu hoặc giao việc ở căn cứ. Bắt giữ hấp dẫn ở cú đổi nghĩa đó: ta không chỉ loại bỏ một mối đe dọa, mà biến một sinh vật ngoài thế giới thành “con của mình”.
 
-Đây là hệ thống chạm nhiều boundary nhất trong các chương đầu. Nó đọc state của mục tiêu, dùng item từ inventory, tạo entity bền và đưa entity vào roster hoặc storage. Vì thế Capture không được include Combat, Health, Inventory hay Companion. Nó chỉ làm việc qua interface lõi và message contract.
+Khoảnh khắc ấy nhìn liền mạch, nhưng nó đi qua nhiều boundary nhất trong các chương đầu. Capture phải đọc state của mục tiêu, dùng item từ Inventory, tạo entity bền rồi đề nghị đưa entity vào roster hoặc storage. Chính vì chạm nhiều hệ thống, nó càng không được include Combat, Health, Inventory hay Companion. Mọi bước phải đi qua interface lõi và message contract để một thành công không trở thành bốn owner cùng sửa state.
 
 ## 26.1 — Vì sao hệ thống này tồn tại
 
-Bắt giữ nối combat với collection. Người chơi làm yếu mục tiêu, chọn sphere phù hợp, ném vào đúng thời điểm và chờ một kết quả chưa chắc chắn. Thất bại không xóa target khỏi thế giới; thành công tạo ra một identity mới có thể được dùng ở các chương sau.
+Bắt giữ nối combat với collection bằng một khoảng chờ có rủi ro. Người chơi làm yếu mục tiêu, chọn sphere phù hợp, ném vào đúng thời điểm rồi chờ một kết quả chưa chắc chắn. Nếu thất bại, target không tự biến mất chỉ vì animation đã chạy. Nếu thành công, kết quả không thể dừng ở một dòng UI; nó phải tạo ra identity mới để các chương sau còn dùng được.
 
 `CaptureRateCorrect` trong `PalCharacterParameterDatabaseRow.h` cho thấy hệ số điều chỉnh tỷ lệ bắt nằm ở tầng definition của loài. Nó chứng minh hình dạng input của bài toán, không chứng minh công thức Palworld gốc. Paldark phải giữ hệ số trong data, còn công thức và thứ tự modifier là contract cần kiểm chứng riêng.
 
@@ -20,7 +20,7 @@ Bắt giữ nối combat với collection. Người chơi làm yếu mục tiêu
 - `F-020` — Kết quả capture.
 - `F-021` — Tạo creature instance.
 
-`F-017` cần đọc HP hiện tại nhưng không được đọc field private của Health. Capture gửi query tới `Paldark.Core.HealthRead`; Health owner trả `FPaldarkHealthSnapshot`. `F-021` cần entity identity nhưng không tự sinh ID tùy ý; nó gọi `Paldark.Core.EntityIdentity.Create` với `FPaldarkEntityCreateContext`. Item sphere được yêu cầu qua `Paldark.Core.ItemRead`/Inventory transaction, không include Inventory.
+Chuỗi mã catalog cũng chính là chuỗi phụ thuộc của một lần thử. `F-017` cần HP hiện tại nhưng không được đọc field private của Health; Capture query `Paldark.Core.HealthRead` và nhận `FPaldarkHealthSnapshot`. `F-021` cần entity identity nhưng không tự sinh ID tùy ý; nó gọi `Paldark.Core.EntityIdentity.Create` với `FPaldarkEntityCreateContext`. Sphere đi qua `Paldark.Core.ItemRead`/Inventory transaction, không qua include Inventory.
 
 ## 26.3 — Trạng thái và chủ sở hữu
 
@@ -34,11 +34,11 @@ Bắt giữ nối combat với collection. Người chơi làm yếu mục tiêu
 | Creature entity mới | `Creature/Entity` owner | roster, storage, companion, save | `Paldark.Core.EntityIdentity.Create(FPaldarkEntityCreateContext)` và entity request |
 | Roster/storage relation | party hoặc storage owner | companion, UI, save | `Paldark.Capture.Event.EntityCreated` rồi transfer request |
 
-Capture không ghi HP, không tự trừ sphere trước khi authority chấp nhận, và không tự sở hữu roster. Một thất bại có thể vẫn tiêu item tùy policy; policy đó phải là data/contract, không được ẩn trong UI.
+Đọc bảng theo thời gian sẽ thấy mỗi bước đổi owner: Health cung cấp snapshot, Capture resolve attempt, Inventory commit sphere, Entity tạo identity, rồi party/storage nhận relation. Capture không ghi HP, không tự trừ sphere trước khi authority chấp nhận và không tự sở hữu roster. Một thất bại có thể vẫn tiêu item tùy policy; policy ấy phải nằm trong data/contract, không được ẩn trong UI.
 
 ## 26.4 — Hợp đồng dữ liệu
 
-Mảnh do Capture định nghĩa là `Capture.Modifier`. Nó chứa hệ số definition-level và policy sphere; không chứa HP hiện tại hay entity id.
+Data của Capture chỉ nên trả lời mục tiêu này và sphere policy tác động thế nào lên phép thử. `Capture.Modifier` vì thế chứa hệ số definition-level cùng policy sphere; nó không chụp HP hiện tại hay entity id vào definition tĩnh.
 
 ```cpp
 USTRUCT()
@@ -74,7 +74,7 @@ Capture khai báo chunk `Paldark.Capture`, schema `1`, chỉ cho dữ liệu c�
 
 ## 26.5 — Giao diện lập trình
 
-Component là `UCaptureComponent`, gắn vào requester. Nó dùng ba interface lõi: `Paldark.Core.HealthRead`, `Paldark.Core.ItemRead`, `Paldark.Core.EntityIdentity`. Không có include sang Combat, Inventory, Companion hay Health.
+Từ phía requester, API phải giữ được toàn bộ chuỗi ấy trong một correlation mà không phơi implementation. `UCaptureComponent` dùng ba interface lõi: `Paldark.Core.HealthRead`, `Paldark.Core.ItemRead`, `Paldark.Core.EntityIdentity`. Không có include sang Combat, Inventory, Companion hay Health.
 
 ```cpp
 UFUNCTION()
@@ -118,7 +118,7 @@ Kênh nghe:
 
 ## 26.6 — Quyền hạn và đồng bộ
 
-Client tự ngắm, hiển thị sphere trajectory và preview probability nếu contract cho phép. Server quyết định target hợp lệ, HP snapshot dùng để resolve, sphere ownership, cooldown, probability result và entity creation. Client không được tự tạo creature entity hay tự chuyển item.
+Người chơi cần thấy quỹ đạo và phản hồi ngay khi ném, nhưng không thể tự quyết rằng target đã thuộc về mình. Client tự ngắm, hiển thị sphere trajectory và preview probability nếu contract cho phép. Server quyết định target hợp lệ, HP snapshot dùng để resolve, sphere ownership, cooldown, probability result và entity creation. Client không tự tạo creature entity hay tự chuyển item.
 
 Kết quả capture, target state, sphere transaction và stable entity id replicate cho client liên quan. Preview arc, shake, sound và UI counter tạm thời chỉ là presentation. Definition và `CaptureRateCorrect` là static data, không cần gửi nguyên payload qua mạng.
 
@@ -126,7 +126,7 @@ Nếu thành công, thứ tự contract là: Capture accepted → Inventory remo
 
 ## 26.7 — Log, console command, và cách biết là chạy đúng
 
-Dùng `LogPaldarkCapture`. Chuỗi log phải nối được query HP, authority decision, sphere transaction và entity creation bằng một `corr`. Health mutation trước đó có correlation khác hoặc cùng correlation tùy request chain, nhưng không được Capture ghi như thể nó sở hữu HP.
+Một animation rung rồi bật ra không đủ để giải thích vì sao lần bắt thất bại. `LogPaldarkCapture` phải nối được query HP, authority decision, sphere transaction và entity creation bằng một `corr`. Health mutation trước đó có correlation khác hoặc cùng correlation tùy request chain, nhưng Capture không được ghi như thể nó sở hữu HP.
 
 Command:
 
@@ -136,13 +136,13 @@ Command:
 - `Paldark.Pal.SpawnFromDefinition` — command thật để tạo target fixture trong PaldarkLab.
 - `Paldark.Inventory.List` — command thật để kiểm sphere/entity transfer.
 
-Test đúng: setup target có definition và HP biết trước; status đọc `rateCorrect`/HP; trigger capture; lọc log thấy request → decision → item transaction → entity creation hoặc rejection. Thành công phải có stable instance id; thất bại phải giữ target theo policy và chỉ đổi inventory nếu policy nói vậy.
+Test đúng bắt đầu bằng target có definition và HP biết trước; status phải đọc được `rateCorrect`/HP; sau trigger, log phải kể được request → decision → item transaction → entity creation hoặc rejection. Thành công phải kết thúc bằng stable instance id. Thất bại phải giữ target theo policy và chỉ đổi Inventory nếu policy nói vậy.
 
 ---
 
 ## 26.8 — Slice native đã triển khai
 
-Slice native tách thành hai Game Features. `Creature` là owner của
+Phần contract trên cho ta biết thứ tự đúng; slice native dùng hai Game Features để chứng minh thứ tự ấy không chỉ nằm trên giấy. `Creature` là owner của
 `FPaldarkEntityId`, pending creation, roster và replicated transfer.
 `Capture` chỉ sở hữu intent, attempt và result; nó không ghi HP, quantity,
 slot hay roster. Capture tìm capability bằng `IPaldarkHealthRead`,
@@ -179,5 +179,7 @@ QA fixture chỉ được bật bằng `-PaldarkCaptureQA`; sphere fixture đư�
 phần threshold, sphere before/after, entity id, roster transfer, target còn
 sống ở nhánh fail và `authority=false` ở client. Không chấp nhận readiness log
 thay cho chuỗi transaction trên.
+
+Một capture thành công mới chỉ tạo ra creature entity và relation. Để cá thể ấy trở thành người bạn thật sự có mặt bên người chơi, ta còn phải giải một bài toán khác: identity phải sống ngay cả khi actor representation chưa được spawn. Đó là điểm bắt đầu của Chương 27.
 
 **Bằng chứng cho chương này.** `F-015` tới `F-021`, `CaptureRateCorrect`, `FCaptureResult` ba field, `FailedCaptureType` và `FPalInstanceID` là mã/field được ghi trong catalog và whitepaper (EXTRACTED/REFERENCE). Công thức probability, transaction order runtime và owner Palworld cụ thể là UNKNOWN. `Paldark.Pal.SpawnFromDefinition` và `Paldark.Inventory.List` là command OBSERVED; fragment, interfaces, channels, save chunk và owner table là thiết kế Paldark INFERRED bám Chương 14 và L8.

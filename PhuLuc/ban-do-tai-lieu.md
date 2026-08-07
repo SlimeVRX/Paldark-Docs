@@ -1,5 +1,9 @@
 # Bản đồ tài liệu tham chiếu Paldark, chương 21–35
 
+Khi một hệ thống còn thiếu, phản xạ tự nhiên là tìm khóa học có tên gần nhất rồi bắt đầu từ đó. Nhưng tên bài chỉ cho biết người dạy đã nói về chủ đề; nó chưa cho biết ta có source để đọc, chỉ có Blueprint binary, hay đơn thuần có một DataTable gợi ý scope. Bản đồ này giúp người đọc không phải lặp lại cuộc tìm kiếm ấy cho từng chương.
+
+Mười lăm phần dưới đây đi cùng Chương 21–35. Mỗi phần chỉ ra đường đọc có giá trị nhất, loại bằng chứng KYWorld thực sự cung cấp và khoảng trống mà tài liệu tham chiếu vẫn chưa lấp được. Đây là bản đồ để khảo sát trước khi thiết kế, không phải danh sách code được phép copy.
+
 > Phạm vi: các catalog `course.yaml` trong 13 thư mục có catalog thực tế (`02`, `05`, `07`–`17`; không có `01`). Catalog được parse bằng script; sau đó chọn lọc theo chủ đề và đọc các bài có điểm khớp cao. Đường dẫn `document` là tương đối với thư mục khoá học. `source_paths` là tương đối với thư mục source được ghi trong catalog; riêng `02.Palworld` là tương đối với `02.Palworld/Source`.
 >
 > Nhãn KYWorld:
@@ -9,6 +13,8 @@
 > - **Thiếu/không thấy**: catalog hoặc `02.Palworld/Source` không có triển khai tương ứng.
 >
 > Kiểm kê source/commit và các bất thường của course nằm ở [Phụ lục D](D-kiem-ke-13-khoa-hoc.md). Khoá 12/14/15/16 là doc-only trong workspace hiện tại.
+
+Với quy ước ấy, ta có thể đi qua từng hệ thống mà không đánh đồng ba câu rất khác nhau: “đã có bài giảng”, “đã có asset” và “đã đọc được implementation”.
 
 ## Chương 21 — Di chuyển và input
 
@@ -185,6 +191,8 @@
 
 ## Trả lời ba câu hỏi
 
+Sau khi đi hết mười lăm hệ thống, ba câu hỏi lặp lại nhiều nhất có thể được trả lời trực tiếp. Chúng cũng là ba lối tắt hữu ích khi bạn chưa cần đọc toàn bộ các bảng phía trên.
+
 ### 1. KYWorld có source proof gì, và gì chỉ là Blueprint/data/asset?
 
 **Có C++ source đọc được trong `02.Palworld/Source`:**
@@ -242,7 +250,8 @@ Các bài này bổ sung điều mà kiến trúc Paldark phải làm rõ khi tr
 
 ## Ghi chú độ tin cậy
 
-- `02.Palworld` có source paths cụ thể nên là bản đồ scope/implementation candidate tốt nhất; C++ đọc được và Blueprint binary phải được phân biệt.
-- Catalog của nhiều khoá Udemy chỉ có `document`, không có `source_paths`; các dòng đó là bài học tham chiếu, không phải bằng chứng source đã được snapshot.
-- “Blueprint asset” ở đây chỉ nghĩa là asset được catalog dẫn tới; không suy diễn graph, nhánh logic hoặc runtime result đã được đọc/kiểm thử.
-- Chương 33 của Paldark cần codec owner-owned riêng; không dùng GameInstance persistence của KYWorld làm bằng chứng cho kiến trúc đó.
+`02.Palworld` có đường source cụ thể nên là bản đồ scope và implementation candidate tốt nhất trong tập nguồn này. Dù vậy, C++ đọc được vẫn phải đứng riêng với Blueprint binary: cùng nằm trong một snapshot không có nghĩa cùng mức độ quan sát.
+
+Nhiều catalog Udemy chỉ khai báo `document` mà không có `source_paths`. Các dòng tương ứng là bài học tham chiếu, không phải bằng chứng source đã được snapshot. Tương tự, nhãn “Blueprint asset” chỉ nói asset được catalog dẫn tới; nó không cho phép suy diễn graph, nhánh logic hay runtime result đã được đọc và kiểm thử.
+
+Ranh giới ấy đặc biệt quan trọng ở Chương 33. GameInstance persistence của KYWorld có thể gợi ý một flow prototype, nhưng không chứng minh kiến trúc codec do owner sở hữu mà Paldark cần. Bản đồ hoàn thành nhiệm vụ khi nó đưa người đọc tới đúng nguồn và đúng câu hỏi — không phải khi nó khiến mọi ô trông như đã có đáp án.

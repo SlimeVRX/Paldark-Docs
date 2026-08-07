@@ -4,15 +4,15 @@
 > Các mục phía dưới giữ lại ý định thiết kế ban đầu, nhưng mọi quyết định
 > runtime phải đọc theo phần “Từng tin là → Thực tế cho thấy → Quyết định mới”.
 
-Một hòn đá chỉ trở thành tài nguyên khi người chơi có thể nhận ra nó, tới gần, làm một hành động và thấy thứ đó đi vào hành trình của mình. Cảm giác “tôi nhặt được thứ này” là điểm nối đầu tiên giữa thế giới và túi đồ; nếu tương tác không rõ, mọi hệ thống phía sau đều trở thành menu rời rạc.
+Bạn đi tới một hòn đá sáng, nhìn vào nó và thấy lời nhắc hiện lên. Một nút bấm sau đó, hòn đá đổi trạng thái và trò chơi cho biết bạn vừa nhận được thứ gì. Chỉ vài giây, nhưng đó là lần đầu thế giới đáp lại chủ ý của người chơi. Trước khoảnh khắc ấy, hòn đá chỉ là cảnh nền; sau khoảnh khắc ấy, nó là tài nguyên và là đầu vào cho một hành trình dài hơn.
 
-Chương này không làm inventory thay chương 23. Nó làm phần trước inventory: chọn target, kiểm tra range/permission, và phát ra một yêu cầu thu thập hoặc tương tác. Kết quả thành công mới tạo item instance hoặc gửi transaction cho container owner.
+Cảm giác “tôi nhặt được thứ này” là điểm nối đầu tiên giữa thế giới với túi đồ. Nếu target chập chờn, range mơ hồ hoặc nút bấm chỉ đổi UI mà không đổi state, mọi hệ thống phía sau sẽ giống những menu rời rạc. Chương này chỉ làm phần trước inventory: chọn target, kiểm tra range/permission và phát ra yêu cầu thu thập hoặc tương tác. Khi request thành công, owner phù hợp mới tạo item instance hoặc thực hiện transaction vào container.
 
 ## 22.1 — Vì sao hệ thống này tồn tại
 
-Tương tác cho người chơi một ngôn ngữ đơn giản: nhìn vào vật thể, bấm nút, nhận phản hồi. Thu thập biến địa hình thành nguồn lực; inspect cho người chơi biết mình đang nhìn gì; interact với station mở đường sang crafting hoặc building mà không cho Interaction biết code của những hệ thống đó.
+Tương tác cho người chơi một ngôn ngữ rất ngắn: nhìn, bấm, nhận phản hồi. Cùng một ngôn ngữ đó có thể biến địa hình thành nguồn lực, cho biết một vật là gì, mở một station hoặc khởi đầu việc đặt công trình. Sự thống nhất nằm ở cử chỉ của người chơi, không có nghĩa mọi target phải dùng chung một khối logic.
 
-Điểm khó nằm ở chỗ target có thể là resource node, item rơi, station, chest hoặc actor khác. Hệ thống này cần một contract chung cho “có thể tương tác”, nhưng không được biến mọi actor thành một lớp khổng lồ. Component gắn ngoài và message giúp từng feature giữ phần state của mình.
+Target có thể là resource node, item rơi, station, chest hoặc actor khác. Nếu gom mọi trường hợp vào một lớp “interactable” khổng lồ, nút `E` sẽ vô tình trở thành chủ của cả thế giới. Ta chỉ cần một contract chung cho câu “vật này có nhận tương tác loại này không?”. Component gắn ngoài và message giữ ngôn ngữ chung, trong khi từng feature vẫn sở hữu state và hậu quả của mình.
 
 ## 22.2 — Nó chạm những gì trong catalog
 
@@ -23,7 +23,7 @@ Tương tác cho người chơi một ngôn ngữ đơn giản: nhìn vào vật
 - `F-043` — Recipe definition, khi tương tác với station để mở recipe context.
 - `F-063` — Commit structure, ở mặt tương tác với công trình đã tồn tại.
 
-`F-008` chỉ được chạm ở phần target discovery; Interaction không sở hữu AI hay encounter state. Tương tự, nó không tự thêm item vào inventory bằng cách gọi `UInventoryComponent` của chương 23. Nó gửi request qua interface lõi hoặc channel đã công bố.
+Nhìn vào danh sách, có thể thấy Interaction đứng ở nhiều cửa ra vào nhưng không sở hữu căn phòng nào phía sau. `F-008` chỉ được chạm ở target discovery; Interaction không sở hữu AI hay encounter state. Tương tự, nó không tự thêm item vào inventory bằng cách gọi `UInventoryComponent` của chương 23. Nó gửi request qua interface lõi hoặc channel đã công bố, rồi chờ owner trả kết quả.
 
 ## 22.3 — Trạng thái và chủ sở hữu
 
@@ -36,11 +36,11 @@ Tương tác cho người chơi một ngôn ngữ đơn giản: nhìn vào vật
 | Transaction chuyển item | `Inventory` | UI, item drop, station | `Paldark.Inventory.Request.Transfer` |
 | Context station đang mở | feature station tương ứng | UI và crafting | `Paldark.Interaction.Event.ContextOpened` |
 
-Interaction chỉ làm chủ selection/prompt và kết quả validate của request tương tác. Nó không làm chủ số lượng resource, item instance hay container quantity. Đây là cách tránh việc một nút “E” trở thành quyền ghi của mọi hệ thống.
+Một lần nhặt nhìn như một mutation duy nhất, nhưng bảng cho thấy ít nhất ba sự thật khác nhau: người chơi đang nhìn target nào, node còn bao nhiêu resource và container đang giữ bao nhiêu item. Interaction chỉ làm chủ selection/prompt cùng kết quả validate của request. Nó không làm chủ resource amount, item instance hay container quantity. Nhờ vậy nút `E` là điểm phát intent, không phải quyền ghi của mọi hệ thống.
 
 ## 22.4 — Hợp đồng dữ liệu
 
-Loại mảnh do hệ thống định nghĩa là `Interaction.Interactable`. Nó mô tả một definition có thể nhận loại tương tác nào, range và channel kết quả; nó không chứa state hiện tại của node hoặc item.
+Từ ranh giới ấy, data contract trở nên nhỏ hơn nhiều. `Interaction.Interactable` chỉ mô tả một definition có thể nhận loại tương tác nào, range bao nhiêu và trả kết quả qua channel nào. Nó không chứa state hiện tại của node hoặc item, vì hai người chơi cùng nhìn một node không được tạo ra hai bản `remaining quantity` trong fragment tĩnh.
 
 ```cpp
 USTRUCT()
@@ -87,7 +87,7 @@ Interaction không khai báo khối lưu `Paldark.Interaction` cho selection/pro
 
 ## 22.5 — Giao diện lập trình
 
-Component là `UInteractionComponent`, gắn vào player actor; target có thể cung cấp `IInteractableSource` qua component ngoài. Các feature khác không include Interaction để gọi class cụ thể.
+Ở runtime, player cần một chỗ biến focus local thành request, còn target cần một cách công bố capability mà không đổi lớp cơ sở. `UInteractionComponent` gắn vào player actor; target có thể cung cấp `IInteractableSource` qua component ngoài. Các feature khác không include Interaction để gọi class cụ thể.
 
 ```cpp
 USTRUCT()
@@ -140,7 +140,7 @@ Kênh nghe:
 
 ## 22.6 — Quyền hạn và đồng bộ
 
-Client được tự raycast, chọn target gần nhất, hiển thị prompt và phát animation bắt đầu. Server quyết định target có tồn tại, requester có ở trong range, resource còn đủ, item drop còn thuộc quyền pickup và transaction có hợp lệ hay không.
+Khoảnh khắc bấm nút phải phản hồi nhanh, nhưng kết quả không thể dựa vào thế giới mà riêng client đang thấy. Client được tự raycast, chọn target gần nhất, hiển thị prompt và phát animation bắt đầu. Server quyết định target có tồn tại, requester có ở trong range, resource còn đủ, item drop còn thuộc quyền pickup và transaction có hợp lệ hay không.
 
 Target id, accepted result và transaction result cần replicate cho client liên quan. Raycast local, outline, prompt và âm thanh “đang nhìn vào” chỉ là hình ảnh. Không replicate prompt như state gameplay. Nếu client dự đoán pickup, prediction phải bị server sửa lại bằng result, không được tự tạo item instance.
 
@@ -148,7 +148,7 @@ Resource node có thể được dựng lại khi actor unload; stable entity id
 
 ## 22.7 — Log, console command, và cách biết là chạy đúng
 
-Category là `LogPaldarkInteraction`. Dòng log phải cho thấy `target`, `kind`, `range`, `authority`, `result` và correlation. Khi pickup thành công, Interaction log request và Inventory log transaction phải nối cùng `corr`; Interaction không tự log như thể nó đã ghi quantity.
+Để kiểm tra một cú nhặt, ta phải đi theo nó từ ánh nhìn tới mutation cuối, không dừng ở prompt biến mất. Category là `LogPaldarkInteraction`. Dòng log phải cho thấy `target`, `kind`, `range`, `authority`, `result` và correlation. Khi pickup thành công, Interaction log request và Inventory log transaction phải nối cùng `corr`; Interaction không tự log như thể nó đã ghi quantity.
 
 Command:
 
@@ -157,9 +157,11 @@ Command:
 - `Paldark.Interaction.QA.Trigger` — gửi focus/try/harvest/pickup qua public interface.
 - `Paldark.Inventory.List` — command thật để đối chiếu kết quả chuyển vào container.
 
-Một test đúng phải có target ban đầu, input interact, một dòng authority accepted hoặc rejected, và nếu accepted thì có transaction Inventory cùng correlation. Nhặt một item mà chỉ UI đổi, không có item instance hoặc transfer log, là lỗi boundary chứ không phải test pass.
+Một test đúng kể được trọn câu chuyện: có target ban đầu, có input interact, có authority accepted hoặc rejected, và nếu accepted thì có transaction Inventory cùng correlation. Nhặt một item mà chỉ UI đổi, không có item instance hoặc transfer log, là lỗi boundary chứ không phải test pass.
 
 ## 22.8 — Từng tin là → Thực tế cho thấy → Quyết định mới
+
+Phần contract trên là đích đến; slice UE 5.6 cho biết con đường thực tế đã buộc ta sửa giả định nào.
 
 ### Từng tin là
 
@@ -212,6 +214,8 @@ Danh sách QA tối thiểu phải chứng minh riêng:
 4. event và resource state replicate về client;
 5. listen-server limitation được ghi đúng, không gọi đó là dedicated proof.
 
+Những quyết định này giữ nguyên cảm giác ở đầu chương — nhìn, bấm, nhận phản hồi — nhưng đặt mỗi thay đổi vào đúng owner. Event `ResourceId + Quantity` vì thế trở thành cây cầu tự nhiên sang chương kế tiếp: sau khi thế giới đồng ý trao một tài nguyên, túi đồ phải biến kết quả ấy thành thứ người chơi thật sự sở hữu.
+
 ---
 
 **Bằng chứng cho chương này.** Các mã `F-008`, `F-036`, `F-037`, `F-042`, `F-043`, `F-063` là OBSERVED trong catalog Chương 3; `FPalStaticItemDataStruct`, `FPalInstanceID` và taxonomy inventory là EXTRACTED/REFERENCE từ whitepaper. `Paldark.Inventory.Event.TransferAccepted`, `Paldark.Build.Event.StructureReady` và `Paldark.Pal.Event.InstanceAvailable` được dùng lại từ manifest ví dụ ở Chương 16; command `Paldark.Inventory.List` là OBSERVED trong PaldarkLab. Fragment, component, channels, owner table và command Interaction là INFERRED; range, respawn và runtime interaction owner Palworld là UNKNOWN.
@@ -223,3 +227,5 @@ component RPC của Game Feature. Core dispatch tới một handler Interaction 
 nhất trên server; handler đo range từ pawn thật của requester, không tin vị
 trí client gửi. Component Game Feature chỉ đọc input và gửi payload có
 correlation ID.
+
+Đến đây Interaction có thể chứng minh “thế giới đã chấp nhận hành động”. Chương 23 sẽ chứng minh phần còn lại: item đi vào đâu, quantity đổi ở owner nào và vì sao đóng UI rồi mở lại vẫn phải thấy cùng một sự thật.

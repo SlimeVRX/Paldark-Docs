@@ -1,12 +1,12 @@
 # Chương 35 — Nhân giống, cô đặc và kinh tế
 
-Đây là vòng lặp dài hạn: creature dư thừa không còn là đồ bỏ, một cặp parent có thể trở thành kế hoạch, output của căn cứ có thể đổi thành vật phẩm cần thiết, và thương nhân biến scarcity thành lựa chọn. Người chơi không chỉ hỏi “mình có gì?” mà hỏi “mình nên hy sinh gì để có phiên bản tốt hơn?”.
+Đến cuối một vòng chơi dài, câu hỏi của người chơi thay đổi. Họ không còn chỉ hỏi “mình có gì?”, mà bắt đầu hỏi “cặp nào nên được giữ làm parent, bản sao nào có thể hy sinh, output nào nên bán và mình đang tiết kiệm cho điều gì?”. Creature dư thừa có giá trị mới, một cặp parent trở thành kế hoạch, còn merchant biến scarcity thành lựa chọn.
 
-Ba nhánh này liên quan nhưng không phải một owner. Breeding làm chủ farm/job và child result; Condenser làm chủ transaction sacrifice/rank; Economy làm chủ offer/price/stock. Chúng dùng Inventory và Progression qua contract, không tự sửa state của nhau.
+Breeding, Condenser và Economy gặp nhau trong cùng cảm giác đầu tư dài hạn, nhưng không vì thế trở thành một owner. Breeding làm chủ farm/job cùng child result; Condenser làm chủ transaction sacrifice/rank; Economy làm chủ offer/price/stock. Cả ba dùng Inventory và Progression qua contract, không sửa state của nhau chỉ vì cùng xuất hiện trên một màn hình quản lý.
 
 ## 35.1 — Vì sao hệ thống này tồn tại
 
-Breeding cho collection một hướng đi khác capture: đầu tư parent, item, thời gian và combination để chờ child. Condenser cho bản sao dư thừa một giá trị tăng dần. Economy mở đường ra cho resource và đưa scarcity trở lại thành quyết định mua/bán.
+Breeding cho collection một hướng đi khác Capture: đầu tư parent, item, thời gian và combination để chờ child. Condenser khiến bản sao dư thừa có giá trị tăng dần thay vì trở thành rác. Economy mở đường ra cho resource, rồi dùng price và stock đưa scarcity trở lại thành quyết định mua/bán.
 
 `FPalBreedingItemEffectData` có bảy field, `UPalMapObjectBreedFarmModel` có progress, required time, egg capacity và target item ids, còn `FPalCombiUniqueDatabaseRow` ánh xạ parent attributes tới child id. Chúng chứng minh hình dạng bài toán. Bảng combination đầy đủ, trait inheritance và mutation rate vẫn UNKNOWN.
 
@@ -27,7 +27,7 @@ Breeding cho collection một hướng đi khác capture: đầu tư parent, ite
 - `F-118` — Trait inheritance.
 - `F-119` — Condenser rank.
 
-Economy, Breeding và Condenser không được dùng một bảng state chung. Currency/item quantity thuộc Inventory; unlocked access thuộc Progression; mỗi feature chỉ quyết định kết quả thuộc miền của mình.
+Catalog đặt shop, breeding và condenser cạnh nhau vì chúng tạo vòng dài hạn, không phải vì chúng dùng chung state. Currency/item quantity vẫn thuộc Inventory; unlocked access vẫn thuộc Progression; mỗi feature chỉ quyết định kết quả trong miền của mình.
 
 ## 35.3 — Trạng thái và chủ sở hữu
 
@@ -43,11 +43,11 @@ Economy, Breeding và Condenser không được dùng một bảng state chung. 
 | Purchase/sale result | `Economy` transaction owner | Inventory, UI, log | `Paldark.Economy.Request.Buy/Sell` |
 | Player/guild market permission | Guild/Economy policy | merchant validator, UI | permission query |
 
-Breeding không tự trừ feed item; Condenser không tự xóa entity ngoài transaction; Shop không ghi Inventory quantity trực tiếp. Mỗi kết quả liên miền là một request/response có correlation.
+Bảng cho thấy mỗi thao tác đều có một điểm không thể hoàn tác nửa chừng. Breeding không tự trừ feed item; Condenser không tự xóa entity ngoài transaction; Shop không ghi Inventory quantity trực tiếp. Mọi kết quả liên miền phải là request/response có correlation để failure không để lại child, rank hoặc stock ở trạng thái nửa commit.
 
 ## 35.4 — Hợp đồng dữ liệu
 
-Mảnh Breeding là `Breeding.Farm`. Nó mô tả requirement và result lookup; không chứa parent runtime id hoặc progress hiện tại. Condenser và Economy có definition riêng, tránh nhét ba miền vào một mảnh.
+Data cũng đi theo ranh giới owner. `Breeding.Farm` mô tả requirement và result lookup; parent runtime id cùng progress hiện tại là state. Condenser và Economy có definition riêng, tránh nhét ba miền vào một fragment chỉ vì UI có thể đặt chúng gần nhau.
 
 ```cpp
 USTRUCT()
@@ -87,7 +87,7 @@ Condenser dùng `Condenser.Rank` cho rank definition; Economy dùng `Economy.Off
 
 ## 35.5 — Giao diện lập trình
 
-Components là `UBreedingFarmComponent`, `UCondenserComponent` và `UEconomyMerchantComponent`. Chúng giao tiếp qua core Inventory/Entity/Guild interfaces.
+Ở runtime, ba miền có ba component và ba transaction flow. `UBreedingFarmComponent`, `UCondenserComponent` và `UEconomyMerchantComponent` giao tiếp qua core Inventory/Entity/Guild interfaces thay vì gọi implementation của nhau.
 
 ```cpp
 UFUNCTION()
@@ -138,7 +138,7 @@ Breeding không include Companion để tạo Pal actor; nó tạo entity/result
 
 ## 35.6 — Quyền hạn và đồng bộ
 
-Server quyết định parent ownership, combination result, progress, item consumption, egg/child identity, sacrifice list, rank mutation, offer price/stock và buy/sell transaction. Client được chọn parent, xem preview và gửi intent; không tự kết luận mutation.
+Các màn hình chọn parent, sacrifice hay offer đều có thể preview ngay, nhưng kết quả cuối phải đi qua authority. Server quyết định parent ownership, combination result, progress, item consumption, egg/child identity, sacrifice list, rank mutation, offer price/stock và buy/sell transaction. Client chọn, xem trước rồi gửi intent; nó không tự kết luận mutation.
 
 Breeding progress, result id, condenser rank, offer snapshot và transaction result replicate tới client liên quan. Static combination/offer definitions đọc từ registry. Farm mesh, incubating VFX, merchant animation và UI countdown là presentation.
 
@@ -146,7 +146,7 @@ Nếu farm chạy offline, dùng checkpoint/last simulation time như Work; chí
 
 ## 35.7 — Log, console command, và cách biết là chạy đúng
 
-Dùng `LogPaldarkBreeding`, `LogPaldarkCondenser` và `LogPaldarkEconomy`. Mỗi transaction ghi stable ids, item/entity before/after, offer/rank, authority và `corr`. Parent selection log không được giả vờ đã tạo child.
+Vì các vòng này dài và có sacrifice, log phải cho phép truy lại chính xác thứ gì đã bị tiêu và thứ gì được tạo. Dùng `LogPaldarkBreeding`, `LogPaldarkCondenser` và `LogPaldarkEconomy`; mỗi transaction ghi stable ids, item/entity before/after, offer/rank, authority cùng `corr`. Parent selection log không được giả vờ child đã tồn tại.
 
 Command:
 
@@ -157,7 +157,7 @@ Command:
 - `Paldark.Economy.QA.Setup`
 - `Paldark.Economy.Status`
 
-Test đúng: assign parent và item, reconcile farm, claim result một lần; thử combo thiếu row; condense với duplicate id hoặc target trong sacrifice list; mua/bán và kiểm Inventory delta; refresh offer rồi kiểm stock/price owner. Không được có duplicate child, mất item nửa transaction hay rank tăng mà sacrifice chưa commit.
+Test đúng đi qua các nhánh dễ mất tài sản nhất: assign parent và item, reconcile farm rồi claim đúng một lần; thử combo thiếu row; condense với duplicate id hoặc target nằm trong sacrifice list; mua/bán và đối chiếu Inventory delta; refresh offer rồi kiểm stock/price owner. Không được có duplicate child, mất item nửa transaction hay rank tăng trước khi sacrifice commit.
 
 ---
 
@@ -165,7 +165,7 @@ Test đúng: assign parent và item, reconcile farm, claim result một lần; t
 
 ## 35.8 — Native slice và giới hạn bằng chứng
 
-Chapter 35 vẫn tách thành ba Game Feature độc lập: `Breeding`, `Condenser` và
+Implementation giữ đúng phép tách đã đặt ở đầu chương. Chương 35 vẫn có ba Game Feature độc lập: `Breeding`, `Condenser` và
 `Economy`, không có aggregate state chung. Economy đã được nghiệm thu ở #152.
 Breeding và Condenser nay có QA state trong subsystem, nhưng chưa có offline
 catch-up. Breeding và Condenser đã có owner codec schema 1: Breeding lưu farm,
@@ -194,3 +194,5 @@ Mỗi dòng log evidence phải đối chiếu với code sinh log trong:
 Không có numeric state nào được gọi là evidence nếu không truy được về member
 state hoặc Core owner API. Các feature không include Inventory, Companion,
 Progression, Creature, Guild hoặc Economy implementation headers.
+
+Đến đây vòng chơi đã đi từ bước chân đầu tiên tới những quyết định kéo dài qua nhiều phiên và nhiều người chơi. Điều giữ mười lăm hệ thống thành một cuốn sách — cũng là điều giữ chúng thành một game — không phải chúng dùng cùng class, mà là mỗi cảm giác đều được lần ngược tới đúng state, đúng owner, đúng contract và một chuỗi bằng chứng có thể kiểm lại.

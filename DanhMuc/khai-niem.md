@@ -1,6 +1,10 @@
 # Danh mục khái niệm sống
 
-Danh mục này được rút từ mục 3–5 của các chương 21–35. Tên trong đây là contract dùng chung; một feature không được tự tạo biến thể tên nếu khái niệm đã có.
+Trong một codebase nhỏ, hai người có thể gọi cùng một thứ bằng hai cái tên rồi sửa cho nhau qua một cuộc trò chuyện. Khi hàng chục feature và nhiều agent cùng làm việc, sự lệch nghĩa ấy đi thẳng vào API, save data và log. Đến lúc phát hiện ra, “entity”, “actor” hay “owner” có thể đã mang ba nghĩa khác nhau ở ba nơi.
+
+Danh mục này ngăn sự trôi nghĩa đó. Nó được rút từ mục 3–5 của các chương 21–35 và giữ những contract dùng chung của Paldark. Khi một khái niệm đã có mặt ở đây, feature mới phải dùng lại đúng tên và ranh giới của nó, thay vì tạo một biến thể gần giống.
+
+Đừng chỉ đọc cột “Nghĩa” như một định nghĩa từ điển. Cột “Chủ/nguồn” cho biết nơi có quyền duy trì khái niệm; chính ranh giới ấy quyết định một module được phép làm gì với dữ liệu mang tên đó.
 
 | Khái niệm | Nghĩa và ranh giới | Chủ/nguồn |
 |---|---|---|
@@ -41,4 +45,6 @@ Danh mục này được rút từ mục 3–5 của các chương 21–35. Tên
 
 ## Quy tắc ID và tên
 
-Không dùng `FCreatureInstanceId` và không dùng `FGuid` trần cho entity reference trong API công khai. `FGuid` chỉ còn xuất hiện bên trong wrapper hoặc ở trường correlation được contract yêu cầu. Interface, event và result channel không được dùng lẫn hình dạng tên.
+Một ID có thể trông như chi tiết cú pháp, nhưng nó quyết định một tham chiếu còn sống được bao lâu. Vì vậy API công khai không dùng `FCreatureInstanceId` và cũng không để lộ `FGuid` trần cho entity reference. `FGuid` chỉ xuất hiện bên trong wrapper hoặc ở trường correlation mà contract yêu cầu; interface, event và result channel cũng phải giữ riêng hình dạng tên của mình.
+
+Quy tắc này khiến người đọc code nhận ra ngay mình đang cầm identity bền vững, một yêu cầu bất đồng bộ hay kết quả của mutation. Tên gọi, ở đây, là lớp kiểm tra kiến trúc đầu tiên.

@@ -8,6 +8,10 @@
 >
 > **Nguyên tắc bắt buộc:** người test chỉ mở game, dùng bàn phím/chuột và quan sát gameplay. Không dùng command line, console, tag, correlation ID hay Output Log.
 
+Một build có thể compile, spawn đúng actor và ghi đủ log, nhưng vẫn thất bại ngay trước mặt người chơi: HUD bảo nhấn một phím mà input context đang hiểu thành việc khác; Cầu Pal rời tay nhưng rơi trước tâm ngắm; Pal được summon nhưng đứng yên vì đường navigation trên map Entry không có và fallback chưa được dùng. Human Gate tồn tại để bắt đúng khoảng cách giữa “hệ thống có code” và “người chơi làm được trọn một việc”.
+
+Chương này là kịch bản bàn giao thật của ADR-001. Nó giữ cả contract lúc giao test, bằng chứng người chơi đã trả về và các regression được phát hiện sau đó. Vì vậy cần đọc trạng thái theo mốc thời gian: kết quả `1/1 USER_VERIFIED` xác nhận spine Capture → Work output; nó không tự xóa những lỗi animation/input được ghi riêng để sửa và retest.
+
 ## 43.1 — Human Gate là gì?
 
 Human Gate là lần người thật xác nhận điều người chơi nhìn thấy và điều khiển được. Agent chịu trách nhiệm code, compile, dữ liệu và chẩn đoán kỹ thuật. Soliz chỉ cần:
@@ -31,9 +35,11 @@ Chuỗi cần nghiệm thu:
 
 **Kết quả runtime 2026-08-05: ADR-001 = 1/1 USER_VERIFIED.** Người chơi đã quan sát Pal tự nhận station và biến `Nhiên liệu 1 → 0`, `Ore 0 → 1`. Compile hoặc headless boot không được dùng để tạo kết quả này; đây là bằng chứng gameplay trực tiếp. Những regression animation/input được ghi sau gate vẫn phải sửa và retest riêng.
 
+Điểm quan trọng là chuỗi được xác nhận bằng normal play, không phải từng state được dựng riêng bằng QA command. Nếu Wild Pal đã có sẵn trong roster hoặc Ore được cộng thẳng vào inventory, màn hình cuối có thể giống nhau nhưng contract “bắt Pal để nó làm việc” chưa hề được đi qua.
+
 ## 43.2 — Quyết định input: làm theo Palworld, không đổi phím để né xung đột
 
-Việc bỏ Crafting khỏi phím C chỉ giải quyết triệu chứng tranh input. Nó không biến C thành phím Attack đúng. Palworld dùng input theo ngữ cảnh: một phím có thể làm việc khác trong OnFoot, Build, UI hoặc Mounted, nhưng tại một thời điểm một lần bấm chỉ được resolve thành đúng một command.
+Một bản sửa nhanh có thể chuyển Crafting khỏi C để Attack “hết xung đột”. Nhưng việc bỏ Crafting khỏi phím C chỉ giải quyết triệu chứng tranh input; nó không biến C thành phím Attack đúng. Palworld dùng input theo ngữ cảnh: một phím có thể làm việc khác trong OnFoot, Build, UI hoặc Mounted, nhưng tại một thời điểm một lần bấm chỉ được resolve thành đúng một command.
 
 Contract cho lát cắt này:
 
@@ -54,7 +60,11 @@ Không có phím **G** toàn cục để giao việc. Crafting và Work không �
 
 Player bắt đầu với tay trống. Gậy/Cầu chỉ xuất hiện trên tay sau khi đã được nhặt và người chơi bấm Equip trong túi đồ. Prompt cũng không được hardcode thành “Bấm E” hoặc “Bấm G”. HUD phải lấy key đang active từ Input Action/Mapping Context để sau khi remap, dòng hướng dẫn và hành động thực tế vẫn trùng nhau.
 
+Contract này nối phím vật lý với ý định nhưng không đồng nhất hai thứ. `F` là binding hiện hành cho semantic interaction; Work là quyết định của AI sau khi Pal được đưa tới gần station, không phải một phím toàn cục. Nhờ vậy HUD có thể đổi theo mapping mà domain vẫn nhận đúng intent, và một lần bấm không bị hai context cùng giải nghĩa.
+
 ## 43.3 — Bằng chứng cho contract
+
+Layout input không được chọn từ thói quen của người viết code. Bảng dưới đặt nguồn Palworld hiện hành cạnh implementation local và nguyên tắc Enhanced Input để phân biệt ba loại quyết định: parity tham chiếu được, behavior Paldark đã chứng minh, và adaptation cố ý của vertical slice.
 
 | Luận điểm | Bằng chứng | Phân loại |
 |---|---|---|
@@ -70,7 +80,11 @@ Player bắt đầu với tay trống. Gậy/Cầu chỉ xuất hiện trên tay
 
 Các nguồn hiện hành đủ mạnh để bác bỏ C=Attack và G=AssignWork. Vanilla Palworld có quick-throw Q, nhưng gate này cố ý dùng mô hình equipment-driven đã được người dùng yêu cầu và PaldarkV2 chứng minh: nhặt → Equip → RMB aim → LMB use. Đây là quyết định normal-play của Paldark, không được báo cáo sai thành parity 1:1 của quick-slot Palworld.
 
+Đó là cách evidence giới hạn claim. Gate có thể PASS vì workflow equipment-driven nhất quán và đã được người dùng duyệt, trong khi nhãn `PARITY_EVIDENCED` cho quick-slot vẫn không được cấp. Một adaptation được nói rõ mạnh hơn một tuyên bố parity vượt quá nguồn.
+
 ## 43.4 — Trạng thái đã quan sát và gap còn lại
+
+Phần này giữ hai lớp lịch sử. Lớp đầu là những gì build trước đã cho người chơi thấy, bao gồm cả các phím tạm gây nhầm; lớp sau là feedback mới nhất đã kéo spine đi xa hơn tới Party Pal và production. Không trộn hai lớp giúp ta thấy chính xác bằng chứng nào đã được nâng cấp và lỗi nào vẫn còn sống.
 
 Người chơi đã xác nhận trên build trước:
 
@@ -93,6 +107,8 @@ Hai lỗi nhìn thấy còn phải retest sau source checkpoint kế tiếp là:
 
 Các kết quả đó chứng minh một số system seam hoạt động, nhưng không chứng minh layout phím hay loop gameplay đã PASS. Một build vẫn hướng dẫn **E → C → V → R → G** phải bị đánh FAIL vì dùng input tạm.
 
+Nói cách khác, một seam đã hoạt động không cấp quyền bỏ qua contract ở seam kế bên. Production `Nhiên liệu 1 → 0`, `Ore 0 → 1` là bằng chứng authority/output; nó không chứng minh crouch, aim-facing hay manual assignment bằng V đã đúng.
+
 Gap được ghi rõ:
 
 - **Manual assignment bằng V**: Palworld cho phép nhấc Pal trong căn cứ và ném vào station đang aim. PaldarkKit chưa được tính là có chức năng này.
@@ -100,6 +116,8 @@ Gap được ghi rõ:
 - **Partner Skill/Roll**: ngoài phạm vi gate này và chưa gán phím bằng suy đoán.
 
 ## 43.5 — Build phải trông như thế nào ngay khi bấm Play?
+
+Trước khi người chơi nhấn input đầu tiên, build đã giao một contract bằng bố cục. Nếu vật cần nhặt khuất sau nhãn, station bị gọi sai tên hoặc mặt đất không nằm dưới chân nhân vật, mọi bước sau đều bị nhiễu bởi một tutorial lane không đọc được. Năm giây đầu vì thế là bước kiểm thử thật, không phải kiểm tra mỹ thuật phụ.
 
 Trong khoảng năm giây đầu phải nhìn thấy:
 
@@ -115,7 +133,11 @@ Tên/HP Wild Pal có thể hiện trong tầm nhìn. Tên vật thể và prompt
 
 Nếu một điều trên sai, dừng và báo **FAIL bước 0**.
 
+Dừng ở bước 0 bảo toàn tín hiệu. Người test không cần tự đi tìm vật thể hoặc dùng hiểu biết cũ để cứu một lane đang nói sai; chính khả năng nhìn và hiểu đường chơi là một phần của normal path.
+
 ## 43.6 — Chuẩn bị
+
+Human Gate cần một điểm xuất phát lặp lại được nhưng không được dựng sẵn kết quả. Bốn thao tác chuẩn bị dưới đây chỉ khóa build, map entry và cách mở game; mọi actor và tutorial lane vẫn phải xuất hiện qua đường khởi tạo bình thường.
 
 1. Dừng PIE và đóng Unreal Editor nếu đang giữ native DLL cũ.
 2. Mở [PaldarkKit.uproject](https://github.com/SlimeVRX/Soliz-Devin-PaldarkKit/blob/main/PaldarkKit/PaldarkKit.uproject) tại HEAD cần nghiệm thu.
@@ -124,7 +146,11 @@ Nếu một điều trên sai, dừng và báo **FAIL bước 0**.
 
 Map Entry phải tự dựng tutorial lane. Người test không đặt actor, gắn tag hoặc đổi map.
 
+Nếu agent phải nhờ người test đặt station hoặc gắn tag để kịch bản chạy, integration gate chưa khép. Lúc đó không nên tiếp tục Human Gate, vì thao tác cứu hộ đã thay đổi chính precondition mà normal player sẽ gặp.
+
 ## 43.7 — Human Gate hoàn toàn bằng gameplay
+
+Các bước 0–6 là một câu chuyện liên tục. Inventory ở bước 1 cung cấp equipment cho combat; HP còn lại ở bước 2 quyết định xác suất capture; creature được bắt ở bước 3 trở thành Party entity ở bước 4; nhiên liệu ở bước 5 cho Pal một công việc tạo output ở bước 6. Không bước nào được thay bằng state dựng tay mà vẫn tính PASS toàn loop.
 
 ### Bước 0 — Màn hình bắt đầu
 
@@ -132,7 +158,11 @@ HUD phải tự chỉ việc đầu tiên và mọi thứ trong 43.5 phải đ�
 
 **PASS:** màn hình sạch, tỷ lệ vật thể hợp lý, Cầu Pal nằm phía trước và prompt không phủ màn hình.
 
+Khi bước 0 PASS, người test đã biết đi đâu và làm gì mà chưa cần đọc chương này như một bản đồ bí mật. Từ đây, input đầu tiên kiểm tra xem prompt và semantic interaction có thật sự khớp nhau hay không.
+
 ### Bước 1 — Nhặt Gậy gỗ và Cầu Pal bằng F
+
+Pickup phải hoàn tất ba việc theo đúng thứ tự: world object biến mất, inventory nhận item, rồi người chơi chủ động Equip để representation xuất hiện trên tay. Nếu model tự vào tay ngay khi nhặt, inventory có thể tăng đúng nhưng equipment contract đã bị đi tắt.
 
 1. Đi tới Gậy gỗ, đặt tâm ngắm lên gậy cho tới khi thấy **[F] Gậy gỗ** và overlay focus.
 2. Nhấn F một lần; model gậy phải biến mất nhưng tay player vẫn trống.
@@ -145,7 +175,11 @@ HUD phải tự chỉ việc đầu tiên và mọi thứ trong 43.5 phải đ�
 
 Nếu HUD vẫn ghi E, build này **FAIL contract input** dù pickup có tăng.
 
+Sau bước này, player không chỉ “có item”; họ đã chứng minh được đường World → Inventory → Equipment bằng UI bình thường. Gậy đang cầm trở thành precondition thật cho combat ở bước 2.
+
 ### Bước 2 — Làm yếu Wild Pal bằng LMB
+
+Mục tiêu không phải giết Pal mà là tạo một target còn sống ở 20 HP. Hai đòn vừa kiểm tra authority damage, vừa kiểm tra animation không khóa locomotion, rồi việc đổi sang Cầu xác nhận chỉ một equipment representation được active.
 
 1. Đứng cách Wild Pal khoảng 2 m và đặt Pal vào tâm ngắm.
 2. Nhấn **Left Mouse Button** một lần.
@@ -159,7 +193,11 @@ Nếu HUD vẫn ghi E, build này **FAIL contract input** dù pickup có tăng.
 
 Nếu C đánh được nhưng LMB không đánh, build **FAIL contract input**.
 
+Dừng đúng sau hai đòn là điều kiện của capture, không phải mẹo để gate dễ qua. Đòn thứ ba sẽ kích hoạt death lifecycle; một actor biến mất vì chết không được ghi nhận như capture thành công.
+
 ### Bước 3 — Ngắm và ném Cầu Pal bằng RMB + LMB
+
+Đây là bước có nhiều trạng thái trung gian nhất: idle, aim, throw committed, projectile pending, recovery, terminal success/failure và cancel. Người test không cần gọi tên state, nhưng chuỗi input dưới đây buộc từng transition phải hiện ra mà không consume item sai lúc.
 
 1. Giữ **Right Mouse Button** trong khi vẫn đặt Wild Pal vào tâm ngắm.
 2. Phải thấy nhân vật đưa Cầu Pal lên tay/trạng thái aim; chưa được consume cầu.
@@ -179,7 +217,11 @@ Kiểm tra hủy, chỉ cần làm một lần khi còn ít nhất hai Cầu:
 
 Nếu Q/V vẫn là đường ném chính, hoặc LMB ném khi chưa aim, build **FAIL contract input/equipment**.
 
+Khi capture PASS, world actor biến mất và roster nhận đúng Pal trong cùng một outcome nhìn thấy. Bước 4 lập tức dùng kết quả đó; nếu E spawn một Pal mẫu khác, capture và summon vẫn chưa cùng chia stable identity dù từng hệ thống có thể chạy riêng.
+
 ### Bước 4 — Gọi Pal bằng E
+
+Summon là phép thử xem creature vừa bắt có sống lâu hơn actor vừa bị loại khỏi world hay không. Một lần E dựng representation, lần thứ hai thu representation về, lần thứ ba phải dựng lại đúng entity — roster không mất và world không nhân đôi.
 
 1. Nhấn **E** một lần.
 2. Không cần mở menu hoặc chọn slot trong vertical slice một-Pal.
@@ -202,7 +244,11 @@ Thiết kế này không đoán mò: KYWorld dùng nhánh xa `DistanceToTarget >
 
 Nếu R summon nhưng E không summon, build **FAIL contract input**.
 
+Pal sau lần E cuối phải ở trong world và có khả năng follow; đó là cầu nối sang Work. Đoạn mô tả formation, navigation fallback và hai bán kính auto-work ở trên giải thích vì sao “spawn được” chưa đủ — companion phải thật sự theo player tới vùng station mà không rung giữa hai activity.
+
 ### Bước 5 — Nhặt nhiên liệu bằng F
+
+Nhiên liệu là input hữu hình của transaction cuối. Ta nhặt nó sau khi summon để người test có thể nhìn cùng lúc companion, station và số lượng inventory, thay vì dựa vào một precondition ẩn đã được set trước.
 
 1. Đi thẳng về cuối sân; nhặt vật phẩm **Nhiên liệu màu cam** nằm trước station màu vàng.
 2. Focus cho tới khi thấy **[F] Nhiên liệu**.
@@ -210,7 +256,11 @@ Nếu R summon nhưng E không summon, build **FAIL contract input**.
 
 **PASS:** nhiên liệu biến mất, HUD ghi Nhiên liệu 1 và inventory tăng đúng một.
 
+Nếu pickup này sai, bước 6 không được dùng `MissingInput` làm bằng chứng Work hỏng. Gate dừng tại source input của transaction trước khi đánh giá worker hay production authority.
+
 ### Bước 6 — Party Pal tự làm việc, không dùng G
+
+Đây là câu trả lời cho câu hỏi mở đầu vertical spine: bắt Pal để làm gì? Người chơi chỉ đưa companion và tài nguyên tới đúng không gian. Từ đó suitability, workload, movement và production phải tự nối với nhau; một phím G sẽ che chính seam mà gate cần chứng minh.
 
 1. Giữ Pal ở trạng thái đã summon bằng E.
 2. Đi thẳng tới **Trạm khai khoáng Ore màu vàng** ở cuối sân, khoảng 17,5 m trước điểm spawn; đưa Party Pal vào phạm vi khoảng **3 m** quanh station.
@@ -235,7 +285,11 @@ Manual assignment bằng V không phải đường cứu hộ cho gate này. Nó
 
 “Bàn chế tạo” từng xuất hiện trong tutorial lane là nhãn gây hiểu nhầm của Workstation này. Tên nghiệm thu đúng là **Trạm khai khoáng Ore**. Crafting recipe/queue/UI là một gate riêng; hiện không yêu cầu người chơi nhấn F vào bàn và không tính Crafting là PASS từ ADR-001.
 
+Khi Ore tăng, loop đã trả một output mà người chơi có thể sở hữu, không chỉ một animation “đang làm việc”. Việc station tiếp tục chờ sau khi nhiên liệu về 0 là trạng thái hợp lệ của queue; thông báo phải giải thích thiếu input, không nói sai rằng assignment thất bại.
+
 ## 43.8 — Điều kiện PASS/FAIL toàn loop
+
+Mỗi bước có PASS riêng để khoanh lỗi, nhưng nhãn của ADR-001 thuộc về toàn chuỗi. Bảy quan sát dưới đây là các mốc state không thể thay thế cho nhau: actor biến mất vì pickup khác actor biến mất vì capture, và effect ở station khác inventory output thực sự tăng.
 
 Toàn Human Gate chỉ PASS khi bước 0–6 đều PASS và quan sát được:
 
@@ -251,9 +305,11 @@ Save/restart, cook, package và multiplayer không thuộc gate này.
 
 **Kết quả nghiệm thu:** **1/1 USER_VERIFIED ngày 2026-08-05** — người chơi đã trực tiếp quan sát đủ Capture → Party/Summon → Work output và `Nhiên liệu 1 → 0`, `Ore 0 → 1`.
 
+Nhãn này gắn với build và phạm vi của test. Nó xác nhận normal path gameplay-only ở bước 0–6; save/restart, package và multiplayer vẫn giữ nguyên trạng thái ngoài scope, còn các regression được ghi ở 43.4 và 43.12 cần gate riêng sau checkpoint sửa lỗi.
+
 ## 43.9 — Cách báo lỗi ngắn nhất
 
-Không gửi log. Chỉ cần:
+Khi một bước sai, hành động hữu ích nhất là dừng ngay ở quan sát đầu tiên khác contract. Human Gate này cố ý không yêu cầu log; người test chỉ cần trả đúng build, bước và điều mắt thấy:
 
     Build: commit đang test
     Kết quả: PASS hoặc FAIL
@@ -263,9 +319,11 @@ Không gửi log. Chỉ cần:
 
 Ví dụ: “FAIL bước 3 — giữ RMB không thấy tư thế ngắm” là đủ để agent khoanh vùng. Không cần actor name, tag, correlation ID hay dòng PALDARK_*.
 
+Phần chẩn đoán sau đó quay lại agent. Nếu cần thêm dữ kiện, agent phải hỏi một quan sát hoặc một video cụ thể; không được biến failure gameplay thành yêu cầu người chơi mở Output Log và tự phân loại subsystem.
+
 ## 43.10 — Trách nhiệm kỹ thuật của agent
 
-Trước khi giao Human Gate, agent phải tự:
+Một test card ngắn chỉ hợp lý khi agent đã trả hết nợ kỹ thuật có thể kiểm tự động. Trước khi giao Human Gate, agent phải tự:
 
 - compile PaldarkKitEditor bằng Unreal Engine 5.6;
 - parse toàn bộ input/content JSON;
@@ -277,9 +335,11 @@ Trước khi giao Human Gate, agent phải tự:
 
 Các kiểm tra đó không thay thế gameplay PASS.
 
+Ngược lại, Human Gate cũng không tha các kiểm tra này. Một lần chơi may mắn không chứng minh input arbitration, schema hoặc correlation đúng; agent vẫn phải giữ compile và audit làm nền, rồi dùng mắt người cho phần mà máy không thể kết luận.
+
 ## 43.11 — Ngưỡng yêu cầu Soliz hỗ trợ asset binary
 
-Agent tự triển khai từ source, asset name và ảnh Designer khi hành vi suy ra trực tiếp. Chỉ yêu cầu Soliz mở/convert asset nếu còn thiếu dữ kiện làm thay đổi kết quả, ví dụ:
+Asset binary là chỗ rất dễ biến “cần người dùng” thành một yêu cầu mơ hồ. Agent tự triển khai từ source, asset name và ảnh Designer khi hành vi suy ra trực tiếp. Chỉ yêu cầu Soliz mở/convert asset nếu còn thiếu dữ kiện làm thay đổi kết quả, ví dụ:
 
 - Blueprint chứa state machine gameplay không có source tương đương;
 - animation notify/timeline/curve quyết định timing;
@@ -288,7 +348,11 @@ Agent tự triển khai từ source, asset name và ảnh Designer khi hành vi 
 
 Mỗi yêu cầu phải nêu một dữ kiện thiếu, vì sao source hiện có chưa đủ và output tối thiểu cần nhận. Không yêu cầu convert chỉ để “tham khảo cho chắc”.
 
+Ngưỡng này giữ Soliz ở vai trò cung cấp fact mà công cụ không đọc được, không trở thành người dò project thay agent. Một screenshot property cụ thể hoặc export tối thiểu thường có giá trị hơn việc convert cả cây asset mà chưa biết câu hỏi cần trả lời.
+
 ## 43.12 — Capture: điều kiện thật và checkpoint sửa lỗi sau feedback
+
+Human feedback sau gate đưa câu chuyện trở lại source với các symptom cụ thể: crouch làm chân/capsule lệch mặt đất, player không quay theo camera khi aim, và lần ném có thể sai quỹ đạo hoặc để Pal kẹt sau failure. Muốn sửa đúng, trước hết phải giữ ranh giới giữa damage, death và capture settlement.
 
 Wild Pal trong tutorial có **100 HP**; Gậy gỗ gây **40 damage** mỗi đòn. Vì vậy chuỗi đúng là `100 → 60 → 20`; đòn thứ ba đưa HP về 0 và Wild Pal biến mất theo death lifecycle. Đây không phải capture. Người chơi phải dừng sau đúng hai đòn.
 
@@ -302,6 +366,8 @@ success = server_roll < capture_chance
 
 Tương ứng: 100 HP = 5%, 60 HP = 34%, 20 HP = 68%. Capture vẫn là xác suất, không hardcode thành công để vượt gate. HUD phải hiện HP và phần trăm của lần ném để người test hiểu kết quả. Ba nhịp rung là presentation; không được nhân thêm ba roll escape 15% làm xác suất thực thấp hơn phần trăm công bố.
 
+Vì capture vẫn có xác suất, một lần thất bại ở 68% không phải bug. Bug chỉ xuất hiện khi phần trăm công bố không khớp authority roll, projectile không tới điểm aim, hoặc failure không trả target về state cho phép thử lại. Chính distinction này biến feedback “bắt không được” thành các contract có thể sửa.
+
 Static audit từ feedback đã tìm được ba lỗi độc lập:
 
 1. khi ballistic solver không có nghiệm ở speed 1600, code âm thầm dùng vector thẳng; gravity làm Cầu rơi trước crosshair;
@@ -310,7 +376,11 @@ Static audit từ feedback đã tìm được ba lỗi độc lập:
 
 Checkpoint sửa lỗi dùng speed cơ sở 2500, tự tăng tối đa 5000 để tìm low arc; nếu vẫn không có nghiệm thì từ chối trước khi consume Cầu thay vì nói dối crosshair. Capture chỉ kéo visual mesh theo local space, không di chuyển actor/collision; movement của target được tạm dừng trong ba nhịp rung rồi phục hồi nếu thất bại. Mọi terminal failure đều reset presentation và dọn projectile đã settle trước khi cho phép lần ném kế tiếp.
 
+Ba lỗi có cùng symptom bề mặt nhưng nằm ở ba boundary: ballistic planning, presentation transform và terminal reset. Tách chúng giúp checkpoint không “chữa” bằng cách tăng xác suất hay teleport actor — những cách có thể làm một lần test trông ổn nhưng phá authority và retry.
+
 ### Retest gameplay-only ngắn nhất
+
+Retest không chạy lại toàn bộ chương theo thói quen. Nó tập trung vào các contract vừa thay đổi, rồi nối ngay về đoạn E → Fuel → Work để chắc rằng sửa Capture không làm đứt vertical spine đã được xác nhận:
 
 1. Nhấn **C** khi đứng và khi đi: phải thấy crouch idle/crouch walk nhưng bàn chân/capsule vẫn chạm mặt đất; nhấn lại để đứng và vẫn phải chạm đất, không giữ độ cao lơ lửng. Shift phải tự đứng lên, C phải hủy sprint. Đây là phím Palworld; Left Ctrl được dành cho roll/dodge về sau.
 2. Equip Gậy, đứng khoảng 2 m, đặt crosshair lên bất kỳ phần thân Pal và LMB đúng hai lần. Phải dừng ở 20 HP.
@@ -320,3 +390,5 @@ Checkpoint sửa lỗi dùng speed cơ sở 2500, tự tăng tối đa 5000 đ�
 6. Sau E summon, nhặt Nhiên liệu màu cam bằng F, đưa Pal tới trong khoảng 3 m của Trạm khai khoáng Ore màu vàng ở cuối sân; không nhấn F/G, chờ Pal tới nơi và thêm khoảng 10 giây để xác nhận `Nhiên liệu 1 → 0`, `Ore 0 → 1`.
 
 Không cần console, log, tag hoặc command line cho retest này.
+
+Đây là vòng khép của Human Gate: người chơi báo điều mắt thấy, agent tìm boundary và tạo checkpoint, rồi người chơi lặp lại đúng đoạn có rủi ro. Mỗi trạng thái lịch sử vẫn được giữ nguyên — ADR-001 đã `USER_VERIFIED`, còn checkpoint sửa regression chỉ được nâng bằng kết quả retest mới, không bằng việc source trông hợp lý.

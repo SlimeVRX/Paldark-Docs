@@ -4,9 +4,9 @@
 
 ## Câu hỏi
 
-Pal biết đi (bài 03), biết thấy (bài 04). Căn cứ đã có trạm và có state sản xuất từ chương 29. Nối hai thứ lại là xong khoá này.
+Pal đã biết đi ở bài 03 và biết thấy ở bài 04. Căn cứ cũng đã có trạm cùng state sản xuất từ Chương 29. Nhìn từ xa, ta chỉ còn một đường nối là có thể kết thúc khóa học.
 
-Câu hỏi thật không phải "nối thế nào", mà: **ai được coi là nguồn sự thật cho câu 'con Pal này đang làm việc'?**
+Nhưng câu hỏi quyết định không phải “nối bằng API nào”. Nó là: **ai được coi là nguồn sự thật cho câu “con Pal này đang làm việc”?** Nếu chưa trả lời, một event đến sớm cũng đủ biến chuyển động trên màn hình thành state canonical sai.
 
 ## Vì sao câu hỏi đó khó
 

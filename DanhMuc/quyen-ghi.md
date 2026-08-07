@@ -1,6 +1,8 @@
 # Danh mục quyền ghi sống
 
-Nguồn là toàn bộ bảng mục 3 của chương 21–35. “Đổi bằng yêu cầu gì” là đường mutation; đọc snapshot không trao quyền ghi. Bảng ownership là kiến trúc; native QA status phải đối chiếu source và không được suy ra chỉ từ tên plugin.
+Khi hai hệ thống cùng nhìn thấy một con số HP, cả hai đều có thể cần đọc nó. Nhưng nếu cả hai cùng được phép ghi, game sẽ sớm có hai câu trả lời cho cùng một sự kiện. Danh mục quyền ghi tồn tại để biến câu hỏi “ai được đổi trạng thái này?” thành một câu trả lời tra được, thay vì một thỏa thuận truyền miệng.
+
+Nguồn của bảng là toàn bộ mục 3 trong các chương 21–35. Cột “Đổi bằng yêu cầu gì” chỉ đường mutation phải đi qua owner; việc đọc một snapshot không tự trao quyền ghi cho bên đọc. Đây là bảng kiến trúc, không phải báo cáo QA: trạng thái native vẫn phải được đối chiếu với source và không được suy ra chỉ từ tên plugin.
 
 | Chương | Trạng thái | Chủ | Ai đọc | Đổi bằng yêu cầu gì |
 |---|---|---|---|---|
@@ -90,20 +92,21 @@ Nguồn là toàn bộ bảng mục 3 của chương 21–35. “Đổi bằng y
 | 35 | Offer/price/stock | Economy merchant | UI, server, save | Refresh |
 | 35 | Buy/sell result | Economy transaction | Inventory, UI, log | Buy/Sell |
 
-| 35 | Parent pairing/progress/combination result | Breeding | Core EntityIdentity/event consumers | AssignParents/Reconcile/ClaimResult |
-| 35 | Sacrifice transaction/rank | Condenser | Inventory/entity transaction contracts | Condense |
-| 35 | Offer/price/stock/buy-sell transaction | Economy | Inventory transaction contract, UI | Refresh/Buy/Sell |
+## Những ranh giới dễ nhầm
 
-## Audit
+Phần lớn lỗi ownership không nằm ở giữa một feature, mà nằm ở nơi hai feature gặp nhau. Các dòng dưới đây ghi rõ bên nào vận chuyển ý định, bên nào ra quyết định và bên nào thực sự được chạm vào state.
 
-Không phát hiện cùng một state có hai owner khác nhau trong các bảng hiện tại. Các ranh giới có chủ ý được ghi rõ: HP thuộc Health, quantity thuộc Inventory, unlocked-node set thuộc Progression, entity identity thuộc EntityIdentity, còn Persistence chỉ điều phối chunk.
-
+| Chương | Trạng thái hoặc đường giao nhau | Chủ | Ai đọc/phối hợp | Đổi bằng yêu cầu gì |
+|---|---|---|---|---|
 | 22–23 | Interaction resource quantity | Interaction authority | Inventory event consumer | `Paldark.Interaction.Event.HarvestAccepted` |
 | 23 | Player inventory slots/item quantity | Inventory authority | Interaction, UI, future features | `Paldark.Inventory` |
 | 22–23 | Generic actor intent routing | Core transport; feature handler owns decision | Runtime actor submits only | `Paldark.Interaction.Intent.Harvest` |
 | 34 | Session metadata, connection coordination, relevancy policy, opaque intent transport | Multiplayer/Net | Feature owner validates and mutates gameplay state | `Paldark.Net.Request.Intent`, `Paldark.Net.Event.Replicated` |
 | 34 | HP, item quantity, work/build/world/dungeon state | Owning feature | Multiplayer transports only | No aggregate network state |
-| 34 | Session metadata, connection coordination, relevancy policy, opaque intent transport | Multiplayer/Net | Feature owner validates and mutates gameplay state | `Paldark.Net.Request.Intent`, `Paldark.Net.Event.Replicated` |
-| 34 | HP, item quantity, work/build/world/dungeon state | Owning feature | Multiplayer transports only | No aggregate network state |
-
 | 33 | Codec registry, generation checkpoint, manifest/recovery orchestration | Persistence | feature owner codecs, loader, QA | `UPaldarkSaveChunkRegistry`, atomic generation, commit marker |
+
+## Audit
+
+Trong các bảng hiện tại, chưa phát hiện một state có hai owner khác nhau. Những ranh giới tưởng như chia đôi thực ra là chủ ý: HP thuộc Health, quantity thuộc Inventory, unlocked-node set thuộc Progression và entity identity thuộc EntityIdentity; Persistence chỉ điều phối chunk, còn Multiplayer chỉ vận chuyển state của owner tới nơi cần nhận.
+
+Kết luận này chỉ đúng với phiên bản hiện tại của danh mục. Mỗi khi một feature thêm đường mutation mới, câu hỏi cần hỏi lại không phải “request có chạy không?” mà là “request cuối cùng có quay về đúng chủ ghi hay không?”.

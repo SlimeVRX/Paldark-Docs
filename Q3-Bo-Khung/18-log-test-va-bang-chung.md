@@ -2,18 +2,27 @@
 
 “Con Pal của tôi tự nhiên chết.”
 
-Progression evidence phải thể hiện owner duy nhất: XP, level, technology point
-và unlocked set đều có `before/after`, requester và correlation. Hai requester
-cùng gửi một unlock chỉ được tạo một mutation. Build phải log query technology
-trước khi accepted, không được ghi thay cho Progression.
+Đó là toàn bộ bug report. Không có mã entity, không biết cái chết xảy ra ở
+server hay client, không biết trước đó Pal đang đói, cháy hay vừa trúng đòn.
+Người chơi chỉ thấy kết quả cuối. Nếu kiến trúc đã tách Hunger, Health,
+Combat, Companion và UI thành những owner độc lập, ta không thể mong họ chỉ
+đúng file cần mở.
 
 Với một project nhỏ, người làm có thể mở code, tìm những chỗ gán `Health`, đặt breakpoint rồi đoán. Với kiến trúc Paldark, hệ đói không được gọi thẳng vào hệ máu; nó gửi yêu cầu qua boundary. Một effect khác có thể cùng gửi yêu cầu. Client có thể chỉ phát intent, còn server mới là bên quyết định. Code đã được tách ra để nhiều agent không đụng nhau, nhưng chính sự tách đó làm mất con đường “find references” đơn giản.
 
 Log là cái giá phải trả cho decoupling. Nó không phải tiện ích thêm vào sau khi feature chạy xong. Nếu L2 cắt các tham chiếu trực tiếp và L8 giao mỗi state cho một chủ ghi, L12 phải để lại dấu vết đủ rõ để đi từ câu nói của người chơi tới đúng owner, đúng request và đúng lần mutation. Không có log chuẩn, decoupling biến thành một hộp đen.
 
+Chương này đi theo đúng hành trình điều tra ấy: trước hết xác định category và
+hình dạng một dòng log, sau đó dựng state bằng command, ghi lại playtest, rồi
+đòi bằng chứng mạnh dần cho từng vertical slice. Mục tiêu không phải tạo thật
+nhiều dòng xanh. Mục tiêu là nối được điều người chơi làm, quyết định của
+authority, mutation của owner và kết quả người chơi nhìn thấy.
+
 ## 18.1 — Category theo miền sở hữu
 
-Ta từng lấy danh mục category của PaldarkLab làm hình mẫu trực tiếp cho PaldarkKit. Khi Movement chạy thật, code cho thấy một ranh giới quan trọng hơn: category dùng chung của Core và category của feature không nên có cùng chủ. PaldarkCore hiện công bố các category nền:
+Khi nhận câu “tự nhiên chết”, việc đầu tiên không phải lọc `Warning`; severity
+không cho biết ai sở hữu state. Ta cần một category dẫn tới đúng miền. Ta từng
+lấy danh mục category của PaldarkLab làm hình mẫu trực tiếp cho PaldarkKit. Khi Movement chạy thật, code cho thấy một ranh giới quan trọng hơn: category dùng chung của Core và category của feature không nên có cùng chủ. PaldarkCore hiện công bố các category nền:
 
 | Category | Miền theo dõi |
 |---|---|
@@ -29,13 +38,16 @@ Movement tự khai báo `LogPaldarkMovement` trong `Movement/Public/MovementLog.
 
 ## 18.2 — Một dòng log phải nối được cả câu chuyện
 
-Một dòng log dành cho phân tích máy cần cố định trường, không phụ thuộc vào câu văn mà người viết tình cờ chọn. Đề xuất format text key-value:
+Category đưa ta tới đúng vùng, nhưng chưa nối được bốn dòng của cùng một yêu
+cầu nếu mỗi owner viết một câu tùy ý. Một dòng log dành cho phân tích máy cần
+cố định trường, không phụ thuộc vào câu văn mà người viết tình cờ chọn. Đề xuất format text key-value:
 
 ```text
 PD|ts=2025-08-02T14:03:11.482Z|session=QA-20250802-014|corr=HUNGER-0007|cat=LogPaldarkGAS|system=Health|requester=Hunger|target=Pal:Fox_014|field=Health|before=12.0|after=0.0|reason=HungerStarvation|authority=Server|result=Dead
 ```
 
-Các trường tối thiểu:
+Format trông dài vì mỗi trường đang loại bỏ một câu hỏi phải đoán khi điều tra.
+Các trường tối thiểu và câu hỏi tương ứng là:
 
 | Trường | Câu hỏi nó trả lời |
 |---|---|
@@ -65,7 +77,9 @@ Dòng thứ hai rất đáng giữ. Hunger không tự trừ `Health`; nó đề
 
 ## 18.3 — Console command là API test
 
-PaldarkLab đã chứng minh command có thể là API test chứ không chỉ là cheat. Các command đăng ký thật gồm:
+Có log chuẩn vẫn chưa đủ nếu bug chỉ xuất hiện sau hai mươi phút chuẩn bị bằng
+tay. Muốn tái hiện cùng state nhiều lần, feature cần một cửa test ổn định đi
+qua contract thật. PaldarkLab đã chứng minh command có thể là API test chứ không chỉ là cheat. Các command đăng ký thật gồm:
 
 - Core và input: `Paldark.HelloWorld`, `Paldark.Experience.Current`, `Paldark.Experience.Hello`, `Paldark.Experience.ListExtensions`, `Paldark.Input.ListBindings`.
 - Pal và GAS: `Paldark.Pal.SpawnTestCompanion`, `Paldark.Pal.CurrentActivity`, `Paldark.Pal.SetActivity`, `Paldark.Pal.Ping`, `Paldark.Pal.SpawnFromDefinition`, `Paldark.Pal.DumpDefinitionRegistry`, `Paldark.Gas.DumpAttributes`, `Paldark.Gas.Damage`.
@@ -75,7 +89,7 @@ PaldarkLab đã chứng minh command có thể là API test chứ không chỉ l
 - Save: `Paldark.Save.Save`, `Paldark.Save.Load`, `Paldark.Save.Dump`, `Paldark.Save.ClearSlot`, `Paldark.Save.ListSlots`, `Paldark.QA.WipeAllSlots`, `Paldark.QA.HubToRaidHandoff`.
 - Backend/net: `Paldark.Backend.Login`, `Paldark.Backend.RequestHubFleet`, `Paldark.Backend.RequestRaidFleet`, `Paldark.Backend.Status`, `Paldark.Net.Host`, `Paldark.Net.Join`, `Paldark.Net.Disconnect`, `Paldark.Net.Status`, `Paldark.Net.HostHub`, `Paldark.Net.HostRaid`, `Paldark.Hub.List`, `Paldark.Hub.QueueRaid`, `Paldark.Hub.Status`.
 
-Danh sách này là bằng chứng về cách làm được, không phải yêu cầu Paldark phải có cheat cho mọi thứ. Quy ước mới là mỗi feature phải cung cấp ba mặt:
+Danh sách dài trên là bằng chứng về cách làm được, không phải yêu cầu Paldark phải có cheat cho mọi thứ. Từ đó, quy ước mới rút lại còn ba mặt mà mỗi feature phải cung cấp:
 
 1. **Dựng trạng thái:** `Paldark.<Owner>.QA.Setup` hoặc command tương đương để tạo fixture.
 2. **Quan sát trạng thái:** `Paldark.<Owner>.QA.Dump` hoặc `Paldark.<Owner>.Status` để in snapshot.
@@ -87,15 +101,22 @@ Nhưng “có console command” và “command line nào cũng chạy được 
 
 ## 18.4 — Biên bản playtest
 
-Một câu “tôi bấm rồi nhưng không chạy” không phải biên bản. Biên bản phải giữ được actor, input, state trước, kết quả mong đợi, kết quả thật và dòng log có thể truy ngược.
+Command làm cho state tái hiện được; biên bản làm cho lần tái hiện ấy có thể
+được một người khác đọc lại. Một câu “tôi bấm rồi nhưng không chạy” không phải biên bản. Biên bản phải giữ được actor, input, state trước, kết quả mong đợi, kết quả thật và dòng log có thể truy ngược.
 
 ### Mẫu trống
+
+Mẫu tối thiểu chỉ có một hàng, nhưng mỗi cột khóa một phần context không được
+phép mất khi bàn giao:
 
 | Bước | Người thực hiện | Tương tác với ai | Input/command | Kết quả mong đợi | Kết quả thật | Log/correlation |
 |---|---|---|---|---|---|---|
 | 1 | `<ai>` | `<actor/state>` | `<input hoặc command>` | `<điều kiện quan sát được>` | `<đã xảy ra>` | `<cat + corr>` |
 
 ### Biên bản mẫu — worker chết vì đói
+
+Điền cùng mẫu cho câu bug ở đầu chương sẽ biến “tự nhiên” thành một chuỗi có
+thời điểm, state và owner cụ thể:
 
 | Bước | Người thực hiện | Tương tác với ai | Input/command | Kết quả mong đợi | Kết quả thật | Log/correlation |
 |---|---|---|---|---|---|---|
@@ -109,7 +130,8 @@ Nếu bước 4 không có dòng `IncomingDamage` nhưng có dòng `Health befor
 
 ## 18.5 — Từ câu nói của người chơi tới vùng nghi ngờ
 
-Quy trình điều tra phải bắt đầu bằng state, không bắt đầu bằng file:
+Đến đây ta đã có category, correlation, command và biên bản. Ghép bốn thứ lại,
+quy trình điều tra có thể bắt đầu bằng state thay vì bắt đầu bằng file:
 
 1. **Chuẩn hóa câu báo lỗi.** “Tự nhiên chết” được đổi thành target `Pal:Fox_014`, field `Health`, thời điểm, map, authority và session.
 2. **Tra bảng owner L8.** `Health` chỉ có một owner. Hunger, burn, combat và UI là requester/observer, không phải nơi được phép ghi.
@@ -121,13 +143,9 @@ Quy trình điều tra phải bắt đầu bằng state, không bắt đầu b�
 
 Bản đồ này làm cho decoupling có thể sống được. Không cần mở mọi plugin để đoán ai đã làm gì; chỉ cần biết state owner, đọc đúng category và nối các dòng có cùng correlation id. Nếu một feature chưa có command dựng/quan sát/kích hoạt hoặc mutation không có dòng chuẩn, feature đó chưa hoàn thành L12 dù gameplay nhìn có vẻ chạy.
 
----
-
-**Bằng chứng cho chương này.** Các category `LogPaldark`, `LogPaldarkNet`, `LogPaldarkGAS`, `LogPaldarkWork` và `LogPaldarkPersistence` là OBSERVED trong `PaldarkCoreLog.h`; `LogPaldarkMovement` và việc feature tự define category trong module là OBSERVED từ Movement slice. Các command được liệt kê ở phần đầu là OBSERVED từ PaldarkLab; ba command Movement và cờ `-PaldarkMovementQA` là OBSERVED từ packaged QA. Việc `-ExecCmds` không cho lifecycle kiểm chứng ổn định ở packaged run là OBSERVED trong môi trường UE 5.6 này. Format `PD|...` và quy tắc ba command là thiết kế Paldark theo L9/L12 (INFERRED). Luồng owner/requester/observer dựa trên L8 và mô hình authority/GAS đã giải thích ở Quyển 2; Palworld runtime cụ thể chưa đủ evidence để khẳng định.
-
 ## 18.6 — Harness bất đồng bộ và âm tính giả
 
-Từng tin là client không có request ngay sau map load là lỗi feature. Thực tế
+Quy trình trên vẫn có thể kết luận sai nếu harness quan sát quá sớm. Từng tin là client không có request ngay sau map load là lỗi feature. Thực tế
 cho thấy harness kết thúc quá sớm, khi actor còn đang replicate. Quyết định
 mới: giữ client ít nhất 60 giây, server lâu hơn client, hoặc chờ tín hiệu log
 thật; retry dùng looping timer và ghi `QA_PROBE`/`QA_ABORT` rõ ràng. Nghiệm
@@ -137,6 +155,10 @@ quay lại client. Không dùng request server-local thay cho client evidence.
 
 ## 18.7 — Log xanh không chứng minh game chơi được
 
+Harness đã chờ đúng thời điểm vẫn có thể đo sai thứ. Dòng “ready” trả lời rằng
+một nhánh code đã chạy; người chơi lại quan tâm nhân vật có hiện đúng, input có
+đi qua thiết bị thật và kết quả có thay đổi trong thế giới hay không.
+
 `PALDARK_STATE`, `ASSET_READY` và các dòng “component ready” chỉ chứng minh
 đường khởi tạo đã chạy. Chúng không chứng minh người chơi nhìn thấy nhân vật
 đúng tỉ lệ, camera không xuyên mesh, hay phím WASD làm vận tốc thay đổi. Một
@@ -144,7 +166,9 @@ Windows package đã có log readiness nhưng người test vẫn thấy mesh qu
 nhân vật không di chuyển. Vì vậy nghiệm thu gameplay phải có bằng chứng hình
 ảnh từ người test, kèm log runtime để nối nguyên nhân với kết quả.
 
-Với Movement, chuỗi log tối thiểu là:
+Với Movement, khoảng cách giữa hai loại bằng chứng hiện ra trong một chuỗi
+ngắn. Mapping phải tồn tại, action phải nhận axis thật, rồi velocity mới được
+phép đổi. Chuỗi log tối thiểu là:
 
 ```text
 PALDARK_MOVEMENT_MAPPING_ADDED
@@ -204,24 +228,15 @@ runtime; nếu chỉ đo từng input riêng lẻ, lỗi “chuột xoay nhưng 
 đổi” vẫn có thể lọt qua. Đây vẫn là bằng chứng gián tiếp trên máy không có
 thiết bị thật, còn xác nhận cảm giác third-person thuộc về Windows playtest.
 
-Một harness gọi thẳng `AddMovementInput`, `QAApplyMove` hoặc hàm camera không
-chứng minh input thật chạy. Bằng chứng input phải đi qua Enhanced Input theo
-đúng chuỗi `mapping context added` → `action triggered` với axis khác 0 →
-vận tốc ngang hoặc control rotation đổi. Nếu chỉ có log QA xanh mà thiếu chuỗi
-này, kết quả là chưa được kiểm chứng. Đây là cùng loại lỗ hổng với trường hợp
-nhân vật rơi tự do vẫn phát đủ log readiness nhưng chưa chứng minh được
-playtest.
+Vì vậy log xanh là bằng chứng cần, nhưng không phải bằng chứng đủ. Nó chứng
+minh đường kỹ thuật; visual playtest trên môi trường có thiết bị thật mới xác
+nhận cảm giác và presentation. Hai loại bằng chứng bổ sung nhau, không loại
+trừ nhau.
 
-Với Movement, package phải ghi thêm `PALDARK_MOVEMENT_BINDINGS_READY` và
-`PALDARK_MOVEMENT_POSSESSION_CHECK`; WASD phải tạo
-`PALDARK_MOVEMENT_ACTION action=MoveForward|MoveRight` rồi
-`PALDARK_MOVEMENT_VELOCITY` với `horizontal_speed > 0`. Chuột phải tạo
-`action=LookYaw|LookPitch` và thay đổi `control_rotation`; không được thay
-thế bằng việc set rotation trực tiếp trong harness. Máy không có GPU chỉ có
-thể chứng minh chuỗi log, không thể thay cho người test xác nhận bằng mắt.
 ## 18.8 — Cook root là một phần của bằng chứng
 
-Một package được cook từ root thu hẹp tạm thời không tương đương với package
+Đường input đúng trong một package thu hẹp vẫn chưa chứng minh bản người dùng
+sẽ nhận có cùng nội dung. Một package được cook từ root thu hẹp tạm thời không tương đương với package
 người dùng tạo từ manifest đầy đủ. Vì vậy `PalworldAsset` phải được kiểm tra
 với root `/Game/PalworldAsset`, và log phải ghi chính xác mọi `-CookDir` đã
 dùng. Khi điều tra crash, phải bisect từng nhánh con trước khi kết luận asset
@@ -236,7 +251,9 @@ listen server và client, rồi đọc log component/runtime từ cả hai proce
 
 ## 18.9 — Combat/Health: chứng minh mutation, không chỉ hit
 
-Combat và Health phải được đọc theo cùng một correlation id. Chuỗi tối thiểu
+Các nguyên tắc trên trở nên cụ thể khi một hành vi đi qua hai owner. Với đòn
+đánh, animation hit thuộc Combat chưa phải kết quả cuối; HP mutation thuộc
+Health mới là state cần chứng minh. Combat và Health phải được đọc theo cùng một correlation id. Chuỗi tối thiểu
 là `INPUT/ACTION` → `INTENT` → `VALIDATE` → `DAMAGE_REQUEST` →
 `PALDARK_HEALTH_MUTATION` với `health_before`, `health_after`,
 `applied_amount` → `RESULT` → client result `authority=false`. Một dòng
@@ -256,7 +273,8 @@ và client. Hai nhánh tối thiểu là thành công và rejected với `reason
 
 ## 18.10 — Capture/Creature: chứng minh RNG và owner boundary
 
-Capture QA phải chạy trên server với seed cố định, không dùng client RNG. Mỗi
+Capture thêm ngẫu nhiên và một transaction tạo entity, nên một dòng “success”
+càng không đủ để dựng lại quyết định. Capture QA phải chạy trên server với seed cố định, không dùng client RNG. Mỗi
 attempt phải có một correlation id xuyên qua intent, HP snapshot, sphere
 transaction, entity creation hoặc rejection và client replication. Dòng roll
 phải có seed, roll, threshold, `rateCorrect`, HP current/max/ratio/factor và
@@ -271,7 +289,8 @@ transaction và replication.
 
 ## 18.11 — Companion: chứng minh entity không phải actor
 
-Companion phải nối một correlation qua intent, resolve stable id, context
+Sau Capture, bằng chứng không dừng ở lúc actor xuất hiện. Companion phải chứng
+minh stable entity vẫn tồn tại khi representation biến mất. Vì vậy Companion phải nối một correlation qua intent, resolve stable id, context
 before/after, actor spawn/despawn và client replication. Mọi dòng target dùng
 `target=Creature:<stable-id>`; actor name hoặc pointer chỉ được ghi như
 metadata representation. Chuỗi QA bắt buộc là summon làm actor tồn tại,
@@ -286,7 +305,8 @@ ghi `authority=false`.
 
 ## 18.12 — Build: chứng minh gate, transaction và structure entity
 
-Build QA phải chạy cùng một definition/transform qua nhiều trạng thái. Tối
+Build ghép technology gate, vật liệu, không gian và entity creation vào cùng
+một lần xác nhận. Để biết gate nào quyết định kết quả, Build QA phải chạy cùng một definition/transform qua nhiều trạng thái. Tối
 thiểu cần thấy `TechnologyLocked`, mở technology bằng Progression, rồi
 `InsufficientMaterials`; sau khi fixture materials được thêm, một vị trí không
 có nền phải bị từ chối với `NoGround`, còn vị trí hợp lệ phải consume đúng cost
@@ -300,9 +320,16 @@ Nếu transaction vật liệu thất bại thì không được có structure; 
 thất bại sau consume thì phải có refund evidence. Cost và technology gate phải
 đọc từ JSON/Core contracts, không được biến thành state phụ trong Build.
 
+Progression evidence phải thể hiện owner duy nhất: XP, level, technology point
+và unlocked set đều có `before/after`, requester và correlation. Hai requester
+cùng gửi một unlock chỉ được tạo một mutation. Build phải log query technology
+trước khi accepted, không được ghi thay cho Progression.
+
 ## 18.13 — Work: chứng minh catch-up không nhân đôi
 
-Mở listen server và client với `-PaldarkWorkQA`. Đối chiếu assignment, enqueue,
+Work kéo cùng state qua hai nhịp thời gian: live tick và offline catch-up. Lỗi
+nguy hiểm nhất không phải thiếu output mà là cùng một khoảng thời gian được
+tính hai lần. Vì vậy mở listen server và client với `-PaldarkWorkQA`. Đối chiếu assignment, enqueue,
 progress, Inventory transaction, Work finished và client `authority=false`.
 Station phải có `slotCount=1`; worker thứ hai bị `SlotConflict`; worker đầu
 tiên được log bằng stable id với `actor_available=false`. QA tua checkpoint để
@@ -315,6 +342,7 @@ quantity trực tiếp và không được thêm need feature trong slice này.
 
 ## 18.14 — Bổ sung sau Chương 31
 
+Chương 31 mở rộng bài học entity–actor từ một companion sang dân số thế giới.
 World QA phải phân biệt lifecycle của actor representation với lifecycle của
 entity. Các dòng `UnloadedForRelevancy` không được đọc thành
 `DestroyedByDeath`; sau unload phải có `Paldark.World.Status` cho thấy stable
@@ -324,7 +352,8 @@ before/after và `authority`.
 
 ## 18.15 — Dungeon: unload boss không phải defeat
 
-Dungeon QA phải dùng một correlation xuyên `enter → run → room → boss →
+Dungeon ghép lifecycle actor, Health result và reward idempotency trong một
+flow dài hơn. Dungeon QA phải dùng một correlation xuyên `enter → run → room → boss →
 Health death result → completed → reward claim`. Trước death, ẩn/unload actor
 boss phải ghi `completed=false`, `reason=ActorUnloadedWithoutHealthDeath` và
 claim phải bị từ chối với `reason=RunNotCompleted`. Chỉ `FDamageResult` từ
@@ -338,7 +367,8 @@ headless chỉ chứng minh log/network evidence, không phải visual dungeon p
 
 ## 18.16 — Chương 35: ba owner, không nửa transaction
 
-Native QA hiện chỉ nghiệm thu Economy. Chạy packaged listen server/client với
+Chương 35 là nơi mức độ bằng chứng phải được giữ đặc biệt chặt: ba plugin tồn
+tại không có nghĩa cả ba gameplay flow đã tồn tại. Native QA hiện chỉ nghiệm thu Economy. Chạy packaged listen server/client với
 `-Paldark35QA` và đối chiếu source sinh log tại
 `EconomyFeatureSubsystem.cpp`: offer stock là member state, số dư đọc qua
 `IPaldarkItemRead`, còn mutation đi qua `IPaldarkItemTransaction`. `before`
@@ -349,3 +379,17 @@ Breeding và Condenser phải hiện `*_DEFERRED`; không được dùng các d�
 bằng chứng cho combo thiếu row, sacrifice list, duplicate id hoặc rollback.
 Các yêu cầu này đang deferred vì chưa có state owner thật. Chưa có
 persistence codec hoặc offline farm catch-up cho Chapter 35.
+
+Từ câu “con Pal tự nhiên chết” ở đầu chương tới các flow dài như Dungeon và
+Economy, nguyên tắc không đổi: bằng chứng phải đi qua đúng cửa mà gameplay thật
+đi qua. Command giúp dựng state, correlation nối request với mutation, log chỉ
+ra owner, còn playtest xác nhận thứ người chơi nhìn thấy. Nếu bỏ một mắt xích,
+ta có thể có một dashboard xanh mà vẫn không trả lời được bug report ban đầu.
+
+Chương 19 sẽ biến những yêu cầu này thành gate lặp lại được. CI không thể quyết
+định game có vui hay không, nhưng nó có thể từ chối một feature không có owner,
+không có correlation hoặc dùng readiness log để giả làm gameplay evidence.
+
+---
+
+**Bằng chứng cho chương này.** Các category `LogPaldark`, `LogPaldarkNet`, `LogPaldarkGAS`, `LogPaldarkWork` và `LogPaldarkPersistence` là OBSERVED trong `PaldarkCoreLog.h`; `LogPaldarkMovement` và việc feature tự define category trong module là OBSERVED từ Movement slice. Các command được liệt kê ở phần đầu là OBSERVED từ PaldarkLab; ba command Movement và cờ `-PaldarkMovementQA` là OBSERVED từ packaged QA. Việc `-ExecCmds` không cho lifecycle kiểm chứng ổn định ở packaged run là OBSERVED trong môi trường UE 5.6 này. Format `PD|...` và quy tắc ba command là thiết kế Paldark theo L9/L12 (INFERRED). Luồng owner/requester/observer dựa trên L8 và mô hình authority/GAS đã giải thích ở Quyển 2; Palworld runtime cụ thể chưa đủ evidence để khẳng định.

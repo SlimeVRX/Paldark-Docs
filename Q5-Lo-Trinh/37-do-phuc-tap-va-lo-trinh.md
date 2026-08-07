@@ -2,19 +2,21 @@
 
 ## 37.1 — Có đánh giá “chính xác” độ phức tạp được không?
 
-**Không thể chính xác theo giờ ở thời điểm này.** Ta chưa chốt phiên bản Palworld mục tiêu, chưa có content count đầy đủ, nhiều logic KYWorld nằm trong Blueprint binary, và chưa có human runtime baseline cho mọi normal path. Một con số như “còn 172 giờ” tạo cảm giác chắc chắn giả.
+Sau một bản kiểm toán, câu hỏi thường đến ngay là: “Vậy còn bao lâu nữa?”. Một con số theo giờ tạo cảm giác dự án đã nằm gọn trong tay, nhưng ở thời điểm này sự chính xác ấy chỉ là hình thức. Ta chưa chốt phiên bản Palworld mục tiêu, chưa có content count đầy đủ, nhiều logic KYWorld còn nằm trong Blueprint binary và chưa có human runtime baseline cho mọi normal path. Nói “còn 172 giờ” sẽ chính xác tới hàng đơn vị trên một nền dữ liệu chưa chính xác tới hàng chục.
 
-Ta có thể đánh giá đủ chính xác để ra quyết định theo ba lớp:
+Điều đó không có nghĩa ta không thể lập kế hoạch. Ta có thể đánh giá đủ chắc để quyết định theo ba lớp:
 
 1. **Độ phức tạp tương đối:** system nào khó hơn và khó vì loại vấn đề nào.
 2. **Dependency:** work nào mở khoá nhiều system khác.
 3. **Evidence confidence:** phần nào có source, phần nào chỉ là asset/doc/inference/unknown.
 
-Giờ công chỉ được estimate sau khi một thin vertical slice của chính system đã qua compile + human gate. Khi đó velocity có dữ liệu thay vì tưởng tượng.
+Giờ công chỉ nên được ước lượng sau khi một thin vertical slice của chính system đã đi qua compile và human gate. Lúc ấy velocity bắt đầu có dữ liệu: ta biết contract mất bao lâu, integration vấp ở đâu và người chơi tìm thấy lỗi gì. Trước mốc đó, hãy dùng độ phức tạp để xếp thứ tự, không dùng nó để hứa ngày.
 
 ## 37.2 — Bảy nguồn khó
 
-Mỗi trục 1–5. Tổng chỉ để xếp nhóm, không phải phép đo tuyến tính; một trục 5 có thể chi phối toàn bộ system.
+Một hệ thống không “khó” theo một cách duy nhất. Combat có thể nặng ở prediction và content; Build nặng ở không gian, UX và validation; Persistence nặng ở hậu quả không thể đảo ngược. Bảy trục dưới đây tách chữ “khó” thành những nguyên nhân có thể thảo luận.
+
+Mỗi trục được chấm từ 1 tới 5. Tổng chỉ dùng để xếp nhóm, không phải phép đo tuyến tính: một trục 5 — chẳng hạn failure không thể phục hồi — có thể chi phối toàn bộ system dù tổng điểm chưa cao nhất.
 
 | Trục | Đo gì | Câu hỏi bắt buộc |
 |---|---|---|
@@ -26,9 +28,11 @@ Mỗi trục 1–5. Tổng chỉ để xếp nhóm, không phải phép đo tuy�
 | `R` — Rules | công thức/ordering/tuning/balance | Nguồn nào chứng minh luật và edge case? |
 | `I` — Integration | số owner/transaction/schema cùng tham gia | Producer/consumer có typed/versioned contract không? |
 
-Nhóm: 7–14 thấp, 15–20 vừa, 21–26 cao, 27–35 cực cao. Sai số hợp lý khoảng ±3 điểm.
+Các khoảng 7–14, 15–20, 21–26 và 27–35 lần lượt được đọc là thấp, vừa, cao và cực cao, với sai số hợp lý khoảng ±3 điểm. Điều đáng nhìn không chỉ là tổng, mà là hình dạng bảy con số: nó cho biết cần mua rủi ro bằng loại prototype và bằng chứng nào.
 
 ## 37.3 — Bảng độ phức tạp
+
+Đặt mười lăm hệ thống lên cùng bảy trục làm lộ một điều mà số lượng class thường che đi: phần việc khó nhất còn lại nằm ở nơi code phải gặp người chơi, content và các owner khác.
 
 | Ch. | Hệ thống | S/N/A/U/C/R/I | Tổng | Nhóm | Vì sao khó nhất |
 |---:|---|---|---:|---|---|
@@ -48,11 +52,11 @@ Nhóm: 7–14 thấp, 15–20 vừa, 21–26 cao, 27–35 cực cao. Sai số h�
 | 34 | Multiplayer | 5/5/2/4/3/5/5 | **29** | Cực cao | cross-cut authority/reconnect/relevancy/guild/persistent world |
 | 35 | Breeding/economy | 5/4/3/5/5/5/5 | **32** | Cực cao | dataset/di truyền/time economy/atomic entity mutation/UI/content |
 
-Điều bảng này nói rõ: phần khó còn lại không phải tạo thêm state struct. Nó là **AI, UX, content, rule evidence và integration** — đúng những trục PR #135–#157 làm ít nhất.
+Vì vậy phần khó còn lại không phải tạo thêm state struct. Nó là **AI, UX, content, bằng chứng cho rule và integration** — đúng những trục PR #135–#157 đầu tư ít nhất. Roadmap tốt phải đưa các trục ấy vào sớm, thay vì để chúng thành phần “hoàn thiện” ở cuối.
 
 ## 37.4 — Tám năng lực nền mở khoá 15 hệ thống
 
-Không có nghĩa tạo tám module mới. Đây là dependency/capability phải chứng minh bằng vertical use:
+Nhiều hệ thống chia sẻ cùng một loại khó. Nếu mỗi chương tự giải stable identity, transaction hay UI boundary theo cách riêng, ta sẽ có mười lăm bản gần giống nhưng không tương thích. Tám năng lực dưới đây là những đòn bẩy mở khóa nhiều hệ thống — **không phải lời đề nghị tạo thêm tám module**. Mỗi năng lực chỉ có giá trị khi được chứng minh trong một vertical use:
 
 1. **Stable identity + actor lease:** Creature, item, structure, player, world entity sống qua spawn/despawn/save.
 2. **Typed command/query/event:** chặn schema lệch khi producer/consumer cùng compile.
@@ -63,9 +67,11 @@ Không có nghĩa tạo tám module mới. Đây là dependency/capability phả
 7. **Definition registry + content schema:** definition read-only, instance mutable, one-row vertical proof trước bulk content.
 8. **Player/world-scoped persistence:** snapshot participant, numeric generation, migration, relation resolution, reconnect-safe identity.
 
-Nếu tám năng lực này được xây ngang không có consumer, ta lặp lại sai lầm cũ. Mỗi năng lực chỉ được thêm ở đúng vertical slice cần nó.
+Xây ngang cả tám capability mà chưa có consumer sẽ lặp lại đúng sai lầm cũ dưới tên gọi mới. Một capability chỉ nên xuất hiện ở lát cắt đầu tiên thực sự cần nó, và phải rời lát cắt ấy cùng một bằng chứng sử dụng. Nền móng không được tính bằng số lớp; nó được tính bằng số đường chơi đã đặt được sức nặng lên trên.
 
 ## 37.5 — Dependency graph của gameplay
+
+Các mũi tên dưới đây không nói mọi feature phải chờ feature trước hoàn thành 100%. Chúng nói outcome nào cần contract hoặc state từ outcome nào để có thể khép một vòng có nghĩa.
 
 ```mermaid
 flowchart TD
@@ -91,9 +97,11 @@ flowchart TD
     NET["34 Multiplayer"] -. "property of each state" .-> CAP
 ```
 
-Persistence và multiplayer không phải “làm xong cuối cùng rồi rắc lên game”. Contract identity/authority của chúng có từ đầu, còn runtime acceptance sâu được hoãn tới milestone phù hợp.
+Hai đường nét đứt là một lời nhắc quan trọng. Persistence và multiplayer không phải lớp gia vị được “rắc lên game” sau cùng: stable identity, scope và authority của chúng phải có từ đầu. Điều được hoãn tới milestone phù hợp là runtime acceptance sâu, không phải contract khiến state về sau có thể lưu và đồng bộ đúng.
 
 ## 37.6 — Work breakdown để đạt parity chức năng
+
+Từ dependency graph, ta có thể hạ từng hệ thống thành các outcome kỹ thuật và trải nghiệm. Danh sách sau là functional work breakdown: nó mô tả những năng lực phải tồn tại để gọi một hệ thống là phủ đủ chức năng, chứ không chỉ ra mỗi năng lực phải nằm trong class hay plugin nào.
 
 ### 21 — Di chuyển và input
 
@@ -248,9 +256,11 @@ Persistence và multiplayer không phải “làm xong cuối cùng rồi rắc 
 - ranch/output/source/sink balance;
 - UI/content/save/network.
 
-Đây là functional WBS. “100%” còn cần content catalog/tuning/visual/audio và một phiên bản Palworld mục tiêu; không thể suy ra từ class list.
+Danh sách này vẫn chưa phải nghĩa đầy đủ của “100%”. Parity còn cần catalog content, tuning, visual, audio và một phiên bản Palworld mục tiêu đã chốt. Class list chỉ cho biết ta đã chuẩn bị bao nhiêu hộp; nó không cho biết các hộp chứa đủ thế giới người chơi mong đợi hay chưa.
 
 ## 37.7 — Lộ trình theo wave
+
+Nếu làm theo số chương, đội sẽ mở nhiều mặt trận trước khi một vòng chơi đem lại feedback. Các wave dưới đây sắp công việc theo khả năng khép outcome và mở khóa outcome kế tiếp. Mỗi wave phải để lại một đường có thể kiểm chứng, không chỉ thêm breadth.
 
 ### Wave 0 — Design gate và evidence hygiene
 
@@ -264,13 +274,13 @@ Persistence và multiplayer không phải “làm xong cuối cùng rồi rắc 
 
 Interaction target/kind → Inventory Sphere → Combat/Health → Capture settlement → Creature roster → Summon → Work arrival → Output.
 
-Mục tiêu: chứng minh identity, transaction, AI, UI và log trên một flow thật.
+Mục tiêu không phải làm đầy đủ từng hệ thống trên đường đi, mà chứng minh identity, transaction, AI, UI và log có thể cùng sống trên một flow thật. Đây là lát cắt dạy cho dự án biết các contract có thực sự ghép được hay không.
 
 ### Wave 2 — Survival/base loop
 
 Harvest → Inventory → Craft → Build → Station/container → Pal automation → Progression unlock.
 
-Mục tiêu: biến một capture thành nền kinh tế căn cứ tự vận hành.
+Mục tiêu là biến một lần capture thành nền kinh tế căn cứ tự vận hành: thứ người chơi mang về phải đi qua inventory, craft, build và lao động để tạo ra khả năng mới.
 
 ### Wave 3 — World/dungeon loop
 
@@ -284,17 +294,19 @@ Movement modes, weapon/element/status breadth, companion skill/mount, Work needs
 
 Reconnect, guild/base permission, persistent multi-player scope, dedicated acceptance, migration/backward compatibility và performance budget.
 
-Wave 5 test sâu được hoãn, nhưng authority/stable ID/schema contract không được hoãn.
+Các bài test sâu của Wave 5 có thể đợi tới khi gameplay đủ hình dạng để đáng harden. Authority, stable ID và schema contract thì không thể đợi, bởi mọi state viết trước đó sẽ mang quyết định của chúng ngay từ ngày đầu.
 
 ## 37.8 — Định nghĩa hoàn thành
 
-Mỗi system đi qua:
+Chữ “xong” trở nên nguy hiểm khi nó không nói xong ở tầng nào. Mỗi system của Paldark vì thế phải đi qua một chuỗi bằng chứng có thứ tự:
 
 `DESIGNED → SOURCE_PRESENT → COMPILED → INTEGRATED → PLAYER_OBSERVABLE → USER_VERIFIED → PARITY_EVIDENCED`.
 
-Phần trăm ở Chương 36 chỉ là dashboard. Definition of Done thực là evidence chain này.
+Phần trăm ở Chương 36 là dashboard để nhìn xu hướng. Definition of Done thật nằm trong evidence chain: source có mặt không thay cho compile; compile không thay cho integration; integration không thay cho điều người chơi nhìn thấy; và một lần nhìn thấy vẫn chưa chứng minh parity.
 
 ## 37.9 — Nguồn và bài học
+
+Roadmap này không đứng một mình. Mỗi lớp quyết định có một tài liệu phía sau để người đọc quay lại kiểm tra đường suy luận:
 
 - Đường học của 13 khoá theo từng system: [Phụ lục D](../PhuLuc/D-kiem-ke-13-khoa-hoc.md).
 - Giáo trình câu hỏi 15 system: [Chương 38](38-giao-trinh-15-khoa-hoc.md).
@@ -302,4 +314,4 @@ Phần trăm ở Chương 36 chỉ là dashboard. Definition of Done thực là 
 - Nguồn Epic và điều được phép suy ra: [Phụ lục F](../PhuLuc/F-nguon-chinh-thuc.md).
 - Kiến trúc proposed: [Chương 39](../Q6-Kien-Truc-VibeCoding/39-kien-truc-hoi-tu-vibecoding.md).
 
-Không bắt đầu code theo roadmap này trước khi ADR-001 được Soliz duyệt.
+Ở snapshot được mô tả trong chương, ADR-001 vẫn là design gate: chưa có phê duyệt của Soliz thì roadmap chỉ dùng để thảo luận thứ tự và rủi ro, không phải quyền bắt đầu code. Một lộ trình tốt không chỉ nói nên đi đâu; nó còn nói rõ cánh cổng nào chưa được mở.

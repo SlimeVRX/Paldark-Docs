@@ -1,10 +1,14 @@
 # Phụ lục H — Ma trận donor PaldarkLab, V2, V3 và PaldarkKit
 
-Mục tiêu không phải chọn một codebase thắng cuộc. Mục tiêu là biết **lấy loại bằng chứng/implementation nào từ đâu**, rồi đặt nó sau contract đã duyệt.
+Đặt PaldarkLab, V2, V3 và PaldarkKit cạnh nhau rất dễ dẫn tới câu hỏi “bản nào tốt nhất?”. Nhưng một codebase có gameplay rộng chưa chắc giữ invariant tốt, còn một kiến trúc chặt chưa chắc đã có vòng chơi đủ sâu. Nếu buộc phải chọn một kẻ thắng, ta sẽ vứt bỏ chính phần bằng chứng mạnh nhất của những bản còn lại.
+
+Ma trận này đổi câu hỏi. Mục tiêu là biết **lấy loại bằng chứng hoặc implementation nào từ đâu**, vì sao donor ấy phù hợp, và phần nào phải để lại. Mọi thứ được mang sang chỉ đi vào Paldark sau contract đã duyệt.
 
 Nguồn audit chính: [PALDARK PaldarkLab vs PaldarkV2 Source Code Audit](https://github.com/SlimeVRX/Soliz-Devin-PaldarkKit/blob/main/PaldarkLab/Docs/PALDARK_PaldarkLab_vs_PaldarkV2_Source_Code_Audit_VI.md), [V3 Technical Architecture](https://github.com/SlimeVRX/Soliz-Devin-PaldarkKit/blob/main/PaldarkV3/Docs/PALDARK_V3_Technical_Architecture_VI.md) và [V3 Implementation Status](https://github.com/SlimeVRX/Soliz-Devin-PaldarkKit/blob/main/PaldarkV3/Docs/PALDARK_V3_IMPLEMENTATION_STATUS_VI.md). Kết quả compile/test trong các tài liệu đó là evidence lịch sử của snapshot được audit, không tự động là HEAD hiện tại. Các liên kết source có thể yêu cầu quyền truy cập repository kỹ thuật.
 
 ## H.1 — Hồ sơ từng codebase
+
+Hãy đọc mỗi hàng như một vai trò trong quá trình hội tụ, không như bảng xếp hạng chất lượng. “Điểm mạnh” nói loại evidence donor có thể cung cấp; “nợ/rủi ro” nói giả định không được vô tình nhập theo.
 
 | Codebase | Điểm mạnh có evidence | Nợ/rủi ro | Vai trò hội tụ |
 |---|---|---|---|
@@ -15,7 +19,7 @@ Nguồn audit chính: [PALDARK PaldarkLab vs PaldarkV2 Source Code Audit](https:
 
 ## H.2 — Ma trận donor theo hệ thống 21–35
 
-`Primary donor` không có nghĩa copy file. Agent phải đọc owner/invariant trước, kiểm license/phạm vi và port phía sau API mới.
+`Primary donor` không có nghĩa là file được ưu tiên copy. Nó chỉ là nơi nên khảo sát đầu tiên cho loại behavior hoặc invariant đang cần. Trước khi port, agent vẫn phải đọc owner, invariant, license và phạm vi sử dụng, rồi đặt private implementation phía sau API mới của Paldark.
 
 | Ch. | Primary donor | Secondary/reference | Dùng phần nào | Không mang theo |
 |---:|---|---|---|---|
@@ -37,6 +41,8 @@ Nguồn audit chính: [PALDARK PaldarkLab vs PaldarkV2 Source Code Audit](https:
 
 ## H.3 — Quy trình port một donor
 
+Port an toàn là một đường suy luận có thể kiểm tra, không phải thao tác chép và sửa cho tới khi compile. Mười bước dưới đây giữ provenance lẫn behavior trong suốt đường đi:
+
 1. Viết behavior contract và nguồn player value.
 2. Ghi canonical state owner + invariant Paldark.
 3. Đọc tối thiểu hai donor nếu có: một cho breadth, một cho failure correctness.
@@ -50,6 +56,8 @@ Nguồn audit chính: [PALDARK PaldarkLab vs PaldarkV2 Source Code Audit](https:
 
 ## H.4 — Quy tắc chống “Frankenstein architecture”
 
+Một dự án có thể dùng nhiều donor mà vẫn giữ được một kiến trúc. Nó chỉ biến thành “Frankenstein” khi các public contract, owner và giả định của donor cùng sống sót cạnh nhau mà không có nơi hội tụ. Những quy tắc sau bảo vệ đúng chỗ đó:
+
 - Không copy public interface của nhiều donor vào Core.
 - Không giữ hai Health/Inventory/AI owner để “tạm tương thích”. Adapter chỉ có deadline và consumer rõ.
 - Không port manager/god character trước khi tách responsibility.
@@ -57,4 +65,4 @@ Nguồn audit chính: [PALDARK PaldarkLab vs PaldarkV2 Source Code Audit](https:
 - Không dùng test count/LOC làm KPI gameplay.
 - Không sửa donor source; PaldarkKit chứa implementation hội tụ và tài liệu ghi provenance.
 
-Kết luận: **Kit là nơi ghép, V3 là luật, V2 là kỷ luật failure, Lab là gameplay donor, KYWorld là chuẩn hành vi/scope.** Đây là cách vừa đi nhanh vừa không đánh mất first-principles reasoning.
+Vai trò cuối cùng có thể đọc trong một câu: **Kit là nơi ghép, V3 là luật, V2 là kỷ luật failure, Lab là gameplay donor, còn KYWorld là chuẩn hành vi và scope.** Không donor nào được quyền mang nguyên topology của mình vào dự án. Nhờ vậy Paldark có thể đi nhanh bằng phần việc đã có bằng chứng mà vẫn giữ được first-principles reasoning ở nơi quyết định được đưa ra.

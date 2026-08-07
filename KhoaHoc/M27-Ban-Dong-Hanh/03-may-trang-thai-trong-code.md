@@ -4,7 +4,7 @@
 
 ## Từ bảng chuyển trạng thái tới code
 
-Bài 01 để lại năm trạng thái và sáu chuyển. Chuyển chúng thành code là phần dễ. Phần khó — và là toàn bộ nội dung bài này — là ba cái bẫy mà bảng đó **không** nói cho bạn biết.
+Bài 01 để lại năm trạng thái và sáu chuyển, gọn tới mức việc chuyển chúng thành code có vẻ chỉ là đánh máy. Phần khó bắt đầu khi code phải sống cạnh authority, lifecycle và các feature khác. Ba cái bẫy trong bài này đều nằm ở những điều bảng chuyển trạng thái **không** thể tự nói cho bạn biết.
 
 Hình dạng cuối cùng:
 

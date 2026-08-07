@@ -1,16 +1,18 @@
 # Chương 44 — CI/CD tự kiểm chứng cho PaldarkV5
 
-PR [#184](https://github.com/SlimeVRX/Soliz-Devin-Palworld/pull/184) là một bước ngoặt thật: lần đầu PaldarkKit có một tác nhân chạy trong game, đi qua một chuỗi gameplay dài, đọc state thật và tạo bằng chứng máy đọc được. Nhưng tên PR “AI tự chơi và tự chụp ảnh game — hết phụ thuộc vào người test” đi xa hơn bằng chứng hiện có. Ở merge commit `6b777c23`, đây là **một autoplay smoke harness chạy local**, chưa phải một CI/CD đáng tin cậy và chưa thể thay người kiểm thử.
+Hãy bắt đầu từ một failure mà chính harness hiện tại cho phép xảy ra: bot đi hết vòng chơi, ghi summary thành công, rồi process không thoát; watchdog bên ngoài kill Unreal, nhưng shell vẫn có thể in `HARNESS PASS`. Kết quả gameplay đúng và kết quả process sai cùng tồn tại trong một run. Nếu chỉ nhìn chữ PASS cuối cùng, máy sẽ trao huy chương cho một artifact mà con người chưa nên tin.
+
+Khoảng hở ấy không phủ nhận giá trị của PR [#184](https://github.com/SlimeVRX/Soliz-Devin-Palworld/pull/184). Đây vẫn là một bước ngoặt thật: lần đầu PaldarkKit có một tác nhân chạy trong game, đi qua chuỗi gameplay dài, đọc state thật và tạo bằng chứng máy đọc được. Nhưng tên PR “AI tự chơi và tự chụp ảnh game — hết phụ thuộc vào người test” đi xa hơn bằng chứng hiện có. Ở merge commit `6b777c23`, đây là **một autoplay smoke harness chạy local**, chưa phải một CI/CD đáng tin cậy và chưa thể thay người kiểm thử.
 
 Kết luận quan trọng nhất của chương này là:
 
 > Chỉ có thể giao cho AI một mục tiêu ngắn như “dựng lại PaldarkV5 từ PaldarkV4” khi repository đã chứa một đặc tả thực thi đủ mạnh để tự phán quyết đúng/sai. Nếu chưa có oracle, replay, baseline và regression corpus thì câu đó không phải specification; nó chỉ là mong muốn.
 
-Chương này kiểm toán PR #184, đối chiếu với quy trình công khai của Epic, Riot, Rare, DICE, Ubisoft, Rebellion và một studio indie, rồi đề xuất đường đi cụ thể từ PaldarkV4 tới một PaldarkV5 mà AI có thể tự triển khai, tự tái hiện lỗi và tự sửa phần lớn lỗi hồi quy.
+Vì vậy chương này không bắt đầu bằng một sơ đồ pipeline lý tưởng. Nó kiểm toán PR #184 từ những chỗ có thể xanh sai, đối chiếu với quy trình công khai của Epic, Riot, Rare, DICE, Ubisoft, Rebellion và một studio indie, rồi mới đề xuất đường đi từ PaldarkV4 tới một PaldarkV5 mà AI có thể tự triển khai, tự tái hiện lỗi và tự sửa phần lớn lỗi hồi quy.
 
 > **Làm rõ thuật ngữ sau khi viết chương này:** nhu cầu hằng ngày của Paldark không phải là “làm CI/CD trước”, mà là tạo **testability, automated verification, executable test case và regression corpus**. CI chỉ là nơi tự động gọi các test đó khi source thay đổi; CD không giải quyết việc một gameplay outcome đúng hay sai. Quy trình test nhỏ, nhanh và vòng tự kiểm chứng của AI được tách riêng ở [Chương 45](45-test-case-nho-va-vong-tu-kiem-chung.md).
 
-Các nhãn bằng chứng dùng trong chương:
+Để audit không biến đề xuất thành sự thật bằng cách đổi giọng văn, mỗi nhận định trong chương giữ một trong bốn nhãn bằng chứng:
 
 - **OBSERVED**: đọc trực tiếp từ source, workflow, log hoặc lịch sử Git hiện có;
 - **INFERRED**: kết luận kỹ thuật suy ra từ bằng chứng nhưng chưa được chạy đủ trên farm;
@@ -19,6 +21,8 @@ Các nhãn bằng chứng dùng trong chương:
 
 ## 44.1 — Phân biệt bốn thứ đang bị gọi chung là “CI/CD”
 
+Khi một script vừa điều khiển game, vừa chụp ảnh, vừa in PASS, bốn trách nhiệm rất dễ bị gộp thành một chữ “CI/CD”. Tách chúng ra trước giúp ta biết #184 đã giải được lớp nào và lớp nào vẫn chưa có trọng tài.
+
 | Khái niệm | Câu hỏi nó trả lời | Trạng thái ở PR #184 |
 |---|---|---|
 | Test case | Một điều kiện cụ thể có đúng không? | Có một số assertion runtime trong autoplay. |
@@ -26,11 +30,11 @@ Các nhãn bằng chứng dùng trong chương:
 | CI | Mỗi thay đổi có tự build/test, chặn merge và lưu bằng chứng không? | Chưa. PR không nối autoplay vào GitHub Actions. |
 | CD | Một artifact đã qua gate có được đánh version, ký/ghi provenance và promote mà không rebuild không? | Chưa có. |
 
-Autoplay cũng không đồng nghĩa với AI. `UPaldarkAutoplaySubsystem` là state machine tất định được viết bằng C++; đó là lựa chọn tốt cho regression test vì dễ lặp lại hơn một LLM. AI nên tham gia ở vòng ngoài — đọc failure, tìm nguyên nhân, viết test và sửa code — còn phép phán quyết trong CI phải dựa trên oracle rõ ràng, không dựa vào cảm giác của mô hình.
+Bảng cho thấy #184 đã có test case và test harness ở một mức hữu ích, nhưng chưa có hai lớp biến kết quả local thành quyết định phát hành. Autoplay cũng không đồng nghĩa với AI. `UPaldarkAutoplaySubsystem` là state machine tất định được viết bằng C++; đó là lựa chọn tốt cho regression test vì dễ lặp lại hơn một LLM. AI nên tham gia ở vòng ngoài — đọc failure, tìm nguyên nhân, viết test và sửa code — còn phép phán quyết trong CI phải dựa trên oracle rõ ràng, không dựa vào cảm giác của mô hình.
 
 ## 44.2 — PR #184 thực sự đã làm gì?
 
-Merge `6b777c23` gồm 8 commit, 23 file, khoảng `+1634/-26`. Các phần chính là:
+Trước khi chỉ ra lỗ hổng, cần ghi nhận chính xác thứ đã được xây. Merge `6b777c23` gồm 8 commit, 23 file, khoảng `+1634/-26`; các phần chính trải từ driver trong game tới script thu artifact:
 
 | Phần | Bằng chứng | Giá trị mang lại |
 |---|---|---|
@@ -43,15 +47,17 @@ Merge `6b777c23` gồm 8 commit, 23 file, khoảng `+1634/-26`. Các phần chí
 | Equip input thật hơn | `HUD.Input.json`, `HUDFeatureComponent` | Thêm action One/Two cho Gậy và Cầu thay vì chỉ gọi equip function. |
 | Bootstrap runtime | `PaldarkRuntimeModule.cpp` | Tự tạo subsystem khi có `-PaldarkAutoplay`. |
 
-Ba quyết định đáng giữ lại cho V5:
+Đọc bảng theo luồng điều khiển → quan sát → bằng chứng, có ba quyết định đáng giữ lại cho V5:
 
 1. test điều khiển feature qua interface, không include implementation;
 2. kết quả dựa trên state owner thật, không chỉ dựa vào dòng “ready”;
 3. một vertical loop buộc nhiều system seam cùng hoạt động.
 
-Đó là lý do PR này quan trọng hơn một script chụp ảnh thông thường. Nó đặt viên gạch đầu tiên cho một **executable gameplay contract**.
+Ba điểm ấy giải thích vì sao PR này quan trọng hơn một script chụp ảnh thông thường. Nó đặt viên gạch đầu tiên cho một **executable gameplay contract**. Phần còn lại của audit không bác bỏ viên gạch đó; nó hỏi cần thêm điều gì để viên gạch trở thành nền chịu lực.
 
 ## 44.3 — Những lỗ hổng khiến #184 chưa thể làm trọng tài
+
+Một harness chỉ đáng tin bằng failure mà nó chịu từ chối. Vì vậy các mục sau được xếp theo nơi một run có thể báo xanh dù contract, process hoặc bằng chứng đã sai, chứ không theo độ lớn của file cần sửa.
 
 ### P0 — Không nằm trong CI và CI hiện tại không đại diện cho PaldarkKit runtime
 
@@ -64,7 +70,7 @@ Audit local tại `6b777c23` cho kết quả:
 - Game Feature composition: local Windows không kết luận được vì script gọi GNU `strings`; workflow Ubuntu có tool này;
 - autoplay: không có artifact local trong `Saved/Autoplay`, không có `PALDARK_AUTOPLAY_*` trong log đang lưu.
 
-Một CI có job đỏ thường trực không thể là trọng tài. Trước khi bật branch protection, cần sửa hoặc tách validator PaldarkV3 khỏi gate PaldarkKit; sau đó thêm gameplay check có tên ổn định và bắt buộc pass.
+Những quan sát này dẫn tới một kết luận vận hành đơn giản: CI có job đỏ thường trực không thể đóng vai trọng tài, vì cả người lẫn agent sẽ học cách bỏ qua màu đỏ. Trước khi bật branch protection, cần sửa hoặc tách validator PaldarkV3 khỏi gate PaldarkKit; sau đó mới thêm gameplay check có tên ổn định và bắt buộc pass.
 
 ### P1 — Harness có thể PASS dù process crash hoặc bị timeout
 
@@ -74,50 +80,54 @@ Một CI có job đỏ thường trực không thể là trọng tài. Trước 
 
 Timeout trong C++ là 240 giây, dài hơn timeout ngoài 210 giây nên mặc định không bao giờ có cơ hội phát `HARNESS timeout`. Đây vừa làm mỗi run chậm vô ích, vừa che crash/hang xảy ra sau khi summary được ghi.
 
-Yêu cầu sửa:
+Muốn một terminal gameplay result trở thành terminal test result, bốn điều sau phải đi cùng nhau:
 
 - game phải phát một terminal result đúng một lần rồi tự thoát;
 - `process_status != 0`, crash, ensure/assert hoặc timeout đều là FAIL/ERROR;
 - timeout trong game phải ngắn hơn watchdog ngoài;
 - artifact vẫn phải upload bằng `if: always()` khi test fail.
 
+Danh sách này đặt process status ngang hàng với assertion gameplay. Thiếu một trong hai, harness vẫn có thể kể đúng câu chuyện trong log nhưng trao sai verdict cho pipeline.
+
 ### P1 — Đường input có fallback che đúng nhóm bug Movement đã từng gặp
 
 Autoplay lấy `UInputAction` rồi gọi `InjectInputForAction`. Cách này kiểm được semantic action và binding phía sau action, nhưng bỏ qua đoạn phím vật lý → mapping context → action. Nếu không tìm được action, Movement còn gọi thẳng `AddMovementInput`. Camera được xoay bằng `Controller->SetControlRotation` thay vì action Look.
 
-Do đó test có thể xanh trong khi các lỗi lịch sử sau quay lại:
+Khoảng đi tắt này khiến test có thể xanh trong khi đúng nhóm lỗi lịch sử sau quay lại:
 
 - action Look không tồn tại hoặc mouse không map vào Look — #147;
 - key/property trong input config sai làm Enhanced Input chết — #154;
 - W không đi theo camera — #156, vì harness tự đặt control rotation và fallback dùng actor forward;
 - mapping W/A/S/D bị mất nhưng action vẫn được inject trực tiếp.
 
-Fallback có thể hữu ích để giữ bot di chuyển trong một exploration run, nhưng **bị cấm trong acceptance test của Enhanced Input**. Nếu action/mapping không sẵn sàng, test phải dừng tại đúng phase với `input_path_unavailable`, không tự cứu đường chơi.
+Các lỗi trong danh sách có chung nguyên nhân: driver bắt đầu quá sâu trong pipeline nên bỏ qua phần đang cần nghiệm thu. Fallback có thể hữu ích để giữ bot di chuyển trong một exploration run, nhưng **bị cấm trong acceptance test của Enhanced Input**. Nếu action/mapping không sẵn sàng, test phải dừng tại đúng phase với `input_path_unavailable`, không tự cứu đường chơi.
 
 Loop hiện còn trộn ba tầng driver: One/Two/E đi bằng raw key, Interact/Attack/Capture inject thẳng semantic action, còn camera set rotation trực tiếp. Một test như vậy chứng minh được vertical outcome nhưng không thể nói chung rằng “input đã đúng”. Mỗi tầng cần test riêng và end-to-end input gate phải tuyên bố chính xác nó bắt đầu ở physical key hay semantic action.
 
 ### P1 — Capture dùng xác suất thật nhưng chỉ thử một lần
 
-Autoplay đánh Wild Pal một lần rồi ném một Cầu. Capture authority lấy seed bằng `FMath::RandRange`; threshold phụ thuộc HP. Theo contract hiện tại, Pal 100 HP bị Gậy gây 40 damage còn 60 HP, tương ứng xác suất khoảng 34%. Một smoke test bắt buộc qua Capture nhưng chỉ thử một lần vì vậy có thể thất bại ngẫu nhiên phần lớn số run.
+Autoplay đánh Wild Pal một lần rồi ném một Cầu. Capture authority lấy seed bằng `FMath::RandRange`; threshold phụ thuộc HP. Theo contract hiện tại, Pal 100 HP bị Gậy gây 40 damage còn 60 HP, tương ứng xác suất khoảng 34%. Vì thế, một smoke test bắt buộc qua Capture nhưng chỉ thử một lần có thể thất bại ngẫu nhiên trong phần lớn số run. Khi randomness quyết định màu của gate, failure không còn chỉ về implementation.
 
 CI không được “may thì xanh”. Cần hai test tách biệt:
 
 - deterministic success với seed/fixture do test sở hữu và threshold đã biết;
 - deterministic failure để kiểm sphere consume/refund, target reset và lần ném kế tiếp.
 
-Seed phải có trong result artifact để mọi failure chạy lại được.
+Hai test tách biệt biến may rủi thành hai contract có thể tái hiện. Seed phải có trong result artifact để mọi failure chạy lại được.
 
 ### P1 — Screenshot mới chỉ chứng minh “có file PNG”
 
 `StartStep` gọi screenshot ngay khi **bắt đầu** state, trước assertion. Nhiều substate dùng cùng tên `WEAKEN`, `CAPTURE` hoặc `OUTPUT`, nên cùng file có thể bị ghi đè và thời điểm cuối không ổn định. Hai script chỉ kiểm 8 byte PNG magic; không so ảnh chuẩn, không kiểm nội dung, không gắn ảnh với terminal assertion.
 
-Như vậy ảnh đen, camera xuyên mesh, mesh quá lớn hoặc ảnh chụp trước khi hành động vẫn được coi là hợp lệ. Visual gate phải:
+Kết quả là ảnh đen, camera xuyên mesh, mesh quá lớn hoặc ảnh chụp trước hành động vẫn được coi là hợp lệ. Muốn đổi “có PNG” thành một visual oracle, gate phải:
 
 - chụp sau khi state đã settle và assertion logic đã PASS;
 - dùng tên duy nhất gồm test ID, phase, attempt và correlation;
 - so với ground truth theo platform/RHI/resolution bằng Screenshot Comparison của Unreal;
 - lưu `ground-truth`, `incoming` và `diff`;
 - không cho AI tự cập nhật ground truth trong cùng PR sửa implementation.
+
+Các điều kiện trên cùng bảo vệ một nguyên tắc: ảnh chỉ có ý nghĩa khi biết nó chụp state nào, so với đáp án nào và ai có quyền đổi đáp án ấy.
 
 ### P1 — Một số oracle chưa chứng minh đúng nguyên nhân
 
@@ -131,15 +141,17 @@ Throw accepted
 → cùng entity xuất hiện trong roster
 ```
 
-Tương tự, ảnh tồn tại không chứng minh HUD đúng; actor active không chứng minh đúng Pal vừa bắt; ore tăng không chứng minh đúng fuel transaction nếu không nối correlation/revision.
+Chuỗi này buộc nguyên nhân và kết quả cùng mang một identity, thay vì suy luận từ việc target “không còn”. Tương tự, ảnh tồn tại không chứng minh HUD đúng; actor active không chứng minh đúng Pal vừa bắt; ore tăng không chứng minh đúng fuel transaction nếu không nối correlation/revision.
 
 ### P2 — Test quá dài để định vị lỗi và chưa cô lập môi trường
 
 Một loop tám bước là end-to-end smoke tốt, nhưng không thay các test nhỏ. Nếu Pickup fail, mọi bước sau chỉ còn `NOT_OBSERVED`. Map dùng `/Engine/Maps/Entry` và phụ thuộc tutorial lane dựng động, thay vì một test map Paldark versioned. Fast mode `-nullrhi` không thể bắt mesh/camera/render; visual mode software Vulkan không đại diện cho Windows GPU package.
 
-Cần giữ loop dài làm một blocker, đồng thời tách mỗi seam thành test độc lập có setup/teardown riêng. `NOT_OBSERVED` ở một required test phải được báo là FAIL hoặc BLOCKED-BY với parent failure; không được biến thành một trạng thái mơ hồ có thể bị bỏ qua.
+Vì vậy không nên chọn giữa loop dài và test nhỏ. Giữ loop dài làm một blocker để bảo vệ vertical integration, đồng thời tách mỗi seam thành test độc lập có setup/teardown riêng để định vị failure. `NOT_OBSERVED` ở một required test phải được báo là FAIL hoặc BLOCKED-BY với parent failure; không được biến thành một trạng thái mơ hồ có thể bị bỏ qua.
 
 ## 44.4 — Mức trưởng thành hiện tại
+
+Sau khi tách các lỗ hổng, ta có thể đặt #184 lên một thang trưởng thành mà không rơi vào hai cực “chưa có gì” hoặc “đã tự test hoàn toàn”:
 
 | Mức | Năng lực | Paldark hiện tại |
 |---:|---|---|
@@ -150,11 +162,11 @@ Cần giữ loop dài làm một blocker, đồng thời tách mỗi seam thành
 | 4 | Editor + packaged + multiplayer + visual/perf matrix | Chưa đạt. |
 | 5 | AI nhận failure, tái hiện, viết regression, sửa và tự chứng minh | Chưa đạt. |
 
-Vì vậy đánh giá công bằng là: **#184 là bước ngoặt về khả năng kiểm thử, không phải điểm kết thúc sự phụ thuộc vào người test**.
+Mức 2 là tiến bộ thật vì state oracle và vertical loop đã tồn tại. Nhưng khoảng cách tới mức 3 nằm đúng ở các failure vừa audit: verdict process, tính tất định, artifact và merge gate. Vì vậy đánh giá công bằng là: **#184 là bước ngoặt về khả năng kiểm thử, không phải điểm kết thúc sự phụ thuộc vào người test**.
 
 ## 44.5 — Các hãng game công khai đã làm gì?
 
-Không có một “CI/CD ngành game” duy nhất. Mẫu chung là nhiều tầng test, build farm, game-side control/read APIs, bot cho flow dài, test packaged trên thiết bị thật, artifact lịch sử và con người làm exploratory/quality review.
+Để biết khoảng cách từ mức 2 lên các mức cao hơn thường được lấp bằng gì, ta nhìn vào quy trình công khai của các hãng game. Không có một “CI/CD ngành game” duy nhất; điểm chung là nhiều tầng test, build farm, game-side control/read APIs, bot cho flow dài, test packaged trên thiết bị thật, artifact lịch sử và con người làm exploratory/quality review.
 
 | Nguồn công khai | Cách họ làm | Bài học cho Paldark |
 |---|---|---|
@@ -166,13 +178,13 @@ Không có một “CI/CD ngành game” duy nhất. Mẫu chung là nhiều t�
 | Rebellion | Kết hợp numeric planner với behavior tree để chơi game từ đầu tới cuối trên nhiều thể loại. | Planner phù hợp exploration/full-game coverage; assertion tất định vẫn phải đứng ngoài planner. |
 | Pontoco — The Last Clockwinder | Ghi và phát lại player input để tái hiện gameplay ổn định, rồi dùng bản ghi cho automated regression. | Mỗi bug khó tái hiện nên trở thành replay fixture có version. |
 
-Tài liệu công khai của Pocketpair mà audit tìm được mô tả việc lặp `memreport` và kiểm tra trên hardware thật khi tối ưu Palworld, nhưng không công bố một kiến trúc CI/gameplay automation đủ chi tiết để đối chiếu. Vì vậy không được suy đoán rằng Palworld dùng hay không dùng một hệ thống cụ thể. Ta có thể học từ hành vi game và nguồn donor, nhưng kiến trúc CI của Paldark phải dựa trên bằng chứng công khai ở trên và nhu cầu thật của repository này.
+Bảng không đưa ra một stack để sao chép nguyên xi; nó cho thấy từng lớp rủi ro cần một loại driver và oracle khác nhau. Tài liệu công khai của Pocketpair mà audit tìm được mô tả việc lặp `memreport` và kiểm tra trên hardware thật khi tối ưu Palworld, nhưng không công bố một kiến trúc CI/gameplay automation đủ chi tiết để đối chiếu. Vì vậy không được suy đoán rằng Palworld dùng hay không dùng một hệ thống cụ thể. Ta có thể học từ hành vi game và nguồn donor, nhưng kiến trúc CI của Paldark phải dựa trên bằng chứng công khai ở trên và nhu cầu thật của repository này.
 
 ## 44.6 — Vì sao chỉ nói “làm lại V5 từ V4” là chưa đủ?
 
-Hai implementation khác nhau có thể cùng đúng; hai game nhìn giống nhau có thể có state authority hoàn toàn khác. Ngược lại, V4 đang chứa cả hành vi đúng lẫn lỗi lịch sử. Nếu lấy toàn bộ V4 làm golden master, V5 sẽ được thưởng khi tái tạo cả bug.
+Lúc này mới có thể quay lại câu “làm lại V5 từ V4”. Hai implementation khác nhau có thể cùng đúng; hai game nhìn giống nhau có thể có state authority hoàn toàn khác. Ngược lại, V4 đang chứa cả hành vi đúng lẫn lỗi lịch sử. Nếu lấy toàn bộ V4 làm golden master, V5 sẽ được thưởng khi tái tạo cả bug.
 
-Trước khi khởi công V5 phải đóng băng một **Paldark Conformance Pack**:
+Vì vậy, trước khi khởi công V5, điều cần đóng băng không chỉ là source cũ mà là một **Paldark Conformance Pack** gồm các lớp bằng chứng sau:
 
 1. **Requirement catalog** — mỗi outcome người chơi có ID, owner và mức bắt buộc.
 2. **Scenario specs** — Given/When/Then, negative cases, timeout và cleanup.
@@ -185,7 +197,7 @@ Trước khi khởi công V5 phải đóng băng một **Paldark Conformance Pac
 9. **Performance budgets** — frame time, memory, load time, actor count và network budget theo scenario.
 10. **Immutable V4 reference build** — commit, engine/toolchain, content hash và artifact đã nghiệm thu.
 
-Khi pack này tồn tại, người dùng có thể chỉ nói một câu. Repository tự cung cấp phần hướng dẫn còn lại. AI không cần viết source giống V4; nó cần làm V5 pass cùng contract, regression và parity gates đã được duyệt.
+Mười thành phần biến một lời nhắc ngắn thành specification có thể chạy. Khi pack này tồn tại, người dùng có thể chỉ nói một câu vì repository tự cung cấp phần hướng dẫn còn lại. AI không cần viết source giống V4; nó cần làm V5 pass cùng contract, regression và parity gates đã được duyệt.
 
 ### Differential qualification V4 ↔ V5
 
@@ -197,11 +209,11 @@ Cùng một scenario, seed, clock và input recording được chạy trên V4 r
 - screenshot theo vùng/tolerance đã duyệt;
 - frame time, memory, load time và network budget.
 
-Mỗi khác biệt được phân loại `EXPECTED_CHANGE`, `V4_KNOWN_BUG`, `V5_REGRESSION` hoặc `INCONCLUSIVE`. `V4_KNOWN_BUG` phải lấy expected từ contract/fixed behavior, không lấy output lỗi của V4 làm chuẩn. V5 chỉ đạt parity khi không còn khác biệt chưa được duyệt.
+Các phép so trong danh sách cố tình bỏ dữ liệu nhiễu và giữ quan hệ có ý nghĩa. Mỗi khác biệt được phân loại `EXPECTED_CHANGE`, `V4_KNOWN_BUG`, `V5_REGRESSION` hoặc `INCONCLUSIVE`. `V4_KNOWN_BUG` phải lấy expected từ contract/fixed behavior, không lấy output lỗi của V4 làm chuẩn. V5 chỉ đạt parity khi không còn khác biệt chưa được duyệt.
 
 ## 44.7 — Phân rã một chức năng như tháo và lắp lại chiếc xe
 
-Một feature không được mô tả bằng tên “Movement” hoặc “Capture”. Nó phải được phân thành chuỗi có thể quan sát:
+Khi một test mang tên “Movement” fail, cái tên ấy không cho AI biết config sai, context chưa cài hay direction math lệch. Muốn failure dẫn được tới một chỗ sửa, feature không thể chỉ được mô tả bằng tên “Movement” hoặc “Capture”; nó phải được phân thành chuỗi có thể quan sát:
 
 ```text
 Precondition
@@ -214,7 +226,7 @@ Precondition
 → terminal player outcome
 ```
 
-Mỗi test case tối thiểu phải có:
+Từ chuỗi ấy, một test case tối thiểu cần đủ những trường sau để người khác chạy lại cùng tình huống và hiểu cùng một verdict:
 
 | Trường | Ý nghĩa |
 |---|---|
@@ -231,9 +243,11 @@ Mỗi test case tối thiểu phải có:
 | `teardown` | Cách trả môi trường về sạch dù test trước crash. |
 | `owner` | Feature/team chịu trách nhiệm khi fail. |
 
-Setup được phép dùng test API để đặt state nhanh. **Hành động đang nghiệm thu không được dùng test API để đi tắt.** Ví dụ test damage có thể spawn target bằng fixture API, nhưng cú đánh phải đi qua Attack path; test W phải gửi W, không gọi `AddMovementInput`.
+Bảng không nhằm làm mọi test dài hơn; nó buộc những giả định vốn ẩn trong đầu người viết trở thành dữ liệu tái hiện được. Setup được phép dùng test API để đặt state nhanh. **Hành động đang nghiệm thu không được dùng test API để đi tắt.** Ví dụ test damage có thể spawn target bằng fixture API, nhưng cú đánh phải đi qua Attack path; test W phải gửi W, không gọi `AddMovementInput`.
 
 ### Ví dụ phân rã Movement và các bug #138/#147/#154/#156
+
+Bốn bug Movement lịch sử nhìn gần giống nhau ở màn hình — nhân vật hoặc camera hành xử sai — nhưng nằm ở những phase khác nhau. Bảng sau giữ mỗi phase cạnh đúng oracle có khả năng chỉ ra nó:
 
 | Phase | Input/điều kiện | Oracle bắt buộc | Bug bị bắt |
 |---|---|---|---|
@@ -247,9 +261,11 @@ Setup được phép dùng test API để đặt state nhanh. **Hành động đ
 | Presentation | Spawn ở test marker | capsule/mesh scale/socket/spring arm trong contract; camera không cắt mesh ở các yaw/pitch. | #138/#139. |
 | Package parity | Chạy Win64 Development package | Chuỗi trên vẫn pass ngoài Editor và với config đã cook. | #154 và package-only regressions. |
 
-Đây là khác biệt giữa “WASD test PASS” và một chuỗi bằng chứng có thể chỉ đúng phase đã gãy.
+Đọc từ trên xuống, mỗi hàng chỉ đóng một mối nối; đọc cả bảng, ta có đường đi từ config tới package. Đây là khác biệt giữa “WASD test PASS” và một chuỗi bằng chứng có thể chỉ đúng phase đã gãy.
 
 ### Ví dụ phân rã vertical loop của #184
+
+Vertical loop cũng được tháo theo cùng cách. Mỗi hàng giữ hành động trên player path và nối nó với một oracle mạnh hơn chữ “đã đi tới bước kế tiếp”:
 
 | Step | Action phải đi qua | Oracle mạnh hơn |
 |---|---|---|
@@ -262,6 +278,8 @@ Setup được phép dùng test API để đặt state nhanh. **Hành động đ
 | Auto-work | Đưa Pal vào bán kính, không nhấn G | assignment → arrival → production; Fuel `1→0`, Ore `0→1`; rời station thì quay về Follow. |
 | Visual | Chụp sau terminal state | UI/mesh/camera so với baseline; ảnh có diff và metadata, không chỉ PNG magic. |
 
+Khi các hàng này chạy độc lập, loop dài trở thành composition evidence thay vì nơi duy nhất chứa mọi oracle. Failure ở Pickup không còn biến phần còn lại thành một chuỗi quan sát mơ hồ.
+
 ### Chống implementation “học thuộc bài test”
 
 Một agent có thể làm một scenario xanh bằng hard-code mà feature vẫn sai. Test suite phải có:
@@ -273,11 +291,11 @@ Một agent có thể làm một scenario xanh bằng hard-code mà feature vẫ
 - test map/fixture variants và một release suite không chỉ dùng đúng tutorial lane;
 - static boundary checks để một implementation chơi được nhưng phá owner/authority vẫn bị chặn.
 
-Test-only code được phép dựng fixture và đọc snapshot, nhưng không được tạo một nhánh gameplay kiểu `if (PaldarkAutoplay) return PASS`. Mutation phải đi qua production owner path giống người chơi thật.
+Các biến thể trong danh sách làm cho test bảo vệ invariant thay vì bảo vệ đúng một kịch bản thuộc lòng. Test-only code được phép dựng fixture và đọc snapshot, nhưng không được tạo một nhánh gameplay kiểu `if (PaldarkAutoplay) return PASS`. Mutation phải đi qua production owner path giống người chơi thật.
 
 ## 44.8 — Kim tự tháp test phù hợp cho game Unreal
 
-Không nên bắt bot chơi toàn game cho mọi lỗi. Càng xuống thấp, test càng nhanh và định vị tốt; càng lên cao, test càng giống người chơi nhưng đắt và dễ nhiễu.
+Sau khi feature đã được tháo thành phase, không còn lý do bắt bot chơi toàn game cho mọi lỗi. Càng xuống thấp, test càng nhanh và định vị tốt; càng lên cao, test càng giống người chơi nhưng đắt và dễ nhiễu. Bảng sau đặt từng loại câu hỏi vào tầng đủ thấp để trả lời nó:
 
 | Tầng | Công cụ phù hợp | Ví dụ Paldark | Khi chạy |
 |---|---|---|---|
@@ -290,11 +308,11 @@ Không nên bắt bot chơi toàn game cho mọi lỗi. Càng xuống thấp, te
 | L6 — Visual/performance/stress | Screenshot Comparison, Insights metrics, soak bots | camera/mesh/HUD diff, 64 Pal, long-running work/world | Nightly/release. |
 | L7 — Human exploratory | Designer/QA/player | fun, feel, readability, exploits mới, art direction | Mỗi milestone/release. |
 
-Human test không biến mất. Nó chuyển từ việc lặp lại W/F/E hàng trăm lần sang tìm lỗi mới, đánh giá feel và phê duyệt thay đổi chuẩn. Khi tìm được bug mới, việc đầu tiên là đóng gói nó thành regression để con người không phải test lại mãi.
+Không tầng nào trong bảng thay thế tầng phía trên; chúng đóng rủi ro theo thứ tự rẻ trước, đắt sau. Human test cũng không biến mất. Nó chuyển từ việc lặp lại W/F/E hàng trăm lần sang tìm lỗi mới, đánh giá feel và phê duyệt thay đổi chuẩn. Khi tìm được bug mới, việc đầu tiên là đóng gói nó thành regression để con người không phải test lại mãi.
 
 ## 44.9 — Kiến trúc pipeline đề xuất
 
-GitHub Actions nên là orchestration và merge gate; Unreal cung cấp build/test primitives bên trong:
+Kim tự tháp trên cho biết test nào cần chạy; pipeline phải bảo đảm mọi lớp nhìn vào cùng một artifact và không đánh rơi failure giữa các process. GitHub Actions nên là orchestration và merge gate; Unreal cung cấp build/test primitives bên trong:
 
 ```text
 Static contracts
@@ -310,6 +328,8 @@ Static contracts
 
 ### Runner tối thiểu
 
+Sơ đồ chỉ chạy đúng khi mỗi runner được giao công việc phù hợp với platform và khả năng quan sát của nó:
+
 - `ubuntu-latest`: static Python/JSON/Markdown; không giả vờ build Unreal.
 - self-hosted Windows có UE 5.6/toolchain: Editor compile, Win64 cook/package và physical-input packaged tests.
 - runner có GPU/RHI chuẩn: visual comparison và performance; software Vulkan chỉ là smoke phụ.
@@ -317,9 +337,11 @@ Static contracts
 
 Runner Unreal nên dùng image/snapshot sạch hoặc ephemeral job workspace. Không cho pull request không tin cậy chạy trên máy có credential lâu dài. Cache chỉ chứa dữ liệu có thể tái tạo; package, logs, screenshots và test reports là artifact, không phải cache.
 
-BuildGraph là lựa chọn phù hợp khi pipeline bắt đầu có nhiều node/artifact; Gauntlet phù hợp để khởi động và giám sát client/server/packaged sessions. Horde hữu ích khi cần farm, device pool, history và scale như Epic, nhưng không phải điều kiện để bắt đầu. Một Windows self-hosted runner sạch + GitHub Actions + Gauntlet đã đủ cho gate đầu tiên.
+Danh sách này tránh hai kiểu xanh giả: Linux chỉ chạy static nhưng được gọi là “Unreal build”, hoặc software rendering được dùng thay cho visual parity trên GPU đích. BuildGraph là lựa chọn phù hợp khi pipeline bắt đầu có nhiều node/artifact; Gauntlet phù hợp để khởi động và giám sát client/server/packaged sessions. Horde hữu ích khi cần farm, device pool, history và scale như Epic, nhưng không phải điều kiện để bắt đầu. Một Windows self-hosted runner sạch + GitHub Actions + Gauntlet đã đủ cho gate đầu tiên.
 
 ### Nhịp pipeline
+
+Không phải trigger nào cũng trả được chi phí của full matrix. Ma trận sau tăng độ phủ theo tuổi và tầm quan trọng của thay đổi:
 
 | Trigger | Gate |
 |---|---|
@@ -329,11 +351,11 @@ BuildGraph là lựa chọn phù hợp khi pipeline bắt đầu có nhiều nod
 | Nightly | Toàn L3/L4, visual matrix, save/restart, dedicated/listen + 2 client, performance và soak. |
 | Release candidate | Clean rebuild đã định danh, full platform/config matrix, migration từ save cũ, long soak; promote đúng artifact đã test. |
 
-Branch protection phải yêu cầu các check xanh và không cho bypass tùy tiện. Tên job phải duy nhất. Một legacy check đỏ thường trực phải được sửa hoặc bỏ khỏi required set; không được dạy team rằng màu đỏ là bình thường.
+Nhịp này giữ feedback local/PR nhanh nhưng vẫn dành packaged, network và soak cho nơi chúng có giá trị. Branch protection phải yêu cầu các check xanh và không cho bypass tùy tiện. Tên job phải duy nhất. Một legacy check đỏ thường trực phải được sửa hoặc bỏ khỏi required set; không được dạy team rằng màu đỏ là bình thường.
 
 ## 44.10 — Evidence pack để AI có thể tự tìm đúng chỗ lỗi
 
-Mỗi test run phải tạo một thư mục tự đủ nghĩa:
+Một dòng `FAIL` không giúp AI tự sửa nếu run đã mất seed, build ID hoặc phase đầu tiên sai. Vì vậy mỗi test run phải tạo một thư mục tự đủ nghĩa:
 
 ```text
 evidence/<run-id>/<test-id>/
@@ -351,7 +373,7 @@ evidence/<run-id>/<test-id>/
   crash/
 ```
 
-`manifest.json` tối thiểu chứa commit, build ID/hash, engine version, platform, config, RHI, map, scenario version, seed, clock mode, server/client topology và artifact SHA-256.
+Các file trong cây chia bằng chứng theo loại, còn `manifest.json` nối chúng về đúng lần chạy. Nó tối thiểu chứa commit, build ID/hash, engine version, platform, config, RHI, map, scenario version, seed, clock mode, server/client topology và artifact SHA-256.
 
 `result.json` không chỉ ghi PASS/FAIL. Nó phải chỉ được phase đầu tiên sai:
 
@@ -368,13 +390,13 @@ evidence/<run-id>/<test-id>/
 }
 ```
 
-Trạng thái chuẩn là `PASS`, `FAIL`, `ERROR`, `FLAKY` hoặc `NOT_RUN`. `NOT_OBSERVED` trong required scenario phải quy về FAIL, hoặc `NOT_RUN` với `blocked_by=<test-id>` nếu một precondition trước đã fail.
+Schema ví dụ cho thấy result phải chỉ phase và expected/actual, không chỉ lặp lại verdict. Trạng thái chuẩn là `PASS`, `FAIL`, `ERROR`, `FLAKY` hoặc `NOT_RUN`. `NOT_OBSERVED` trong required scenario phải quy về FAIL, hoặc `NOT_RUN` với `blocked_by=<test-id>` nếu một precondition trước đã fail.
 
 Không dùng log mỗi tick. Dùng event terminal, state revision và correlation như Chương 41. Khi fail, artifact phải chứa đủ dữ kiện để AI tái hiện bằng một command, không yêu cầu người dùng quay lại game và mô tả từ đầu.
 
 ## 44.11 — Biến lịch sử bug V4 thành regression corpus
 
-Bảng dưới là corpus khởi đầu từ lịch sử Git và Chương 18/36/43; chưa được gọi là “đủ tất cả bug” cho tới khi toàn bộ issue, feedback, video và test card V1–V4 được kiểm kê.
+Evidence pack trả lời một run; regression corpus bảo đảm bài học của nhiều run không bị quên. Bảng dưới là corpus khởi đầu từ lịch sử Git và Chương 18/36/43; chưa được gọi là “đủ tất cả bug” cho tới khi toàn bộ issue, feedback, video và test card V1–V4 được kiểm kê.
 
 | Regression ID | Lỗi lịch sử | Reproduction/oracle cần khóa | Bằng chứng nguồn |
 |---|---|---|---|
@@ -398,7 +420,7 @@ Bảng dưới là corpus khởi đầu từ lịch sử Git và Chương 18/36/
 | `PST-REG-ROUNDTRIP` | Codec có nhưng entity/world restore thiếu | Save fixture → restart process → normalized snapshot bằng expected; migration idempotent. | PR #148/#155. |
 | `NET-REG-CLIENTPATH` | Server-local QA giả làm request client | Hai process; correlation bắt đầu ở client, commit server, presentation quay về đúng client. | Chương 18.6, PR #151. |
 
-Quy tắc backfill cho từng bug:
+Mỗi hàng mới chỉ là một lời hứa cho tới khi test được chứng minh đỏ trên bản còn lỗi và xanh trên bản đã sửa. Quy tắc backfill cho từng bug là:
 
 1. tìm commit cuối còn lỗi và commit đầu đã sửa;
 2. viết minimal reproduction có oracle;
@@ -408,11 +430,11 @@ Quy tắc backfill cho từng bug:
 6. thêm test vào suite phù hợp và gắn owner;
 7. lưu artifact cặp red/green làm bằng chứng ban đầu.
 
-Đây là cách chứng minh test thật sự bắt bug, không chỉ chứng minh test tự báo PASS.
+Bảy bước tạo một cặp bằng chứng đối chứng. Đây là cách chứng minh test thật sự bắt bug, không chỉ chứng minh test tự báo PASS.
 
 ## 44.12 — Giao thức để AI tự sửa mà không “sửa luôn trọng tài”
 
-Vòng lặp tự trị đề xuất:
+Khi test vừa là hướng dẫn vừa là người chấm, agent có một lối tắt nguy hiểm: đổi đáp án thay vì sửa implementation. Vòng lặp tự trị đề xuất vì thế tách rõ lúc tái hiện, lúc sửa và lúc nộp bằng chứng:
 
 1. AI đọc requirement ID và impact graph.
 2. Với bug mới, AI tạo reproduction trước; với regression cũ, chạy test hiện có.
@@ -425,7 +447,7 @@ Vòng lặp tự trị đề xuất:
 9. Tạo PR kèm red-before/green-after và artifact links.
 10. CI required checks phán quyết; artifact xanh được promote, không rebuild.
 
-AI không được tự làm các việc sau trong cùng thay đổi implementation nếu không có review riêng:
+Mười bước trên chỉ đáng tin khi trọng tài đứng yên trong lúc implementation thay đổi. Vì vậy AI không được tự làm các việc sau trong cùng thay đổi implementation nếu không có review riêng:
 
 - nới tolerance/expected value;
 - thay golden screenshot;
@@ -436,7 +458,7 @@ AI không được tự làm các việc sau trong cùng thay đổi implementat
 - xóa crash/ensure khỏi failure policy;
 - sửa cả test lẫn code mà không chứng minh test đỏ trên buggy revision.
 
-Retry chỉ dùng để đo flaky. Một lần retry xanh không xóa lần fail đầu. Test mới phải vào `staging` và chạy lặp đủ lâu trước khi được nâng thành `blocker`, theo bài học BVS của Riot.
+Các điều cấm đều bảo vệ cùng một ranh giới: code được phép tiến tới expected, còn expected không được lùi về phía code để tạo màu xanh. Retry chỉ dùng để đo flaky. Một lần retry xanh không xóa lần fail đầu. Test mới phải vào `staging` và chạy lặp đủ lâu trước khi được nâng thành `blocker`, theo bài học BVS của Riot.
 
 CI không thể đảm bảo “tự sửa tất cả bug chưa từng biết”. Nó có thể đảm bảo mạnh hơn và thực tế hơn:
 
@@ -444,7 +466,11 @@ CI không thể đảm bảo “tự sửa tất cả bug chưa từng biết”
 
 ## 44.13 — Lộ trình từ #184 tới lúc được phép bắt đầu V5
 
+Từ audit tới rewrite có bốn cánh cổng. Thứ tự của chúng quan trọng: nối một harness chưa đáng tin vào CI chỉ tự động hóa verdict sai nhanh hơn.
+
 ### Gate A — Làm #184 đáng tin
+
+Gate đầu tiên sửa chính quan hệ giữa terminal gameplay state, process và artifact:
 
 - terminal result tự thoát, exit code là bắt buộc;
 - timeout trong/ngoài nhất quán;
@@ -456,6 +482,8 @@ CI không thể đảm bảo “tự sửa tất cả bug chưa từng biết”
 
 ### Gate B — Nối vào CI thật
 
+Chỉ khi run local có verdict đáng tin, ta mới biến nó thành một quyết định merge:
+
 - thêm workflow PaldarkKit riêng;
 - self-hosted Unreal runner sạch;
 - build Editor và package Win64;
@@ -465,6 +493,8 @@ CI không thể đảm bảo “tự sửa tất cả bug chưa từng biết”
 
 ### Gate C — Tách test pyramid
 
+Khi gate đã chạy, bước kế tiếp là giảm thời gian định vị bằng các test nhỏ hơn mà vẫn giữ loop dài:
+
 - Movement regression #138/#147/#154/#156;
 - atomic Pickup/Combat/Capture/Companion/Work tests;
 - giữ #184 loop làm end-to-end blocker;
@@ -472,6 +502,8 @@ CI không thể đảm bảo “tự sửa tất cả bug chưa từng biết”
 - staging/quarantine policy và flaky dashboard.
 
 ### Gate D — Những thứ V5 bắt buộc có ngay từ skeleton
+
+Ba gate đầu làm V4 trở thành nguồn bằng chứng; Gate D bảo đảm V5 sinh ra đã có các seam để tiếp tục tự kiểm chứng:
 
 - requirement/test IDs sống cùng feature;
 - Low-Level + Functional test modules;
@@ -484,7 +516,7 @@ CI không thể đảm bảo “tự sửa tất cả bug chưa từng biết”
 
 ### Entry criteria cho “Làm lại PaldarkV5 từ đầu”
 
-Không bắt đầu rewrite chỉ vì #184 đã merge. Chỉ bắt đầu khi:
+Không checklist nào ở trên được thay bằng câu “#184 đã merge”. Chỉ bắt đầu rewrite khi:
 
 1. V4 reference build và toolchain được đóng băng;
 2. mọi bug đã biết được kiểm kê, bug quan trọng có red/green regression;
@@ -494,9 +526,11 @@ Không bắt đầu rewrite chỉ vì #184 đã merge. Chỉ bắt đầu khi:
 6. test mới qua staging trước khi thành blocker;
 7. Conformance Pack có owner và người có quyền phê duyệt baseline.
 
+Bảy điều kiện này không hứa V5 sẽ không có bug; chúng bảo đảm project có khả năng nhận ra, tái hiện và giữ lại bài học từ bug trước khi khối lượng rewrite tăng lên.
+
 ### Exit criteria cho V5
 
-V5 không “done” vì compile hay vì bot đi tới cuối map một lần. Nó chỉ đạt parity khi:
+Entry criteria cho phép bắt đầu; exit criteria mới định nghĩa lúc được phép gọi parity. V5 không “done” vì compile hay vì bot đi tới cuối map một lần. Nó chỉ đạt parity khi:
 
 - toàn bộ required scenario trong Conformance Pack pass;
 - regression corpus V1–V4 pass;
@@ -505,11 +539,13 @@ V5 không “done” vì compile hay vì bot đi tới cuối map một lần. N
 - performance budget không regression ngoài tolerance đã duyệt;
 - artifact được tạo một lần và đúng artifact đó được giao test/phát hành.
 
+Đọc cùng nhau, hai checklist khóa cả đầu vào lẫn đầu ra của rewrite: không khởi công chỉ bằng niềm tin, cũng không nghiệm thu chỉ bằng một run đẹp.
+
 ## 44.14 — Quyết định kiến trúc
 
-PR #184 nên được giữ và tiến hóa, không vứt đi. `UPaldarkAutoplaySubsystem` có thể trở thành game-side driver/controller đầu tiên, nhưng test definition nên tách dần thành scenario nhỏ, data-driven, được Automation/Gauntlet gọi và trả structured result.
+Audit dẫn tới quyết định giữ và tiến hóa PR #184, không vứt đi. `UPaldarkAutoplaySubsystem` có thể trở thành game-side driver/controller đầu tiên, nhưng test definition nên tách dần thành scenario nhỏ, data-driven, được Automation/Gauntlet gọi và trả structured result.
 
-Thứ tự đầu tư đúng cho Paldark không phải “thêm AI nhìn ảnh”, mà là:
+Failure ở đầu chương cho thấy thứ tự đầu tư đúng không phải “thêm AI nhìn ảnh”, mà là:
 
 1. làm oracle đúng;
 2. làm scenario tái hiện được;
@@ -518,7 +554,7 @@ Thứ tự đầu tư đúng cho Paldark không phải “thêm AI nhìn ảnh�
 5. backfill bug corpus;
 6. sau đó mới cho AI tự chạy vòng sửa lỗi.
 
-Khi đó bước ngoặt của #184 mới hoàn tất: người test không còn là người phải bấm lại mọi phím sau mỗi commit; họ trở thành người tìm lỗi mới và định nghĩa chất lượng. AI không còn nói “đã sửa”; nó phải nộp một bằng chứng máy có thể bác bỏ.
+Sáu bước đi từ oracle tới agent, không đi ngược lại. Khi đó bước ngoặt của #184 mới hoàn tất: người test không còn là người phải bấm lại mọi phím sau mỗi commit; họ trở thành người tìm lỗi mới và định nghĩa chất lượng. AI không còn nói “đã sửa”; nó phải nộp một bằng chứng máy có thể bác bỏ. Chương 45 sẽ thu đường đi ấy về quy mô công việc hằng ngày: một bug, một test nhỏ và một vòng tự kiểm chứng.
 
 ## 44.15 — Nguồn chính thức và nguồn sơ cấp
 

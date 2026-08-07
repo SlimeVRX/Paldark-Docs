@@ -1,19 +1,19 @@
 # Chương 4 — Từ tính năng ra trạng thái
 
-Một designer nói: “Tôi muốn có hệ thống thợ làm việc khi người chơi đi vắng.” Một programmer nghe thành: “Tạo một AI worker.” Hai câu đó chưa đủ gần nhau để bắt đầu code. Câu thứ nhất nói về cảm giác và tính năng; câu thứ hai mới chỉ chọn một loại class.
+Một designer nói: “Tôi muốn có hệ thống thợ làm việc khi người chơi đi vắng.” Một programmer nghe thành: “Tạo một AI worker.” Cả hai đều đang nói về cùng một feature, nhưng hai câu ấy chưa đủ gần nhau để bắt đầu code. Câu thứ nhất mô tả lời hứa với người chơi; câu thứ hai mới chỉ chọn một loại class, chưa nói class đó phải giữ điều gì hay chịu trách nhiệm tới đâu.
 
-Khoảng cách giữa hai câu được lấp bằng bốn câu hỏi. Chúng ta dùng chúng không phải để làm tài liệu nặng hơn, mà để biết mình đang xây đúng thứ gì.
+Khoảng cách đó được lấp bằng bốn câu hỏi. Chúng không nhằm làm tài liệu nặng hơn. Ngược lại, chúng ngăn ta viết rất nhiều code cho một state mà chưa ai biết ai sở hữu.
 
 1. **Ai giữ trạng thái?**
 2. **Ai được phép sửa?**
 3. **Ai cần biết khi nó đổi?**
 4. **Cái gì phải sống sót qua lần thoát game?**
 
-Bốn câu này đủ nhỏ để dùng cho một feature mới, nhưng đủ chặt để lộ ra những chỗ “nghe có vẻ đơn giản” mà thực ra đã cần authority, replication hoặc persistence.
+Bốn câu này đủ nhỏ để hỏi ngay khi một feature mới được đề xuất, nhưng đủ chặt để làm lộ những chỗ “nghe có vẻ đơn giản” mà thực ra đã cần authority, replication hoặc persistence. Năm ví dụ sau cố tình đi từ state nhẹ nhất đến state để lại hậu quả lâu dài, để thấy không phải câu trả lời nào cũng dẫn về server hay save.
 
 ## 4.1 — Ví dụ 1: camera — thuần client, không cần lưu
 
-Bạn kéo chuột, camera quay quanh nhân vật. Khi người chơi khác quay camera của họ, máy bạn không cần biết. Đây là một ví dụ tốt để bắt đầu vì nó cho thấy không phải state nào cũng cần server.
+Bạn kéo chuột và camera quay quanh nhân vật. Người chơi khác có thể đang nhìn cùng một actor từ một góc hoàn toàn khác, nhưng máy bạn không cần biết góc nhìn của họ. Camera là ví dụ tốt để bắt đầu vì nó phá một ngộ nhận phổ biến: không phải state nào trong game nhiều người cũng cần đi qua server.
 
 ### Ai giữ trạng thái?
 
@@ -29,7 +29,7 @@ HUD local, aim reticle và animation của local character có thể cần biế
 
 ### Có phải sống sót qua lần thoát game không?
 
-Thông thường không. Có thể lưu preference như sensitivity hoặc camera distance, nhưng đó là user setting, không phải world state. Nếu chưa có yêu cầu cụ thể, camera transform của phiên chơi nên bị bỏ khi thoát.
+Thông thường là không. Ta có thể lưu preference như sensitivity hoặc camera distance, nhưng đó là user setting chứ không phải world state. Nếu chưa có yêu cầu cụ thể, camera transform của phiên chơi nên bị bỏ khi thoát. Phân biệt được hai loại dữ liệu này là bước đầu để save không trở thành nơi chứa mọi thứ “phòng khi cần”.
 
 Bảng chuyển đổi của camera:
 
@@ -43,7 +43,7 @@ Bảng chuyển đổi của camera:
 
 ## 4.2 — Ví dụ 2: trừ máu — server-authoritative mutation
 
-“Bấm nút đánh” là input. “Máu giảm từ 100 xuống 76” là sự kiện gameplay. Hai thứ này không cùng authority. Client được phép gửi intent đánh; server mới quyết định hit hợp lệ và áp damage.
+Từ camera chuyển sang combat, ranh giới đổi hẳn. “Bấm nút đánh” là input; “máu giảm từ 100 xuống 76” là một kết quả gameplay. Hai việc xảy ra sát nhau trên màn hình nhưng không cùng authority. Client được phép gửi intent đánh; server mới quyết định hit hợp lệ và áp damage.
 
 ### Ai giữ trạng thái?
 
@@ -59,7 +59,7 @@ Owner client cần cập nhật thanh máu. Những client đang relevancy với
 
 ### Có phải sống sót qua lần thoát game không?
 
-Máu hiện tại trong một trận thường không cần lưu. Nếu actor là creature persistent hoặc công trình persistent, cần quyết định riêng: lưu current health, lưu damage state, hay khởi tạo lại theo rule. Không được tự động coi mọi replicated property là save field.
+Máu hiện tại trong một trận thường không cần lưu. Nhưng nếu actor là creature persistent hoặc công trình persistent, câu trả lời phải được đưa ra riêng: lưu current health, lưu damage state, hay khởi tạo lại theo rule? Một property cần replication không vì thế mà tự động trở thành save field; hai cơ chế đang giải hai vấn đề khác nhau.
 
 | Câu hỏi | Trả lời mẫu |
 |---|---|
@@ -71,7 +71,7 @@ Máu hiện tại trong một trận thường không cần lưu. Nếu actor l�
 
 ## 4.3 — Ví dụ 3: thợ làm việc khi người chơi vắng mặt
 
-Đây là ví dụ làm lộ sự khác nhau giữa “đang chạy trong world” và “đang có ý nghĩa khi không ai nhìn”. Nếu người chơi đi khỏi base mà worker đứng yên, automation mất giá trị. Nếu server tắt mà game vẫn hứa công việc đã hoàn tất, ta cần một mô hình thời gian khác.
+Ví dụ thứ ba đưa ta ra khỏi khoảnh khắc đang diễn ra trên màn hình. Nó làm lộ sự khác nhau giữa “đang chạy trong world” và “vẫn có ý nghĩa khi không ai nhìn”. Nếu người chơi đi khỏi base mà worker đứng yên, automation mất giá trị. Nếu server tắt mà game vẫn hứa công việc đã tiếp tục, ta cần một mô hình thời gian khác.
 
 ### Ai giữ trạng thái?
 
@@ -87,7 +87,7 @@ Owner base cần biết slot đã nhận worker; station UI cần biết progres
 
 ### Có phải sống sót qua lần thoát game không?
 
-Nếu game hứa “vắng mặt vẫn sản xuất”, phải lưu đủ mốc thời gian và điều kiện để tính offline delta: assignment, recipe, input consumed, progress timestamp, output capacity và các blocker. `WorldTime` hay wall-clock cần một policy rõ; hiện evidence Palworld chưa cho con số scheduler/respawn cụ thể, nên đây là quyết định clean-room.
+Nếu game hứa “vắng mặt vẫn sản xuất”, một thanh progress runtime là chưa đủ. Ta phải lưu đủ mốc thời gian và điều kiện để tính offline delta: assignment, recipe, input consumed, progress timestamp, output capacity và các blocker. `WorldTime` hay wall-clock cần một policy rõ; hiện evidence Palworld chưa cho con số scheduler/respawn cụ thể, nên đây là quyết định clean-room.
 
 | Câu hỏi | Trả lời mẫu |
 |---|---|
@@ -99,7 +99,7 @@ Nếu game hứa “vắng mặt vẫn sản xuất”, phải lưu đủ mốc 
 
 ## 4.4 — Ví dụ 4: tiến trình cây công nghệ
 
-Technology tree nhìn như UI, nhưng UI chỉ là mặt ngoài. State thật là người chơi đã mở node nào, còn bao nhiêu point, node đó có prerequisite gì và unlock có áp dụng cho recipe/structure nào.
+Technology tree là ví dụ dễ đánh lừa mắt nhất: người chơi nhìn thấy một màn hình đầy node, nên ta dễ coi nó là bài toán UI. Nhưng UI chỉ là mặt ngoài. State thật là người chơi đã mở node nào, còn bao nhiêu point, node đó có prerequisite gì và unlock áp dụng cho recipe/structure nào.
 
 ### Ai giữ trạng thái?
 
@@ -115,7 +115,7 @@ Technology UI cần refresh. Craft menu, build placement, recipe filter và ques
 
 ### Có phải sống sót qua lần thoát game không?
 
-Có. Đây là state người chơi kỳ vọng còn nguyên sau lần đăng nhập. Save phải có node IDs hoặc stable IDs, không chỉ lưu index array; khi schema đổi cần version và migration. Whitepaper hiện xác nhận technology nodes 150+ và tier cost, nhưng không xác nhận save schema gốc. Vì vậy owner/migration dưới đây là yêu cầu clean-room, không phải claim về Palworld runtime.
+Có. Đây là state người chơi kỳ vọng còn nguyên sau lần đăng nhập. Save phải có node IDs hoặc stable IDs, không chỉ lưu index array; khi schema đổi cần version và migration. Whitepaper hiện xác nhận technology nodes 150+ và tier cost, nhưng không xác nhận save schema gốc. Vì vậy owner/migration dưới đây là yêu cầu clean-room, không phải claim về Palworld runtime. Chính chỗ này cho thấy dữ liệu tĩnh và state bền vững có thể cùng xuất hiện trên một màn hình nhưng tuyệt đối không nên bị trộn làm một.
 
 | Câu hỏi | Trả lời mẫu |
 |---|---|
@@ -127,13 +127,13 @@ Có. Đây là state người chơi kỳ vọng còn nguyên sau lần đăng nh
 
 ## 4.5 — Ví dụ 5: capture result — state ngắn nhưng có hậu quả dài
 
-Capture là ví dụ nằm giữa combat và persistence. Một lần ném sphere có kết quả ngắn: success, fail count hoặc failed type. Nhưng nếu thành công, nó tạo captured instance, thay đổi roster và có thể tạo worker/partner value về sau.
+Capture gom các loại state vừa đi qua vào cùng một khoảnh khắc. Một lần ném sphere có kết quả rất ngắn: success, fail count hoặc failed type. Nhưng nếu thành công, kết quả ấy tạo captured instance, thay đổi roster và có thể sinh ra worker/partner value về sau. Một event thoáng qua vì thế trở thành cánh cửa dẫn tới persistence.
 
-Server giữ capture attempt và tính kết quả; client giữ animation, camera feedback và UI. Các client cần biết actor bị capture hoặc biến mất thì nhận event/replication phù hợp. Capture result bản thân có thể không cần save sau khi hiển thị, nhưng captured instance và roster thì có thể phải sống sót qua lần thoát game. Header `FCaptureResult` có ba field được evidence register ghi nhận, còn toàn bộ owner/persistence pipeline chưa được xác minh từ source Palworld; đó là ranh giới phải ghi rõ trước khi tái tạo.
+Server giữ capture attempt và tính kết quả; client giữ animation, camera feedback và UI. Những client cần biết actor đã bị capture hoặc biến mất sẽ nhận event/replication phù hợp. Capture result có thể được bỏ ngay sau khi trình bày xong, trong khi captured instance và roster phải có khả năng sống sót qua lần thoát game. Header `FCaptureResult` có ba field được evidence register ghi nhận, còn toàn bộ owner/persistence pipeline chưa được xác minh từ source Palworld; đó là ranh giới phải ghi rõ trước khi tái tạo.
 
 ## Bảng trống cho agent điền
 
-Đừng bắt đầu implementation của một feature mới nếu bốn câu dưới đây còn trả lời bằng “chắc là”. Bảng này cố tình để trống; mỗi agent điền nó cùng với contract của feature.
+Sau năm ví dụ, bốn câu hỏi không còn là bài tập lý thuyết. Đừng bắt đầu implementation của một feature mới nếu câu trả lời vẫn là “chắc là”. Bảng này cố tình để trống; mỗi agent phải điền nó cùng với contract của feature.
 
 | Feature | Ai giữ trạng thái? | Ai được phép sửa? | Ai cần biết khi đổi? | Cái gì sống sót qua thoát game? | Evidence / UNKNOWN |
 |---|---|---|---|---|---|
@@ -141,7 +141,7 @@ Server giữ capture attempt và tính kết quả; client giữ animation, came
 |  |  |  |  |  |  |
 |  |  |  |  |  |  |
 
-Sau khi điền xong, hãy thử tìm một trạng thái đang bị hai owner cùng giữ. Nếu tìm thấy, đó thường là lỗi kiến trúc trước cả khi có lỗi code. Hãy tìm tiếp một mutation mà client đang được phép tự quyết. Nếu tìm thấy, đó là lỗi authority. Và cuối cùng, tìm một field được lưu bằng array index trong khi dữ liệu có thể reorder. Đó là lỗi save sẽ chỉ xuất hiện sau này, khi người viết feature ban đầu đã rời khỏi nhánh.
+Sau khi điền xong, hãy thử bác bỏ chính bảng của mình. Tìm một trạng thái đang bị hai owner cùng giữ; nếu có, lỗi kiến trúc đã tồn tại trước cả lỗi code. Tìm tiếp một mutation mà client đang được phép tự quyết; đó là lỗi authority. Cuối cùng, tìm một field được lưu bằng array index trong khi dữ liệu có thể reorder; đó là lỗi save thường chỉ xuất hiện về sau, khi người viết feature ban đầu đã rời khỏi nhánh. Chương 5 sẽ gom các câu trả lời riêng lẻ này thành một bản đồ chung, để thấy hệ thống nào đang trở thành ngã tư của cả game.
 
 ---
 

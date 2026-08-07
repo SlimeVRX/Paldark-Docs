@@ -1,6 +1,8 @@
 # Phụ lục A — Sổ bằng chứng
 
-Sổ này gom claim ở khối bằng chứng cuối các chương 1–35. Nhãn được giữ theo cách các chương đã dùng; claim thiết kế không được đọc như fact Palworld.
+Đọc một cuốn sách kỹ thuật, ta rất dễ nhớ kết luận mà quên con đường đã dẫn tới nó. Sau vài chương, một lựa chọn thiết kế có thể được nhắc lại nhiều tới mức nghe như sự thật về Palworld, dù ban đầu nó chỉ là suy luận của Paldark. Sổ này giữ cho hai loại câu ấy không hòa vào nhau.
+
+Mỗi dòng gom một claim từ khối bằng chứng cuối các chương 1–35, chỉ ra nguồn và giữ nguyên nhãn mà chương đã dùng. Hãy đọc bảng theo chiều từ phải sang trái: nhãn cho biết ta được phép tin mạnh tới đâu, nguồn cho biết có thể quay lại kiểm tra ở đâu, rồi claim mới cho biết kết luận đang được bảo vệ.
 
 | Chương | Claim | Nguồn | Nhãn |
 |---:|---|---|---|
@@ -72,4 +74,6 @@ Sổ này gom claim ở khối bằng chứng cuối các chương 1–35. Nhãn
 
 ## Giới hạn của sổ
 
-`EXTRACTED` và `OBSERVED` là hình dạng hoặc факт có nguồn; `REFERENCE` là mẫu tham khảo; `INFERRED` là quyết định thiết kế Paldark; `UNKNOWN` là khoảng trống cần người dùng hoặc khảo sát bổ sung. Không dùng một dòng `INFERRED` để tuyên bố Palworld vận hành đúng như vậy.
+Sổ bằng chứng không làm mọi claim trở nên chắc chắn như nhau. `EXTRACTED` và `OBSERVED` ghi hình dạng hoặc sự kiện có nguồn; `REFERENCE` đưa ra một mẫu để đối chiếu; `INFERRED` là quyết định mà Paldark suy ra; còn `UNKNOWN` đánh dấu khoảng trống cần người dùng hoặc khảo sát bổ sung.
+
+Ranh giới quan trọng nhất nằm giữa quan sát và suy luận. Một dòng `INFERRED` có thể là quyết định kiến trúc hợp lý, nhưng không vì thế mà chứng minh Palworld vận hành đúng như vậy. Khi nguồn mới xuất hiện, việc đúng cần làm là cập nhật nhãn và đường dẫn, không lặng lẽ viết lại ký ức của cuốn sách.

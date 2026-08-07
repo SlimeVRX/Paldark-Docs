@@ -1,12 +1,14 @@
 # Chương 16 — Một tính năng gồm những gì
 
-Agent nhận một task không nên bắt đầu bằng việc mở lớp nhân vật chung. Việc đầu tiên là mở thư mục feature của mình, đọc khai báo, tra danh mục khái niệm và biết chính xác những file nào mình được tạo. Nếu không có hình dạng chuẩn, mỗi agent sẽ hiểu “một tính năng” là một class, một Blueprint, một thư mục Content hoặc một commit khác nhau.
+Hai agent cùng nhận câu “hãy làm feature Work”. Người thứ nhất tạo một `UWorkComponent` trong lớp Pal chung. Người thứ hai tạo một Blueprint station và một DataTable. Cả hai đều có thể quay video chứng minh phần của mình chạy, nhưng khi ghép lại thì không có chỗ nào nói ai sở hữu assignment, dữ liệu được package ra sao, command nào dựng fixture hay state nào phải save. Vấn đề không phải họ code kém; vấn đề là chữ “feature” chưa có một hình dạng chung.
 
-Chương này đưa ra một gói tối thiểu có thể giao cho một agent. Gói đó không phải nghi lễ để làm tài liệu dày hơn. Mỗi file có một vai: public contract để người khác include, private implementation để owner giữ quyền ghi, data để registry quét, docs để agent khác dùng, test để CI chạy.
+Vì vậy agent nhận task không nên bắt đầu bằng việc mở lớp nhân vật chung. Việc đầu tiên là mở thư mục feature của mình, đọc khai báo, tra danh mục khái niệm và biết chính xác những file nào mình được tạo. Nếu không có hình dạng chuẩn, mỗi agent sẽ tiếp tục hiểu “một tính năng” là một class, một Blueprint, một thư mục Content hoặc một commit khác nhau.
+
+Chương này đưa ra một gói tối thiểu có thể giao cho một agent. Gói đó không phải nghi lễ để làm tài liệu dày hơn. Mỗi file có một vai trong đường đi từ ý định tới bằng chứng: public contract để người khác include, private implementation để owner giữ quyền ghi, data để registry quét, docs để agent khác dùng, test để CI chạy. Thiếu một vai thì feature có thể vẫn “chạy trên máy người làm”, nhưng chưa phải một đơn vị có thể giao, tháo và kiểm độc lập.
 
 ## 16.1 — Cây thư mục chuẩn
 
-Ví dụ dưới đây dùng feature `Work`, nhưng mọi feature đều giữ cùng hình dạng:
+Ví dụ dưới đây dùng feature `Work`, nhưng mọi feature đều giữ cùng hình dạng. Hãy đọc cây này theo chiều từ lời hứa ra hiện thực: descriptor cho engine biết plugin tồn tại; `Public` công bố hợp đồng; `Private` giữ mutation; manifest và data cho máy đọc; docs và tests cho người kế tiếp chứng minh lại.
 
 ```text
 Plugins/GameFeatures/Work/
@@ -67,7 +69,9 @@ Plugins/GameFeatures/Work/
 | `Docs/Ownership.md` | Bảng L8: state nào Work làm chủ, requester/observer nào được dùng |
 | `Tests/` | Test engine-independent, test transaction và playtest record |
 
-`Public/` chỉ là hợp đồng. Nếu một file public cần include `WorkComponent.h` để người khác gọi implementation cụ thể, ranh giới đang sai. Người dùng Work nên thấy interface, message, definition id và save chunk contract; họ không nên thấy queue nội bộ hoặc pointer tới actor.
+Các hàng trong bảng không phải những cách đặt tên tùy ý. Chúng ngăn cùng một sự thật xuất hiện ở hai nơi: owner nằm trong manifest và Ownership doc; gameplay data nằm ở text; composition binary chỉ là artifact; implementation mutation nằm trong `Private`.
+
+`Public/` chỉ là hợp đồng. Nếu một file public cần include `WorkComponent.h` để người khác gọi implementation cụ thể, ranh giới đang sai. Người dùng Work nên thấy interface, message, definition id và save chunk contract; họ không nên thấy queue nội bộ hoặc pointer tới actor. Đây là phép thử đơn giản: một consumer phải biết Work hứa gì, nhưng không cần biết Work thực hiện lời hứa bằng subsystem, component hay một cấu trúc nội bộ nào khác.
 
 ### Một lưu ý không được bỏ qua khi package
 
@@ -84,7 +88,7 @@ archive.
 
 ## 16.2 — File khai báo tính năng
 
-`Feature/Work.feature.json` là file có tên cố định. Đây là hiện thực của L10 và là nơi máy dựng đồ thị phụ thuộc. Không được thay bằng README, không được chia thành năm file riêng khiến validator phải đoán.
+Cây thư mục cho người đọc biết nên tìm ở đâu; máy vẫn cần một điểm vào duy nhất để dựng đồ thị. `Feature/Work.feature.json` là file có tên cố định. Đây là hiện thực của L10 và là nơi máy dựng dependency, ownership và composition. Không được thay bằng README, vì README không phải contract máy đọc; cũng không được chia thành năm file riêng khiến validator phải đoán file nào mới là sự thật.
 
 Một file đã điền cho tính năng làm việc/phân công worker:
 
@@ -156,7 +160,7 @@ Một file đã điền cho tính năng làm việc/phân công worker:
 }
 ```
 
-Mỗi trường có một lý do tồn tại và một phép kiểm tương ứng:
+Manifest dài không phải vì ta muốn mô tả lại toàn bộ code. Mỗi trường chỉ giữ một điều mà feature khác, generator hoặc CI cần biết trước khi chạy implementation. Bảng sau nối từng lời khai với lý do và phép kiểm tương ứng:
 
 | Trường | Vì sao cần | Máy kiểm gì |
 |---|---|---|
@@ -176,13 +180,13 @@ Mỗi trường có một lý do tồn tại và một phép kiểm tương ứn
 
 ### Quy ước ánh xạ contract
 
-Tên logic `Paldark.<Owner>.<Name>` là interface và ánh xạ sang `IPaldark<Name>`/`UPaldark<Name>`. Lớp hiện thực cụ thể dùng tên khác, dạng `UPaldark<Name>Subsystem`; không dùng hậu tố `Contract`. Kênh sự kiện luôn có dạng `Paldark.<Owner>.Event.<Name>`, kênh kết quả có dạng `Paldark.<Owner>.Result.<Name>`. Manifest phải phân biệt interface trong `core_interfaces` với channel trong `listens` và `emits`; không đưa một channel vào danh sách interface chỉ vì nó có chữ `Request`.
+Một manifest chỉ giúp được máy nếu tên trong text dẫn tới tên trong C++ theo một đường không mơ hồ. Tên logic `Paldark.<Owner>.<Name>` là interface và ánh xạ sang `IPaldark<Name>`/`UPaldark<Name>`. Lớp hiện thực cụ thể dùng tên khác, dạng `UPaldark<Name>Subsystem`; không dùng hậu tố `Contract`. Kênh sự kiện luôn có dạng `Paldark.<Owner>.Event.<Name>`, kênh kết quả có dạng `Paldark.<Owner>.Result.<Name>`. Manifest phải phân biệt interface trong `core_interfaces` với channel trong `listens` và `emits`; không đưa một channel vào danh sách interface chỉ vì nó có chữ `Request`.
 
 Có thể thêm trường `blueprints` hoặc `content_root` khi cần presentation, nhưng không dùng manifest để giấu state. Nếu Work có Blueprint, manifest chỉ nói Blueprint nào là presentation và parent C++ nào; logic vẫn nằm trong module.
 
 ## 16.3 — Đi hết một task nhỏ
 
-Giả sử task là: “Cho phép một Pal có `Work.Mining = 2` được gán vào một station khai khoáng, có command để dựng fixture và log khi assignment đổi.” Agent đi theo thứ tự sau:
+Một cây chuẩn và một schema chuẩn vẫn có thể bị dùng sai thứ tự. Giả sử task là: “Cho phép một Pal có `Work.Mining = 2` được gán vào một station khai khoáng, có command để dựng fixture và log khi assignment đổi.” Nếu agent viết component trước, mọi quyết định owner và contract phía sau sẽ bị uốn theo code đã có. Vì vậy task đi theo thứ tự sau:
 
 1. **Tra danh mục.** Tìm `FWorkKindTag`, `FPaldarkFragment`, `FPaldarkEntityId`, owner của assignment và channel liên quan trong Chương 12. Nếu `Work.Capable` chưa có, ghi mục mới vào danh mục trước khi code.
 2. **Tạo thư mục plugin.** Tạo plugin dưới `Plugins/GameFeatures/` với
@@ -224,9 +228,11 @@ Giả sử task là: “Cho phép một Pal có `Work.Mining = 2` được gán 
 14. **Gửi review.** Kèm manifest text, generator output, artifact hash,
     command output, server/client log và những điểm UNKNOWN.
 
-Thứ tự này cố ý đi từ thông tin tới code. Nếu viết component trước rồi mới phát hiện assignment đã có owner khác, agent sẽ phải di chuyển state giữa các module — chính là loại thay đổi làm nhiều agent cùng dừng lại.
+Thứ tự này cố ý đi từ thông tin tới code, rồi từ code tới bằng chứng. Nếu viết component trước rồi mới phát hiện assignment đã có owner khác, agent sẽ phải di chuyển state giữa các module — chính là loại thay đổi làm nhiều agent cùng dừng lại. Ngược lại, khi manifest và danh mục đã chốt, phần implementation có thể thay đổi mà public boundary vẫn đứng yên.
 
 ## 16.4 — Checklist trước khi coi là xong
+
+Danh sách bước ở trên kể cách đi; checklist dưới đây là cánh cổng cuối, dùng khi trí nhớ và sự tự tin của người làm không còn đáng tin bằng bằng chứng. Mỗi ô phải được đóng bởi file, log hoặc test cụ thể, không phải bằng câu “phần đó chắc ổn”.
 
 - [ ] `Work.uplugin` khai báo đúng module và loading phase.
 - [ ] `Work.Build.cs` chỉ phụ thuộc core/interface cần thiết, không include feature khác.
@@ -255,6 +261,8 @@ Thứ tự này cố ý đi từ thông tin tới code. Nếu viết component t
 - [ ] `git diff --name-only` chỉ chứa file thuộc plugin Work hoặc exception đã được duyệt.
 
 Checklist này là điểm giao giữa agent và CI. Một agent có thể hoàn thành code mà quên manifest; với Paldark, như vậy chưa phải hoàn thành feature.
+
+Khi toàn bộ checklist xanh, “feature Work” không còn là một video hay một class. Nó là một gói có owner, contract, dữ liệu, composition, đường kiểm thử và giới hạn bằng chứng rõ ràng. Chương 17 sẽ đi vào phần duy nhất của gói này vẫn cần asset nhị phân và thao tác editor: Blueprint được phép làm gì mà không kéo gameplay state ra khỏi ranh giới vừa dựng.
 
 ---
 

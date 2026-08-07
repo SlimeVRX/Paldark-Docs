@@ -1,12 +1,12 @@
 # Chương 25 — Chiến đấu
 
-Chiến đấu là lúc hệ thống phải trả lời một câu rất cụ thể: đòn này có thực sự làm mục tiêu mất máu không? Người chơi có thể bấm attack ở client, nhìn thấy animation và nghe tiếng va chạm, nhưng những thứ đó chưa phải sự thật. Sự thật là bên nhận đã xét yêu cầu, áp luật của nó, rồi công bố kết quả.
+Người chơi vung vũ khí, lưỡi đánh chạm mục tiêu, âm thanh va chạm vang lên và con số damage bật khỏi màn hình. Tất cả đều có thể xảy ra trên client trước khi trò chơi trả lời câu hỏi quan trọng nhất: **đòn này có thật sự làm mục tiêu mất máu không?** Animation, âm thanh và hit marker tạo cảm giác; sự thật chỉ xuất hiện khi bên nhận đã xét request, áp luật của nó rồi công bố kết quả.
 
-Đây là chương thể hiện rõ nhất mô hình ở Chương 12 mục 12.4: **bên gây gửi yêu cầu, bên nhận quyết định**. Attacker không được tự trừ HP của target. Combat điều phối request và đọc result; health/attribute owner mới có quyền ghi state nhận damage.
+Vì vậy Combat là nơi mô hình ở Chương 12 mục 12.4 trở nên nhìn thấy được: **bên gây gửi yêu cầu, bên nhận quyết định**. Attacker không tự trừ HP của target. Combat điều phối request và đọc result; health/attribute owner mới có quyền ghi state nhận damage. Ranh giới này không làm combat chậm đi — nó ngăn hai phía cùng kể hai phiên bản khác nhau của cùng một cú đánh.
 
 ## 25.1 — Vì sao hệ thống này tồn tại
 
-Combat cho exploration một rủi ro có thể đọc được. Cận chiến đổi khoảng cách lấy damage; tầm xa đổi resource và aim lấy an toàn; elemental damage và skill identity làm cho việc chọn weapon hoặc Pal có lý do. Khi target chết hoặc bị knockdown, người chơi thấy hành động vừa làm đã tạo hậu quả.
+Combat cho exploration một rủi ro có thể đọc được. Cận chiến đổi khoảng cách lấy damage; tầm xa đổi resource và aim lấy an toàn; elemental damage cùng skill identity khiến việc chọn weapon hoặc Pal có lý do. Khi HP hạ xuống, target knockdown hoặc chết, người chơi thấy hành động vừa làm đã tạo hậu quả trong thế giới chứ không chỉ chạy một montage.
 
 Nếu client tự quyết hit, hai người chơi có thể thấy hai sự thật. Nếu combat include thẳng Inventory để lấy weapon, hoặc include Pal để đọc skill, feature sẽ kéo mọi hệ thống vào cùng một điểm. Combat cần một request contract, một result contract và một owner duy nhất cho mỗi state.
 
@@ -25,7 +25,7 @@ Nếu client tự quyết hit, hai người chơi có thể thấy hai sự th�
 - `F-027` — Critical hit.
 - `F-028` — Death và knockdown.
 
-`EPalWeaponType` có 21 giá trị gồm `MAX`, là evidence về số chiều weapon taxonomy, không phải danh sách attack implementation Paldark. `EnemyReceiveDamageRate`, `EnemyInflictDamageRate` và các field stat cho thấy tuning có nhiều lớp; không dùng chúng để tự bịa công thức cuối.
+Catalog mở ra nhiều nhánh — melee, ranged, projectile, element, critical, death — nhưng vertical slice không cần giả vờ đã giải hết. `EPalWeaponType` có 21 giá trị gồm `MAX`, là evidence về số chiều weapon taxonomy, không phải danh sách attack implementation Paldark. `EnemyReceiveDamageRate`, `EnemyInflictDamageRate` và các field stat cho thấy tuning có nhiều lớp; chúng không cho phép ta tự bịa công thức cuối.
 
 ## 25.3 — Trạng thái và chủ sở hữu
 
@@ -39,11 +39,11 @@ Nếu client tự quyết hit, hai người chơi có thể thấy hai sự th�
 | Death/knockdown state | `Health` owner | companion, capture, UI, replication | health result đạt threshold |
 | Projectile entity và hit result | `Combat` authority | relevant clients, presentation | `Paldark.Combat.Request.Fire` / server resolution |
 
-Combat không được ghi `Health`, không được tự sở hữu weapon inventory và không được tự chuyển target sang dead. Nó gửi damage request; bên nhận quyết định damage cuối. Đây là L8 được viết thành API thay vì chỉ là câu trong tài liệu.
+Theo dõi một cú đánh qua bảng, ta thấy “attack” thực ra chạm nhiều state nhưng không sở hữu tất cả: intent và projectile ở phía Combat, HP/death ở phía Health, weapon ở Inventory. Combat không được ghi `Health`, không được tự sở hữu weapon inventory và không tự chuyển target sang dead. Nó gửi damage request; bên nhận quyết định damage cuối. Đây là L8 được viết thành API thay vì chỉ là câu trong tài liệu.
 
 ## 25.4 — Hợp đồng dữ liệu
 
-Loại mảnh là `Combat.Attack`. Nó mô tả attack definition: kind, power reference, element, range profile và result channel. Không chứa HP hiện tại, ammo quantity hay target death state.
+Data của một đòn đánh vì thế chỉ mô tả khả năng mà attacker muốn dùng, không chép state của target vào cùng nơi. `Combat.Attack` chứa kind, power reference, element, range profile và result channel; nó không chứa HP hiện tại, ammo quantity hay death state.
 
 ```cpp
 USTRUCT()
@@ -99,13 +99,13 @@ struct FDamageResult
 };
 ```
 
-Combat gửi `FDamageRequest`; Health/attribute owner quyết định có áp dụng và áp bao nhiêu, rồi trả `FDamageResult`. Capture đọc `HealthAfter`/`bDowned`, còn L12 dùng before/after để log mutation.
+Đây là điểm chuyển giao quan trọng nhất của chương: Combat gửi `FDamageRequest`; Health/attribute owner quyết định có áp dụng hay không và áp bao nhiêu, rồi trả `FDamageResult`. Capture về sau chỉ cần đọc `HealthAfter`/`bDowned`, còn L12 có before/after để log mutation. Không feature nào phải đoán kết quả từ animation.
 
 Combat không khai báo khối lưu `Paldark.Combat` cho attack intent, projectile phiên hay cooldown ngắn. HP, death và entity state bền thuộc owner Health/entity; nếu sau này cần lưu ammo hoặc weapon durability thì Inventory khai báo state/khối của mình, Combat chỉ đọc qua contract.
 
 ## Trạng thái triển khai — Health + Combat
 
-Slice đầu tiên cố ý hẹp: một đòn melee, một target dummy do scenario/QA spawn,
+Contract trên mô tả biên ổn định; slice đầu tiên cố ý chứng minh nó bằng một tình huống hẹp: một đòn melee, một target dummy do scenario/QA spawn,
 không projectile, critical, GAS hay station/framework mở rộng. `Health` là
 owner duy nhất của HP, death và knockdown. `Combat` chỉ sở hữu attack intent,
 cooldown và attack definition; nó không include hoặc gọi implementation header
@@ -153,7 +153,7 @@ death/knockdown.
 
 ## 25.5 — Giao diện lập trình
 
-Component là `UCombatComponent`, gắn ngoài vào actor có thể gây damage hoặc nhận combat intent. Health component thuộc core/GAS owner; item/equipment được đọc qua `Paldark.Core.ItemRead`. Combat không include module Inventory, Pal hay Movement.
+Sau khi biết đường mutation chạy ở đâu, public API chỉ cần diễn tả intent và snapshot. `UCombatComponent` gắn ngoài vào actor có thể gây damage hoặc nhận combat intent. Health component thuộc core/GAS owner; item/equipment được đọc qua `Paldark.Core.ItemRead`. Combat không include module Inventory, Pal hay Movement.
 
 ```cpp
 UFUNCTION()
@@ -200,7 +200,7 @@ Kênh nghe:
 
 ## 25.6 — Quyền hạn và đồng bộ
 
-Client tự đọc input, aim camera, chạy animation prediction, muzzle flash và hit marker tạm thời. Server quyết định attack permission, cooldown, target relevancy, projectile simulation hoặc hit validation, damage request acceptance và result. Health owner trên authority quyết định HP, resist, status, knockdown/death.
+Đây là nơi cảm giác tức thời và sự thật authoritative phải sống cạnh nhau. Client tự đọc input, aim camera, chạy animation prediction, muzzle flash và hit marker tạm thời. Server quyết định attack permission, cooldown, target relevancy, projectile simulation hoặc hit validation, damage request acceptance và result. Health owner trên authority quyết định HP, resist, status, knockdown/death.
 
 Damage result, HP/attribute delta, death/knockdown state và relevant projectile result cần replicate. Animation, camera shake, sound và local crosshair chỉ là presentation; hit marker cuối phải dựa trên result authority, không chỉ dựa trên trace client.
 
@@ -208,7 +208,7 @@ Nếu dùng GAS, Combat phát request qua core/GAS contract và đọc `DamageRe
 
 ## 25.7 — Log, console command, và cách biết là chạy đúng
 
-Dùng `LogPaldarkCombat` cho intent, validation, projectile và hit resolution; `LogPaldarkGAS` hoặc category của health owner cho damage/HP mutation. Hai category phải dùng cùng `corr`. Một dòng Combat không được giả vờ rằng HP đã giảm; nó ghi `DamageRequest=Sent` hoặc `HitResolved`. Health owner ghi before/after HP.
+Muốn chứng minh một cú đánh, ta phải nhìn xuyên qua lớp trình diễn. Dùng `LogPaldarkCombat` cho intent, validation, projectile và hit resolution; `LogPaldarkGAS` hoặc category của health owner cho damage/HP mutation. Hai category phải dùng cùng `corr`. Một dòng Combat không được giả vờ rằng HP đã giảm; nó chỉ ghi `DamageRequest=Sent` hoặc `HitResolved`. Health owner mới ghi before/after HP.
 
 Command đã có thật:
 
@@ -223,7 +223,9 @@ Command QA đề xuất:
 - `Paldark.Combat.Status`
 - `Paldark.Combat.QA.Trigger`
 
-Test tối thiểu: setup attacker/target, dump attribute trước, trigger attack, lọc `corr`, kiểm request → authority decision → damage result → HP mutation → death/knockdown observer. Nếu `LogPaldarkCombat` có “hit” nhưng không có `LogPaldarkGAS`/health mutation, đó có thể là miss, rejection hoặc bug boundary; không được kết luận target đã mất máu chỉ từ animation.
+Test tối thiểu tái hiện một cú đánh từ đầu tới cuối: setup attacker/target, dump attribute trước, trigger attack, lọc `corr`, rồi kiểm request → authority decision → damage result → HP mutation → death/knockdown observer. Nếu `LogPaldarkCombat` có “hit” nhưng không có `LogPaldarkGAS`/health mutation, đó có thể là miss, rejection hoặc bug boundary; animation không đủ để kết luận target đã mất máu.
+
+Khi target đã có HP thật và damage result đáng tin, combat tạo được một trạng thái trung gian rất đặc biệt: sinh vật vẫn còn sống nhưng đã yếu đi. Chương 26 dùng đúng snapshot ấy để biến chiến thắng thuần túy thành một lựa chọn khác — thử bắt giữ và tạo ra một identity bền.
 
 ---
 
