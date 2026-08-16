@@ -66,7 +66,7 @@ onBeforeUnmount(() => {
       <div class="book-stats" aria-label="Thống kê sách">
         <span>6 quyển</span>
         <span>46 chương</span>
-        <span>68 trang</span>
+        <span>69 trang</span>
       </div>
     </template>
   </Layout>

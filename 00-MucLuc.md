@@ -8,11 +8,11 @@ Ta sẽ không nhảy thẳng vào module và pipeline. Trước hết, ta học
 
 Nếu bạn đến đây để hiểu quyết định hiện tại, hãy đọc theo thứ tự này:
 
-1. [Kế hoạch tái dựng KYWorld bằng C++](/) — trang canonical: vì sao pause PaldarkKit, clean-room lab, CR-0…CR-8, ownership, polish và điều kiện tích hợp.
-2. [Nền nghiên cứu composability và harness](/NghienCuu/paldark-composability-harness) — bằng chứng, mô hình effects/coeffects, retrospective và các giới hạn đã dùng để lập kế hoạch.
+1. [Tái cấu trúc KYWorld bằng C++ mà không đánh mất gameplay](/) — chuyên khảo canonical: source audit, chronology, retrospective, lý thuyết composability, branch-by-abstraction, parity, backlog và harness Sol–Luna.
+2. [Tư liệu nghiên cứu composability và harness](/NghienCuu/paldark-composability-harness) — route lưu trữ để giữ liên kết cũ; nội dung hiện hành đã được hợp nhất vào chuyên khảo.
 3. [Sáu quyển sách Paldark](#quyển-1--đọc-một-game) — archive/reference corpus từ cách đọc trải nghiệm đến kiến trúc, gameplay, lộ trình và hợp tác người–AI.
 
-Root plan là lời hứa chính của site; nghiên cứu và sáu quyển giải thích, cung cấp provenance hoặc giữ lịch sử. Các route archive bên dưới không bị đổi để những liên kết cũ tiếp tục tra cứu được.
+Chuyên khảo ở root là nguồn quyết định duy nhất; sáu quyển, ADR, snapshot và route nghiên cứu giữ provenance/lịch sử. Các route archive bên dưới không bị đổi để những liên kết cũ tiếp tục tra cứu được, nhưng không được dùng để tự động mở scope mới.
 
 ## Quyển 1 — Đọc một game
 
@@ -132,12 +132,12 @@ Phụ lục là nơi cuốn sách để lộ đường chỉ khâu của mình. 
 ## Trạng thái
 
 ::: info Lưu ý biên tập
-Phần dưới là snapshot triển khai theo commit, không phải kiến thức bất biến. Kiến trúc hiện hành được chốt tại [ADR-001 — Chương 39](Q6-Kien-Truc-VibeCoding/39-kien-truc-hoi-tu-vibecoding.md); hồ sơ tiến độ chi tiết nằm ở Chương 36, 42 và 43.
+Phần dưới là snapshot lịch sử theo commit, không phải trạng thái hiện hành. Nguồn quyết định hiện tại là [chuyên khảo KYWorld C++ parity](/); ADR-001 và hồ sơ ở Chương 36, 42, 43 được giữ để truy vết quá trình.
 :::
 
 Snapshot kiểm toán PR #135–#157 là `5e70218d`; mốc #178 được static-audit là `09e9b5e7`; vertical spine mới nằm ở `61c3aaac`. Sau #157, điểm ước lượng là 56,7% engineering, 7,0% normal-play path và 9,5% Palworld parity; ở #178 là 61,9%, 15,0% và 12,0%; sau `61c3aaac` là 65,9%, 25,7% và 14,2%. Các điểm có sai số ±5; cột normal-play sau `61c3aaac` mới là static path coverage và chưa thay thế human runtime acceptance.
 
-Giai đoạn hiện tại là **human gate** của ADR-001. ADR-001 ở Chương 39 đã được Soliz duyệt; vertical spine đầu tiên nằm ở commit `61c3aaac`, đạt `DESIGNED`, `SOURCE_PRESENT`, `COMPILED` và static `INTEGRATED`. `PLAYER_OBSERVABLE`, `USER_VERIFIED` và `PARITY_EVIDENCED` vẫn chờ kết quả test card ở Chương 43. Gate kỹ thuật của agent là compile C++/UHT/link; không cook, package, multiplayer runtime hay babysit CI nếu Soliz không đổi scope.
+Tại snapshot lịch sử, ADR-001 đã được duyệt và vertical spine ở `61c3aaac` đạt `DESIGNED`, `SOURCE_PRESENT`, `COMPILED` cùng static `INTEGRATED`; `PLAYER_OBSERVABLE`, `USER_VERIFIED` và `PARITY_EVIDENCED` vẫn chờ. Chuyên khảo mới tạm dừng mở rộng PaldarkKit và chưa mở gameplay conversion KYWorld; trạng thái này không được suy ngược từ header cũ.
 
 Lịch sử build/package cũ vẫn là evidence lịch sử, không được tự động coi là bằng chứng cho HEAD hiện tại. Mọi feature dùng chuỗi trạng thái `DESIGNED → SOURCE_PRESENT → COMPILED → INTEGRATED → PLAYER_OBSERVABLE → USER_VERIFIED → PARITY_EVIDENCED` thay cho một chữ “done”.
 

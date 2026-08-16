@@ -7,10 +7,10 @@ const siteUrl = 'https://slimevrx.github.io/Paldark-Docs/'
 export default withMermaid(
   defineConfig({
     lang: 'vi-VN',
-    title: 'Tái dựng KYWorld bằng C++ — Paldark',
+    title: 'KYWorld C++ parity — Paldark',
     titleTemplate: ':title · Paldark',
     description:
-      'Kế hoạch tái dựng KYWorld bằng C++ theo clean-room: từ hành vi đã quan sát đến gameplay có thể kiểm chứng, rồi mới xem xét tích hợp PaldarkKit.',
+      'Chuyên khảo tái cấu trúc KYWorld bằng C++ trên UE 5.4: composability, parity, bảo toàn polish và cộng tác Sol–Luna.',
     base: '/Paldark-Docs/',
     cleanUrls: true,
     lastUpdated: true,
@@ -22,18 +22,18 @@ export default withMermaid(
       ['meta', { property: 'og:type', content: 'website' }],
       ['meta', { property: 'og:site_name', content: 'Paldark Docs' }],
       ['meta', { property: 'og:locale', content: 'vi_VN' }],
-      ['meta', { property: 'og:title', content: 'Tái dựng KYWorld bằng C++ — Paldark' }],
+      ['meta', { property: 'og:title', content: 'Tái cấu trúc KYWorld bằng C++ mà không đánh mất gameplay' }],
       [
         'meta',
         {
           property: 'og:description',
-          content: 'Kế hoạch canonical tái dựng KYWorld bằng C++: clean-room lab, CR-0…CR-8, human gate và adapter PaldarkKit.',
+          content: 'Chuyên khảo canonical: branch-by-abstraction trên UE 5.4, parity đa chiều, feature capsule và quy trình Sol–Luna–review.',
         },
       ],
       ['meta', { property: 'og:image', content: `${siteUrl}og.png` }],
       ['meta', { property: 'og:image:width', content: '1734' }],
       ['meta', { property: 'og:image:height', content: '907' }],
-      ['meta', { property: 'og:image:alt', content: 'Tái dựng KYWorld bằng C++ — gameplay có thể kiểm chứng' }],
+      ['meta', { property: 'og:image:alt', content: 'Tái cấu trúc KYWorld bằng C++ mà không đánh mất gameplay' }],
       ['meta', { name: 'twitter:card', content: 'summary_large_image' }],
       ['meta', { name: 'twitter:image', content: `${siteUrl}og.png` }],
     ],
@@ -65,16 +65,16 @@ export default withMermaid(
       },
     },
     themeConfig: {
-      siteTitle: 'Paldark — Kế hoạch KYWorld C++',
+      siteTitle: 'Paldark — KYWorld C++ parity',
       nav: [
-        { text: 'Kế hoạch KYWorld C++', link: '/' },
+        { text: 'Chuyên khảo canonical', link: '/' },
         { text: 'Sách Paldark', link: '/00-MucLuc' },
         {
           text: 'Nghiên cứu & bằng chứng',
           items: [
-            { text: 'Nền composability và harness', link: '/NghienCuu/paldark-composability-harness' },
+            { text: 'Tư liệu nghiên cứu · lưu trữ', link: '/NghienCuu/paldark-composability-harness' },
             { text: 'Sổ bằng chứng', link: '/PhuLuc/A-so-bang-chung' },
-            { text: 'ADR-001 hiện hành', link: '/Q6-Kien-Truc-VibeCoding/39-kien-truc-hoi-tu-vibecoding' },
+            { text: 'ADR-001 · hồ sơ lịch sử', link: '/Q6-Kien-Truc-VibeCoding/39-kien-truc-hoi-tu-vibecoding' },
             { text: 'Danh mục khái niệm', link: '/DanhMuc/khai-niem' },
             { text: 'Danh mục quyền ghi', link: '/DanhMuc/quyen-ghi' },
             { text: 'Bản đồ tài liệu', link: '/PhuLuc/ban-do-tai-lieu' },
@@ -143,7 +143,7 @@ export default withMermaid(
       skipToContentLabel: 'Đi tới nội dung',
       externalLinkIcon: true,
       footer: {
-        message: 'Kế hoạch tái dựng KYWorld C++ canonical và kho lưu trữ kiến trúc, evidence, giáo trình của Paldark.',
+        message: 'Chuyên khảo KYWorld C++ parity canonical và kho lưu trữ kiến trúc, evidence, giáo trình của Paldark.',
         copyright: 'Paldark Docs · SlimeVRX',
       },
     },

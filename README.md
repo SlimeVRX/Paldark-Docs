@@ -1,13 +1,13 @@
 # Paldark Docs
 
-Paldark Docs hiện có kế hoạch canonical ở trang chủ: **Tái dựng KYWorld bằng C++ — từ hành vi đã quan sát đến gameplay có thể kiểm chứng**. Kế hoạch giải thích vì sao tạm dừng mở rộng PaldarkKit, cách dùng KYWorld như behavioral reference trong clean-room lab, lộ trình CR-0…CR-8, các gate human và điều kiện adapter tích hợp về sau. [Nghiên cứu composability và harness](NghienCuu/paldark-composability-harness.md) được giữ như nền tảng bằng chứng; sáu quyển cũ vẫn là archive/reference corpus.
+Paldark Docs có một nguồn quyết định canonical ở trang chủ: **Tái cấu trúc KYWorld bằng C++ mà không đánh mất gameplay**. Chuyên khảo hợp nhất source audit, chronology 539 commit, retrospective PaldarkKit, Cordis/DeepSeek Harness, Lyra/UEFN, kiến trúc feature capsule, branch-by-abstraction, parity gates và quy trình Sol–Luna–fresh review. Sáu quyển, ADR và route nghiên cứu cũ là archive/reference corpus; chúng không tự mở scope triển khai.
 
 Đọc tại: **https://slimevrx.github.io/Paldark-Docs/**
 
 ## Nội dung
 
-- kế hoạch tái dựng KYWorld C++ canonical ở index.md
-- nghiên cứu composability/harness ở NghienCuu/paldark-composability-harness.md
+- chuyên khảo KYWorld C++ parity canonical ở index.md
+- route nghiên cứu cũ ở NghienCuu/paldark-composability-harness.md được giữ như trang lưu trữ/link compatibility
 - 6 quyển, 46 chương chính làm kho lưu trữ và nguồn truy vết
 - giáo trình thực hành và danh mục sống
 - phụ lục nguồn, bằng chứng, ADR, template và câu hỏi mở

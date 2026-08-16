@@ -7,10 +7,10 @@ export const bookSidebar: DefaultTheme.SidebarItem[] = [
     text: 'Bắt đầu',
     collapsed: false,
     items: [
-      page('Kế hoạch KYWorld C++', '/'),
-      page('Nền nghiên cứu composability', '/NghienCuu/paldark-composability-harness'),
+      page('Chuyên khảo canonical', '/'),
+      page('Tư liệu nghiên cứu · lưu trữ', '/NghienCuu/paldark-composability-harness'),
       page('Sách Paldark và mục lục', '/00-MucLuc'),
-      page('Kiến trúc hiện hành · ADR-001', '/Q6-Kien-Truc-VibeCoding/39-kien-truc-hoi-tu-vibecoding'),
+      page('Hồ sơ kiến trúc lịch sử · ADR-001', '/Q6-Kien-Truc-VibeCoding/39-kien-truc-hoi-tu-vibecoding'),
     ],
   },
   {

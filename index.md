@@ -1,344 +1,1120 @@
-# Tái dựng KYWorld bằng C++ — từ hành vi đã quan sát đến gameplay có thể kiểm chứng
+# Tái cấu trúc KYWorld bằng C++ mà không đánh mất gameplay
 
-> **Loại tài liệu:** kế hoạch nghiên cứu và triển khai theo clean-room
-> **Trạng thái:** kế hoạch kỹ thuật `PROPOSED — AWAITING ARCHITECTURE APPROVAL`
-> **Phiên bản tham chiếu:** 0.1 — snapshot 2026-08-16
-> **Phạm vi:** phòng thí nghiệm C++ độc lập, sau đó mới xem xét adapter vào PaldarkKit
+## Một mô hình về composability, parity và cộng tác đa tác nhân cho Paldark
 
-Đây là trang canonical của dự án cho quyết định tái dựng KYWorld. Bài nghiên cứu composability trước đây vẫn được giữ ở [Nghiên cứu Paldark: composability và harness](/NghienCuu/paldark-composability-harness); bài đó là nền tảng lập luận và bằng chứng, còn trang này là kế hoạch hành động có điều kiện.
+> **Loại tài liệu:** chuyên khảo canonical duy nhất của dự án
+>
+> **Trạng thái:** `PROPOSED — READY FOR ARCHITECTURE REVIEW`
+>
+> **Phiên bản bằng chứng:** 1.0 — 2026-08-16
+>
+> **Reference tree:** `02.Palworld/Source@a6eab166` · gameplay main kết thúc tại `dc776d8f` · Unreal Engine 5.4
+>
+> **Trạng thái thực thi:** chưa chuyển đổi gameplay; chưa nâng engine; chưa tích hợp PaldarkKit
 
-## Phần I — Quyết định mà người đọc cần hiểu trước
+Tài liệu này thay thế mọi kế hoạch KYWorld trước đây với tư cách nguồn quyết định hiện hành. Sáu quyển Paldark, các ADR cũ, snapshot tiến độ và bài nghiên cứu trước đây vẫn tồn tại để truy vết lịch sử, nhưng không được dùng để tự động mở scope hoặc ghi đè một quyết định trong chuyên khảo này.
 
-### 1. Một repository có thể chứa feature mà người chơi vẫn nhận một lời hứa bị hỏng
+Một file có thể là nguồn giải thích canonical, nhưng một dự án dài không thể sống chỉ bằng văn xuôi. Khi triển khai, trạng thái máy đọc được như baseline, task packet, evidence và câu hỏi mở sẽ nằm trong các ledger nhỏ của repository. Chuyên khảo trả lời **vì sao**; ledger trả lời **đang ở đâu và làm gì tiếp theo**.
 
-Bạn đứng trước một mỏ quặng, nhấn `F`, rồi chờ một điều rất nhỏ: quặng biến mất, số lượng trong túi tăng đúng một đơn vị và HUD phản ánh thay đổi ấy. Nếu cả ba cùng xảy ra, bạn không cần biết input đi qua bao nhiêu component. Nếu quặng biến mất nhưng số lượng không đổi, hoặc HUD đứng yên trong khi save đã ghi, người chơi không gọi đó là “một seam chưa được chứng minh”; họ chỉ thấy trò chơi thất hứa.
+---
 
-Một ví dụ khác còn dễ lộ hơn. Bạn nhấn `V` để giữ một con vật, lần đầu nhân vật ngắm đúng và tư thế trông hợp lý. Bạn nhấn `V` lần thứ hai ở một trạm không hợp lệ; thao tác bị từ chối nhưng con vật đột nhiên bị kéo về vị trí cũ. Repository có thể có hàm mang tên `CancelManualHold`, log compile xanh và vài commit sửa animation, nhưng trải nghiệm nhìn thấy vẫn là một cú teleport. Chênh lệch giữa artifact có tên đúng và kết quả người chơi thấy chính là lý do chúng ta đổi hướng.
+## Tóm tắt
 
-PaldarkKit hiện có nhiều nền móng đáng giữ: module, GameFeature, data, ability, test và các seam để nhiều người cùng làm. Tuy vậy, càng mở rộng bề ngang, mỗi tính năng càng đụng vào nhiều trạng thái mà chỉ normal play và mắt người mới xác nhận được. Khi một task đã kéo theo camera, animation, input, UI, authority, retry và persistence, việc thêm code nền không còn đồng nghĩa với việc hoàn thành một đường chơi.
+PaldarkKit đã chứng minh rằng AI có thể dựng nhanh module, Game Feature, hợp đồng dữ liệu, authority check, stable identity, reservation và test seam. Nó chưa chứng minh rằng việc mở rộng liên tục theo chiều ngang sẽ tự hội tụ thành một trò chơi có độ hoàn thiện cao. Hai human gate lớn nhất cho thấy khoảng cách ấy: Task 52 trải qua một wall-clock envelope gần bốn ngày; Task 54/55 kéo dài hơn hai ngày nhưng tại snapshot kiểm toán vẫn chưa đạt `USER_VERIFIED`. Các lỗi tập trung ở điểm mà compile và static test không nhìn thấy đầy đủ: principal identity, target selection, root motion, orientation, animation, carry và chuỗi hành vi qua nhiều hệ thống.
 
-Vì vậy, quyết định ở đây không phải “KYWorld có bao nhiêu file để chép”. Câu hỏi là: những hành vi nào đã được quan sát, điều kiện nào làm chúng đáng tin, và làm sao viết lại các lời hứa đó bằng C++ độc lập để chúng ta có thể bỏ một giả thuyết mà không phá PaldarkKit. Từ câu hỏi nhỏ ở mỏ quặng, kế hoạch đi đến một lab tách rời, một chuỗi gate và một quyết định tích hợp chỉ xuất hiện sau cùng.
+KYWorld có giá trị theo hướng ngược lại. Repository hiện có 10.173 tracked paths, 10.039 `.uasset`, 51 `.umap`, nhưng chỉ 34 `.cpp`, 36 `.h`, 3 `.cs` và khoảng 2.919 dòng native C++ vật lý. Phần lớn gameplay và polish nằm trong Blueprint, animation, UMG, data và content graph. Lịch sử main có 539 commit, trong đó 161 merge; các workstream player/GAS, inventory/UI, weapon/combat và build/craft/world chạy song song. Đây là một reference giàu hành vi, không phải một architecture C++ để dịch nguyên xi.
 
-### 2. Vì sao tạm dừng mở rộng PaldarkKit
+Chuyên khảo đi đến bốn kết luận.
 
-Tạm dừng không phải kết luận rằng công việc trước đây thất bại. PaldarkKit đã cho chúng ta biết nhiều bài học về module, quyền ghi, stable ID, authority check, reservation/escrow và review độc lập. Điều cần dừng là cách mở rộng theo chiều ngang trước khi một lát cắt ngắn chạy ổn định bằng input bình thường.
+Thứ nhất, cách bảo toàn polish ít gây nhiễu nhất là **branch-by-abstraction trên chính snapshot UE 5.4**, với một reference worktree bất biến và một candidate worktree. Việc tạo project rỗng UE 5.6 rồi chép lại sẽ đồng thời thay asset path, default, engine semantics và implementation; khi parity fail, không thể biết biến nào gây ra sai khác. “Làm lại từ đầu” vì vậy phải có nghĩa là xây lại quyền sở hữu và dependency bằng C++, không phải vứt bỏ asset graph đã tạo nên presentation.
 
-Có bốn mức thường bị gọi chung là “đã làm”. Thứ nhất là breadth: có class, asset, plugin hoặc commit mô tả một tính năng. Thứ hai là seam đã compile và được nối trong environment. Thứ ba là normal path: người chơi thực hiện hành động và nhìn thấy kết quả đúng, kể cả trường hợp từ chối và thử lại. Thứ tư là polish: camera, animation, âm thanh, timing, bố cục HUD và cảm giác chuyển tiếp không phá lời hứa. KYWorld có giá trị đặc biệt ở mức tham chiếu hành vi và polish quan sát được; PaldarkKit cần một cách tiếp cận cho phép học điều đó mà không đẩy mọi giả thuyết chưa kiểm tra vào kernel đang dùng.
+Thứ hai, “Everything is a Plugin” chỉ hữu ích nếu tách được năm khái niệm: **package**, **feature instance**, **capability**, **effect receipt** và **gameplay transaction**. Một delegate registration có thể thu hồi; damage đã gây ra thì không. Một Game Feature Plugin có thể chứa nhiều capability; một Actor Component không tự trở thành plugin; một native DLL thường không được unload an toàn chỉ vì feature đã deactivate.
 
-Snapshot ngày 2026-08-16 làm ranh giới ấy cụ thể hơn. Cả 21 GameFeature hiện được cấu hình `Active` từ đầu; audit source chưa thấy đường bật/tắt động, nên chúng mới chứng minh biên đóng gói tĩnh chứ chưa chứng minh feature có thể ra vào giữa phiên chơi. `Work` còn phụ thuộc trực tiếp vào `PalBehavior`; registry definition–fragment vẫn là stub; event bus phát đồng bộ trong cùng call stack; persistence và multiplayer mới ở đường QA, chưa phải Save/Quit/Load hay Host/Join/Reconnect của normal play. Những sự thật này không phủ nhận giá trị của code đã có. Chúng cho biết lab và adapter sau này không được giả định dynamic composition, provider discovery, durable event, save hay network đã được giải quyết chỉ vì tên subsystem tồn tại.
+Thứ ba, chuyển đổi phải diễn ra theo từng behavior row nhỏ: đặc tả reference, thêm native seam ở trạng thái dormant, chuyển đúng một quyền thực thi, so sánh A/B, rồi mới retire graph C/D cũ. Blueprint data và presentation phù hợp vẫn được giữ. Thành công được đo bằng state, timing, presentation, reference và runtime parity, không bằng phần trăm file “đã C++ hóa”.
 
-AI có thể viết một lượng lớn code nền, nhưng tự động xác nhận một đường chơi phức tạp vẫn có giới hạn. Một test fixture gọi thẳng owner không nói rằng người chơi đã đến đúng khoảng cách, nhìn đúng hướng, thấy animation đúng nhịp hay nhận một reject dễ hiểu. Khi outcome có yếu tố thị giác và timing, human gate là một phần của đặc tả, không phải bước trang trí sau compile.
+Thứ tư, công việc dài phải dựa vào artifact thay vì ký ức chat. GPT-5.6 Sol giữ vai trò planner/architect và fresh reviewer; GPT-5.6 Luna chỉ triển khai packet đã đóng. Luna bắt buộc dừng khi contract mơ hồ, owner không rõ, cần mở rộng write-set hoặc một giả thuyết thất bại lặp lại. Sau restart, task mới đọc `STATUS`, baseline, packet, decision và evidence thay vì cố phục dựng cuộc hội thoại cũ.
 
-Bài học thực dụng là thu nhỏ vòng phản hồi. Trước tiên hãy làm một slice từ boot đến movement, interaction, một resource và inventory HUD. Nếu slice này chưa giữ được quantity, identity, reject và retry, thêm capture, Work hay multiplayer chỉ làm số đường lỗi tăng lên. Việc tạm dừng giúp chúng ta giữ những gì PaldarkKit đã học, đồng thời đặt một đường biên nơi giả thuyết mới có thể bị loại bỏ an toàn.
+Mục tiêu trước mắt không phải viết gameplay. Mục tiêu là duyệt architecture, khóa reference, tạo regression atlas, phân loại Blueprint và mở một pilot nhỏ đủ chứng minh phương pháp.
 
-### 3. KYWorld đáng giữ ở đâu, và không phải là gì
+---
 
-KYWorld có giá trị như một behavioral/reference corpus đã được polish ở nhiều lát cắt: movement và input, inventory/UI, equipment, bow combat, creature, capture, PalBox, building/crafting, riding/flying, AI và world/life. Người chơi có thể học được thứ tự một vertical slice trở nên thuyết phục: input phải có cảm giác, vật thể phải phản hồi, quan hệ với creature phải bền hơn một dòng text, và presentation phải hỗ trợ state thay vì che lỗi.
+## 1. Bài toán nghiên cứu
 
-Static census cho thấy corpus này cũng rất rộng: snapshot ghi nhận **10.173 tracked paths**, trong đó **10.040 `.uasset`**, **51 `.umap`**, **34 `.cpp`**, **36 `.h`**, **3 `.cs`**, khoảng **2.919 dòng vật lý native C++**. Tính theo tracked paths, `.uasset` chiếm xấp xỉ **98,7%** ở snapshot đó. Những con số này cho biết nơi cần đặt câu hỏi và vì sao binary breadth vừa phong phú vừa khó đọc; chúng không phải phần trăm behavior đã hoàn thành.
+### 1.1. Hai loại giá trị đang nằm ở hai project khác nhau
 
-Native layer vẫn có những seam hữu ích. `PlayerCharacter` cho thấy camera, Enhanced Input và camera-relative movement; `BaseAbilitySystemComponent` cho thấy mapping input tag, ability spec và handle; `BaseCharacter` tạo ASC/AttributeSet khi possessed. Ngược lại, inventory quantity, capture, PalBox, UI graph và nhiều behavior quan trọng nằm trong asset hoặc tài liệu mô tả. Một `BP_PalSphere`, một DataTable hay một commit “building/crafting” là manh mối để thiết kế observation, không phải bằng chứng atomicity, persistence, authority hay parity.
+PaldarkKit có giá trị kiến trúc: domain boundary, owner, versioned payload, idempotency, automation và cấu trúc phù hợp với nhiều agent. KYWorld có giá trị trải nghiệm: movement, bow, inventory, capture, PalBox, build/craft, riding/flying, HUD, animation, sound, VFX và nhiều chi tiết đã được chỉnh trong một vòng phát triển ngắn nhưng dày đặc.
 
-Vì thế, KYWorld không phải donor architecture, không phải giấy phép, không phải nguồn để phân phối asset/code và không phải một bản thiết kế có thể dịch Blueprint-to-C++ tự động. Nó là reference cho những lời hứa mà người quan sát được phép ghi lại, cùng với các known unknowns. Chúng ta giữ polish như mục tiêu trải nghiệm, còn implementation phải là code, data và asset nguyên bản hoặc có provenance rõ.
+Nếu tiếp tục PaldarkKit theo lối cũ, ta phải tái phát minh từng chi tiết polish rồi nhờ người kiểm tra một chuỗi ngày càng dài. Nếu chép Blueprint KYWorld nguyên trạng, ta giữ cảm giác nhưng giữ luôn coupling, quyền ghi ẩn và graph khó chia việc. Bài toán không phải chọn một trong hai. Bài toán là **giữ nguyên lời hứa player-facing của KYWorld trong khi thay dần biểu diễn và quyền sở hữu bằng một kiến trúc C++ có thể ghép, review và rollback**.
 
-### 4. “Tái dựng” nghĩa là viết lại hành vi, không dịch biểu đạt
+### 1.2. Các câu hỏi
 
-Tái dựng bắt đầu từ câu mà người chơi có thể kiểm tra: “Ở gần một mỏ quặng hợp lệ, nhấn `F` một lần làm quantity tăng một lần và HUD cập nhật; target ngoài range hoặc không hợp lệ bị từ chối mà state không đổi.” Câu này không cần nói Blueprint có node gì, biến nào tên gì hay asset donor được nối ra sao. Nó vẫn đủ để đặt pre-state, input, owner, commit point, failure và presentation.
+- **RQ1 — Reference:** KYWorld thực sự được hình thành theo thứ tự nào, và lịch sử Git cho biết dependency nào đáng tin?
+- **RQ2 — Parity:** điều gì phải giữ nguyên để nói conversion không làm mất gameplay hoặc polish?
+- **RQ3 — Modularity:** phần nào của Cordis, DeepSeek Harness, Lyra, Game Features, GAS và UEFN có thể chuyển sang Unreal C++ mà không cường điệu guarantee?
+- **RQ4 — Migration:** làm sao thay Blueprint gameplay bằng C++ mà vẫn giữ object path, asset defaults, presentation và một build chơi được ở mọi checkpoint?
+- **RQ5 — Collaboration:** làm sao Sol, Luna, reviewer và human gate phối hợp mà task vẫn tiếp tục được sau khi tắt máy?
+- **RQ6 — Learning:** dữ liệu PaldarkKit cho thấy rework tập trung ở đâu, và metric nào nên thay thế LOC, số plugin hoặc countdown?
 
-Một contract tốt sẽ mô tả theo trace: `Input → Intent → Owner → State transition → Commit/Reject → Event/Snapshot → Presentation`. Với pickup, `Interaction` chỉ truy vấn target và tạo request; `Inventory` là canonical writer của quantity; `Presentation` đọc snapshot; retry dùng `CorrelationId` hoặc `IdempotencyKey` để không nhân đôi. Nếu target bị phá giữa query và commit, quyền authority sai hoặc reservation hết hạn, contract phải nói rõ reject reason và state nào được giữ nguyên.
+### 1.3. Luận đề
 
-Điều này cũng phân biệt hai loại thay đổi. Đăng ký listener, input mapping, timer, provider handle hay một grant có inverse rõ là installation effect; chúng có thể được ghi vào ledger và tháo theo reverse order. Quantity đã chuyển, damage đã settle, capture đã commit, building đã đặt, output đã spawn hoặc save đã ghi là committed gameplay transaction. Gỡ listener không thể trả lại quặng, và gọi `ClearAbility` không phải rollback damage. Với loại sau, domain owner, authority, reservation, idempotency và compensation phải được thiết kế riêng.
+Gọi một capability đã polish là tập các quan sát:
 
-Một implementation khác class, graph và bytecode vẫn có thể tương đương trong contract nếu cùng input, pre-state, outcome, reject reason, identity relation và timing tolerance đã khóa. Đây là equivalence có phạm vi, không phải lời hứa “clone hoàn chỉnh”. Chỗ nào reference chỉ có tên asset hoặc mô tả mơ hồ, chúng ta ghi `UNKNOWN` và tạo observation task thay vì lấp khoảng trống bằng suy đoán.
+```text
+P = <S, T, V, R, X>
+```
 
-### 5. Lab độc lập là bước đệm an toàn
+trong đó `S` là gameplay state, `T` là thứ tự và timing, `V` là presentation, `R` là asset/reference graph, và `X` là runtime health. Một migration unit chỉ đạt parity khi candidate tương đương reference trên tập quan sát và tolerance đã khóa; C++ sạch hơn không tự tạo ra tương đương này.
 
-Nếu vừa xem donor Blueprint vừa sửa PaldarkKit, ba thứ sẽ trộn vào nhau: hành vi tham chiếu, biểu đạt cụ thể và seam riêng của target. Khi test fail, chúng ta không biết lỗi đến từ spec, engine, adapter hay một giả định sao chép. Lab độc lập cho phép một giả thuyết sai bị loại bỏ mà không làm kernel PaldarkKit bẩn thêm.
+Luận đề trung tâm là:
 
-Kế hoạch đề xuất `PaldarkReconstructionLab` ở compile-time riêng. Phòng quan sát/specification có reference version, normal input, output, timing, failure, build/map/config, media hash và provenance. Phòng implementation chỉ nhận behavioral contract đã freeze, neutral IDs, original hoặc licensed code/assets, test và log. Nếu ambiguity buộc người triển khai xem donor, task dừng và lập provenance decision: ai xem, thấy gì, vì sao cần, ảnh hưởng clean-room ra sao và có cần reset context hay không.
+> Một phép chuyển đổi ít rủi ro cần giữ cố định bốn biến — engine, asset identity, scenario và presentation — trong khi thay đúng một ownership path. Branch-by-abstraction làm được điều đó; một clean project hoặc một đợt dịch hàng loạt thì không.
 
-Adapter vào PaldarkKit chỉ được xem xét ở `CR-8`, sau khi lab có contract, transaction, runtime, human gate và provenance đủ mạnh. Adapter không được trở thành domain owner thứ hai; nó dịch neutral command/result về seam của target. Nếu adapter cần copy donor, sửa Core ngoài write-set hoặc tạo duplicate state, stop condition được kích hoạt và slice quay về lab hoặc dừng.
+### 1.4. Phạm vi và non-goals
 
-Tách lab có chi phí ban đầu, nhưng nó biến “có thể bỏ đi” thành một thuộc tính thật. Ta có thể giữ một slice nhỏ, thay provider, đổi asset placeholder hoặc bỏ cả giả thuyết mà không phải phục hồi PaldarkKit từ một integration nửa hoàn thành.
+Phạm vi là feature thực sự có trong reference: level flow, player, input/camera/movement, interaction, item/inventory/UI, equipment/combat, Pal AI/capture/party/PalBox, build/craft/cook/work, world flow và presentation liên quan. Multiplayer, persistence production, dungeon/boss, breeding/economy hoặc feature chỉ có tên trong backlog không được thêm trong giai đoạn parity nếu reference không có hành vi chứng minh được.
 
-### 6. Bộ xương C++ và ranh giới sở hữu
+Không có mục tiêu biến mọi `.uasset` thành source text; viết lại artist-authored AnimBP, Behavior Tree, EQS, UMG layout, material, VFX hay audio bằng C++ thường vừa vô ích vừa làm mất khả năng authoring. Không nâng UE 5.4 trong cùng chuỗi commit với conversion. Không dùng số commit gốc như schedule cam kết. Không public asset hoặc media proprietary; site này chỉ public phương pháp, số liệu và kết luận kiến trúc.
 
-Một kiến trúc dễ đọc không bắt đầu bằng việc biến mọi class thành plugin. Nó bắt đầu bằng câu hỏi ai được phép ghi state nào, state sống ở scope nào và phần nào có thể tháo mà không để lại side effect. Trong lab, `Foundation` giữ stable ID, principal, correlation/idempotency, `Result/Failure`, authority, lifecycle, clock/random policy và activation ledger hẹp. `Data` giữ definition, schema, validator và adapter cho `DataAsset`/`PrimaryAsset`; data không tự settle transaction.
+---
 
-`CompositionHost` chịu trách nhiệm Experience/ruleset, Game Feature activation, `requires/provides`, provider identity/generation, quiescence và teardown. Các domain owner giữ Interaction, Inventory, Crafting, Build, Health, Combat, Creature, Capture, Companion/PalBox và Work. `Presentation` biến event/snapshot thành view model, HUD, animation, audio/VFX; nó không ghi quantity, identity hay assignment. `PaldarkAdapter` chỉ xuất hiện ở CR-8.
+## 2. Phương pháp và kỷ luật bằng chứng
 
-Sơ đồ dưới đây có một ý chính: input không đi thẳng từ UI tới Actor tùy ý, và nhánh reject cũng là một outcome có hợp đồng.
+### 2.1. Thứ bậc nguồn
+
+Nghiên cứu dùng bốn lớp bằng chứng, theo thứ tự ưu tiên:
+
+1. source code, manifest, Git object, test result và runtime observation được khóa version;
+2. specification gốc, README và tài liệu dự án;
+3. tài liệu primary của Cordis, DeepSeek Harness, Epic Games và OpenAI;
+4. review, bài giảng và tài liệu tổng hợp dùng để đặt câu hỏi, không dùng để thay primary evidence.
+
+Mọi claim được gắn một trong năm nhãn:
+
+| Nhãn | Nghĩa |
+|---|---|
+| `MEASURED` | Đếm hoặc tính trực tiếp từ artifact được pin |
+| `SOURCE_OBSERVED` | Thấy trực tiếp trong source/manifest/history |
+| `DOCUMENTED` | Nguồn tài liệu nói như vậy nhưng chưa runtime-verify |
+| `INFERRED` | Suy luận có giải thích từ nhiều signal |
+| `UNKNOWN` | Chưa đủ bằng chứng; không được lấp bằng phỏng đoán |
+
+Maturity của implementation dùng một ladder khác:
+
+```text
+DISCOVERED → SPECIFIED → SOURCE_PRESENT → COMPILED
+→ AUTOMATED_PASS → EDITOR_PASS → PLAYER_OBSERVABLE
+→ USER_VERIFIED → PARITY_EVIDENCED
+```
+
+Hai ladder không được trộn. Một claim `MEASURED` về số file không làm feature thành `PLAYER_OBSERVABLE`; một compile pass không chứng minh camera, animation hoặc inventory flow.
+
+### 2.2. Cách kiểm toán KYWorld
+
+Git history được tách merge/non-merge, committer date, author identity và path cluster. Các commit import vendor/VFX lớn được coi là dependency import, không phải hàng nghìn feature. Thứ tự feature được suy từ ancestry, co-change, path, specification và native seam. Vì `.uasset` là binary, dependency hard/soft đầy đủ vẫn là `UNKNOWN` cho đến khi Asset Registry hoặc Reference Viewer export được lưu ở W0.
+
+Gameplay main được phân biệt với ba commit README về sau. Nhánh `origin/TestTest` được giữ như một hypothesis vì có một tweak cuối chưa merge; nó không tự trở thành gold reference.
+
+### 2.3. Cách kiểm toán PaldarkKit
+
+Elapsed time là khoảng giữa timestamp commit đầu và cuối. Nó bao gồm nghỉ, chờ human, công việc song song và máy tắt; tuyệt đối không gọi là person-hours. Corrective keyword trong subject chỉ là proxy rework. Churn lớn cho biết review surface, không cho biết chất lượng. Một report cũ không được dùng để nâng HEAD mới nếu build hash, engine, map, config, observer và media hash không khớp.
+
+### 2.4. Giới hạn
+
+Static audit không nhìn đầy đủ latent Blueprint order, collision, animation blend, root motion, focus, audio mix hoặc cảm giác camera. Commit chronology cho thấy quá trình, không chứng minh causal optimality. Cordis formalize một calculus có premise rõ; các theorem không tự áp dụng cho arbitrary Unreal code. Human A/B vẫn có sai số và phải được ghi kèm environment.
+
+---
+
+## 3. KYWorld như một corpus thực nghiệm
+
+### 3.1. Snapshot và census
+
+Submodule `02.Palworld/Source` đang trỏ tới `a6eab166bedeb3a48ea1fa6c082e2560e59b8134`. Ba commit sau gameplay chỉ sửa README, nên `dc776d8f` ngày 2025-01-06 là điểm kết thúc gameplay main và packaging repair cuối. Snapshot hiện hành giữ cùng content gameplay nhưng thuận tiện cho provenance.
+
+| Thuộc tính | Giá trị đo được |
+|---|---:|
+| Tracked paths | 10.173 |
+| `.uasset` | 10.039 |
+| `.umap` | 51 |
+| `.cpp` / `.h` / `.cs` | 34 / 36 / 3 |
+| Dòng native C++/header vật lý | khoảng 2.919 |
+| Kích thước asset/content tracked | khoảng 8,78 GB |
+| Runtime module trong `.uproject` | 1 (`Palworld_Base`) |
+| Game Feature Plugin riêng | 0 |
+
+`Content/Blueprint` có 1.433 asset, trong đó cluster Character khoảng 904, Component khoảng 357, Item 64, Build 48 và Craft 28. `Content/VFX`, `Content/PalworldAsset` và `Content/DreamscapeSeries` chiếm phần lớn dung lượng. Đây là lý do conversion phải bắt đầu bằng manifest và reference graph, không bằng một lệnh export toàn thư mục.
+
+### 3.2. “Năm tuần” có ba mốc khác nhau
+
+Specification gốc ghi 2024-12-09 đến 2025-01-03 và đội bốn người; README về sau gọi là dự án năm tuần. Git kể chi tiết hơn:
+
+- bootstrap đầu tiên: 2024-11-28;
+- project `Palworld_Base` sau reset: 2024-12-05;
+- gameplay main và packaging: đến 2025-01-06;
+- 3 commit README: 2025-05-27, 2025-05-28 và 2025-08-03.
+
+Main có **539 commit = 378 non-merge + 161 merge**. Giai đoạn gameplay có 536 commit = 375 non-merge + 161 merge. Git ghi sáu author string và năm email identity, trong khi spec/README nói bốn người; không có `.mailmap`, vì vậy không tự hợp nhất identity ngoài bằng chứng.
+
+| Giai đoạn | Khoảng | Total | Non-merge | Ý nghĩa |
+|---|---:|---:|---:|---|
+| Bootstrap | 11/28–12/08 | 16 | 15 | reset project, native spine, input/GAS/player animation |
+| W1 | 12/09–12/15 | 107 | 82 | player, Pal/AI, item/inventory, bow, build cùng khởi chạy |
+| W2 | 12/16–12/22 | 124 | 88 | interaction, capture/party, handgun, glider, build integration |
+| W3 | 12/23–12/29 | 123 | 82 | production craft, AI/EQS, riding, minimap, frontend |
+| W4/polish | 12/30–01/06 | 166 | 108 | cooking, day/night, UI, audio/VFX, demolition, packaging |
+
+Phân bố daily `total/non-merge` cho thấy integration diễn ra liên tục, không có một “ngày feature” tuyến tính:
+
+```text
+11/28 3/3
+12/02 4/4   12/05 4/4   12/06 4/3   12/07 1/1
+12/09 26/22 12/10 11/8  12/11 17/12 12/12 11/8
+12/13 22/15 12/14 13/11 12/15 7/6
+12/16 25/17 12/17 25/18 12/18 22/13 12/19 14/12
+12/20 24/15 12/21 9/8   12/22 5/5
+12/23 29/21 12/24 23/15 12/25 2/2   12/26 23/15
+12/27 28/17 12/28 14/9  12/29 4/3
+12/30 34/22 12/31 31/20 01/02 27/19 01/03 36/21
+01/04 29/18 01/05 8/7   01/06 1/1
+```
+
+Raw author strings không đồng nhất với số người, nên được báo cáo nguyên trạng:
+
+| Author string | Total | Non-merge | Workstream nổi bật |
+|---|---:|---:|---|
+| `naioooo` | 148 | 104 | C++/GAS, player, Pal AI/capture |
+| `DESKTOP-HAOF24A\user` | 139 | 92 | inventory/UI |
+| `kdh19217` | 131 | 93 | weapon, movement, combat |
+| `KimTaeHyun` | 88 | 59 | build/craft/world |
+| `DESKTOP-O7V0JEH\kumsi` | 23 | 23 | weapon/movement polish |
+| `KGA6` | 7 | 4 | inventory/UI; cùng email với một identity ở trên |
+
+### 3.3. Chronology chức năng đã chuẩn hóa
+
+**Phase 0 — native spine.** `4f970528` tạo project, player, controller, Enhanced Input và startup DataAsset; `043d61cb` hình thành animation hierarchy; `f7560a10` thêm movement abilities; `67bc28ba` materialize module native và content base. Input tags, ability grants và player skeleton có trước feature phụ thuộc.
+
+**Phase 1 — bốn vertical foundation song song.** Player/GAS thêm attack, crouch, roll và swim. Pal/AI thêm native Pal base, AI controller, behavior tree và startup abilities. Inventory đi từ taxonomy item tới manager, DataTable, grid, equipment và PalBox prototype. Combat/build đi từ bow/arrow tới aim/shoot, build component, craft test và world map. Sự song song này giải thích 161 merge commit và cảnh báo chống việc “replay lịch sử theo ngày”.
+
+**Phase 2 — integration.** `PalDataComponent`, Pal inventory, capture overlap/animation, stored Pal, party profile, preview, handgun, glider và build material checks xuất hiện khi foundation đã đủ. Capture không phải một feature độc lập: nó phụ thuộc sphere equip/throw, collision, Pal identity, storage và UI.
+
+**Phase 3 — production loops.** Craft test bị bỏ để chuyển sang production craft; inventory quantity/consume nối với workbench; Pal AI nhận state/EQS/skill; riding/flying, minimap, progress UI, start menu và customization level được hoàn thiện. Một commit 271 file đưa startup data, skill và montage vào từng species là content integration, không phải một atomic behavior.
+
+**Phase 4 — closure và polish.** Cooking, day/night, spawn, level-up, minimap, sound cue, sleep, per-species preview camera, demolition và crafting Niagara được nối trước packaging cleanup. `dc776d8f` xóa 918 asset test/vendor không dùng và sửa package cuối. `origin/TestTest@0fbf2517` thêm riding/world tweak nhưng chưa merge, nên cần A/B riêng trước khi nhận làm chuẩn.
+
+### 3.4. Dependency order rút ra từ history
+
+```mermaid
+flowchart TD
+  Base["Module · config · tags · input · GAS base"] --> Player["Player skeleton · camera · movement · animation"]
+  Base --> Item["Item taxonomy · definitions"]
+  Base --> Pal["Pal native base · species assets · startup data"]
+  Player --> Interaction["Interaction · focus · outline"]
+  Item --> Inventory["Inventory core · slots · quantity"]
+  Interaction --> Inventory
+  Inventory --> Equipment["Equipment"]
+  Equipment --> Combat["Bow · handgun · damage · reload"]
+  Pal --> AI["BT · EQS · skills"]
+  Combat --> Capture["Capture · party · PalBox"]
+  Inventory --> Capture
+  Inventory --> Production["Craft · build · cook · work"]
+  AI --> Production
+  Player --> Flow["GameInstance · customization · level flow"]
+  Production --> Polish["HUD · minimap · audio/VFX · packaging"]
+  Capture --> Polish
+  Flow --> Polish
+```
+
+History được dùng như **regression atlas và dependency evidence**, không như một danh sách 539 task mới. Merge, revert/reapply và binary import làm mapping `một commit cũ = một feature` sai ngay từ tiền đề. Lịch sử mới sẽ atomic hơn: một behavior claim, một native seam hoặc một asset switch cho mỗi commit reviewable.
+
+---
+
+## 4. Retrospective PaldarkKit
+
+### 4.1. Những gì đo được
+
+| Phạm vi | Commit | Wall-clock envelope |
+|---|---|---:|
+| Code-only | `ce1119df → 40245693` | 12d 22h 33m 22s |
+| Code + packet/doc cuối | `ce1119df → a8d63560` | 12d 22h 34m 24s |
+| Docs + code toàn kỳ | `778b45bf → a8d63560` | 12d 22h 59m 43s |
+| PR #135–157 | `099fc590 → 5e70218d` | 15h 03m 03s |
+| PR #158–178 | `8735afdd → 09e9b5e7` | 3h 27m 36s |
+| ADR-001 capture→work | `61c3aaac → 50acd945` | 25h 52m 09s |
+| Regression tooling | `1ce2448f → a884500a` | 2h 06m 53s |
+| Wave 2 A–E | `1b56af49 → 1aa92a2b` | 34h 05m 42s |
+| Wave 2B | `0e1f0837 → a912b519` | 25h 05m 38s |
+| Wave 2C | `f5a96264 → 408a97aa` | 1h 41m 01s |
+| Wave 2D | `5c57853c → 796597b3` | 25m 28s |
+| Wave 2E | `7e8724ed → 1aa92a2b` | 3h 40m 39s |
+| Task 52 | `1075ec53 → 672eb66f` | 4d 03h 55m 28s |
+| Task 54/55 | `73404963 → a8d63560` | 2d 01h 01m 03s |
+
+Đây là khoảng lịch, không phải thời gian lao động. Wave 2A không có timestamp gate độc lập nên duration của nó là `UNKNOWN`, không phải 0.
+
+Trong 160 commit chạm `PaldarkKit`, có 18 merge và 142 non-merge. 25/142 commit non-merge có churn ít nhất 1.000 dòng; 26/142 chạm ít nhất 20 file; top 10 chiếm 34,6% gross text churn. Có 37 subject khớp corrective keyword rộng và 17 subject bắt đầu bằng `Fix`. Những số này không kết luận “waste”; chúng chỉ cho thấy review surface và correction cluster lớn.
+
+### 4.2. Giá trị cần giữ
+
+- 21 feature manifest tạo language về owner, interface, event và owned state.
+- Stable identity, authority validation và versioned payload là nền đúng.
+- Reservation/escrow và idempotency phân biệt validate với commit.
+- `SubmitIntent` là seam thực, có nhiều caller, thay vì UI tự sửa domain state.
+- Evidence ladder mới phân biệt `SOURCE_PRESENT`, `COMPILED` và `USER_VERIFIED`.
+- 12 validator M0 có pass/poison phase, 8 UE Automation Test NullRHI và 17 historical bug record đã tạo một nền regression hữu ích.
+
+### 4.3. Nợ kiến trúc và test
+
+Tất cả 21 plugin hiện `Active/Enabled`, nên chúng chứng minh packaging boundary tĩnh chứ chưa chứng minh activation/deactivation giữa session. Sáu manifest không có composition action/component. `ResolveDefinitions` và `ValidateDefinitions` luôn false; `FreezeRegistry` là no-op. Event bus broadcast đồng bộ, không phải durable log, replay hoặc queue.
+
+Modular giữa plugin nhưng chưa modular bên trong plugin: Work khoảng 4.088 dòng, Inventory 2.943, PalBehavior 2.457 và HUD 2.164. Work trộn assignment, transport, production, persistence, replication, QA và presentation. Đây là microkernel ở tên gọi nhưng god component ở implementation.
+
+CI hiện chạy Python M0, chưa chạy UE compile/Automation. NullRHI không tạo pixel evidence. UE report 8/8 pass vẫn có 11–14 warning và `comparisonExported=false`; report mới nhất cũ hơn HEAD nhiều commit. World, Dungeon, Persistence, Multiplayer và Breeding/Economy là QA-only; không thể tính chúng như normal-play completion.
+
+### 4.4. Hai case study của rework
+
+Task 52 dùng Unreal `AActor::Owner` như faction/principal, khiến friendly-target, sight flee và reciprocal combat sai. Sau capture, E-summon thiếu strict Player principal identity, nên Work/Unarmed/Bow downstream không thể đánh giá. Human gate A–D kéo gần 100 giờ và vẫn sinh follow-up về Player HP và Work/carry.
+
+Task 54/55 có ba lỗi quan sát được: V không chọn đúng target, Work lunge/root-motion snap và carry upside-down. Snapshot chỉ chứng minh source/compile/review; `PLAYER_OBSERVABLE`, `USER_VERIFIED` và version-locked runtime vẫn pending. Initial Task 54 thêm riêng 1.175 dòng trong `WorkFeatureComponent.cpp`, rồi cần Unity collision fix một giờ sau.
+
+### 4.5. Bài học chuyển sang KYWorld
+
+1. Metric chính là behavior row đi qua `PLAYER_OBSERVABLE → USER_VERIFIED → PARITY_EVIDENCED`, không phải LOC, plugin count hoặc countdown.
+2. Một human gate chỉ kiểm tra một seam trong 3–5 phút; không gom capture, summon, combat, carry và production vào một card.
+3. Một task production nên có ngưỡng reviewability ban đầu: tối đa khoảng 10 production file và 800 dòng handwritten net. Generated output và asset binary tách commit. Đây là guardrail, không phải luật vật lý.
+4. Cùng một runtime failure lặp hai lần hoặc hypothesis thứ hai thất bại thì Luna dừng và quay lại Sol.
+5. Mỗi visual bug sinh một invariant tự động thấp nhất có thể: exact target, transform delta, upright orientation, montage state, screenshot diff hoặc trace ngắn.
+6. Candidate đang chờ human không tiếp tục thay đổi; giữ frozen commit và evidence hash.
+7. Countdown bị loại khỏi KPI. Theo dõi first-pass gate rate, implementation-to-gate latency, rework-after-handoff, escaped bugs, warning debt và evidence freshness.
+
+---
+
+## 5. Nền lý thuyết: composability có điều kiện
+
+### 5.1. Temporal và spatial composability
+
+Cordis mô hình hóa một component hoạt động trong context. Một installation effect có thể viết khái niệm:
+
+```text
+e: Γ → (Γ′, e⁻¹)
+```
+
+Effect thay context `Γ` thành `Γ'` và trả một inverse witness. Nhiều effect trong cùng component được thu hồi LIFO. Temporal composability không yêu cầu allocator hoặc object address trở lại giống hệt; nó yêu cầu context sau tháo **tương đương quan sát** với context trước cài trong domain đã tuyên bố.
+
+Spatial composability thêm `requires/provides`. Consumer chỉ active khi provider phù hợp tồn tại. Khi provider biến mất, runtime phải làm provider unavailable, quiesce dependent, thu dependent theo reverse dependency order, rồi mới thu provider. Provider identity/generation quan trọng: một provider mới có cùng value không phải instance cũ.
+
+Paper formalize Cordis và dùng Koishi làm case study. DeepSeek Harness chính thức hiện nói rõ nó được Cordis hỗ trợ và dùng “Everything is a Plugin”, nhưng repository vẫn ở developer preview. Các kết quả recovery/confluence của paper không tự chứng minh mọi Harness plugin thỏa premise; self-evolving harness được paper nêu như hướng validation tương lai.
+
+### 5.2. Hai miền không được trộn
+
+**Installation effect** tồn tại để cài một capability:
+
+- delegate hoặc message subscription;
+- Enhanced Input mapping context;
+- Game Framework component request;
+- GAS ability/effect/attribute grant handle;
+- timer, async cancellation token;
+- UI extension, asset lease, spawn lease.
+
+Các effect này phải trả typed receipt, chạy LIFO trong feature và reverse-topology giữa feature.
+
+**Committed gameplay transaction** thay canonical domain state:
+
+- damage đã settle;
+- item đã chuyển quantity;
+- Pal đã capture;
+- building đã đặt;
+- craft output đã tạo;
+- save/RPC đã vượt system boundary.
+
+Nó có dạng:
+
+```text
+T(S, C) → (S′, Result, Events)
+```
+
+với validation, authority, idempotency, reservation/escrow, commit barrier và khi cần compensation. `ClearAbility`, unbind delegate hoặc deactivate plugin không được gọi là rollback của `T`.
+
+### 5.3. Năm khái niệm của một feature capsule
+
+| Khái niệm | Câu hỏi |
+|---|---|
+| Package | Code/content được build, cook và phân phối ở đâu? |
+| Feature instance | Instance nào đang active trong world/player/session nào? |
+| Capability | Hợp đồng typed nào được cung cấp cho consumer? |
+| Effect receipt | Registration hoặc lease nào phải được thu hồi? |
+| Domain transaction | Gameplay state nào đã commit và ai sở hữu nó? |
+
+Nếu đồng nhất năm thứ này thành “plugin”, architecture sẽ hoặc tạo hàng trăm module, hoặc giả vờ rằng unload package có thể hoàn tác gameplay. Định nghĩa hữu ích hơn là:
+
+> Mọi capability có vòng đời thay thế độc lập phía trên một composition kernel ổn định là một feature capsule; không phải mọi class, actor hay helper đều là plugin.
+
+### 5.4. Các mệnh đề có điều kiện
+
+**Mệnh đề 1 — cleanup cục bộ.** Nếu mọi installation mutation đi qua mediated context và trả receipt đúng, LIFO cleanup khôi phục miền registration của một feature. Nó không đúng nếu code gọi global singleton, filesystem, network hoặc subsystem ngoài context mà không ghi receipt.
+
+**Mệnh đề 2 — cleanup liên feature.** Nếu dependency graph acyclic, provider bị revoke trước teardown và dependent được thu reverse-topology, consumer không quan sát provider đã bị hủy trong quiescent state. Nó không bảo đảm arbitrary async callback, replication packet hoặc latent Blueprint đã được cancel nếu chúng không tham gia lifecycle.
+
+**Mệnh đề 3 — migration isolation.** Nếu engine, asset path, baseline scenario và presentation được giữ cố định, rồi chỉ một authoritative path được switch, sai khác A/B có tập nguyên nhân nhỏ hơn so với rebuild ở project mới. Đây là lập luận kiểm soát biến, không phải định lý về chất lượng code.
+
+**Mệnh đề 4 — single-writer convergence.** Nếu mỗi canonical state có đúng một domain owner và integration chỉ gửi command/đọc event, parallel work giảm semantic conflict. Git conflict vẫn có thể xảy ra ở asset binary hoặc contract chung.
+
+---
+
+## 6. Đối chiếu với Unreal, Lyra và UEFN
+
+| Cơ chế | Điều học được | Điều không được suy ra |
+|---|---|---|
+| UE Module | compile/link/package boundary, startup/shutdown | reactive provider graph hoặc exact unload |
+| Game Feature Plugin | feature bundle, activation action, content boundary | action tự có inverse đúng hoặc native DLL được unload |
+| Modular Gameplay | actor extension callback và request handle | typed capability registry tổng quát |
+| GAS | ability/effect/tag, prediction, grant handle | rollback damage, inventory, capture hoặc save |
+| Lyra Experience | desired session composition, PawnData, action set | Experience thay GameMode hoặc hot-switch hoàn chỉnh |
+| Subsystem | typed service với Engine/World/GameInstance/Player lifetime | dependency hiển thị, provider replacement hoặc receipt ledger |
+| Gameplay Message | publisher/listener tách nhau | durable state, authority, ordering hoặc transaction |
+| Mass | fragment/tag composition, processor query | undo arbitrary side effect hoặc gameplay plugin lifecycle |
+| UEFN Device/Verse | placeable capability, `@editable` wiring, event subscription | universal inverse cho engine/world mutation |
+
+Lyra cung cấp hai analogue tốt. `FLyraAbilitySet_GrantedHandles` giữ handles để thu abilities/effects/attribute sets (`LyraAbilitySet.h:85`, `LyraAbilitySet.cpp:32`). `GameFeatureAction_AddAbilities` giữ component-request và grant handles rồi reset rõ ràng (`GameFeatureAction_AddAbilities.cpp:22`). Nhưng source snapshot cũng ghi teardown action “should be handled FILO”, partial-loaded teardown còn TODO, async action deactivation chưa được hỗ trợ đầy đủ và feature cuối cùng chỉ deactivated chứ chưa fully unloaded (`LyraExperienceManagerComponent.cpp:385–465`). `SetCurrentExperience` yêu cầu chưa có experience hiện tại ở dòng 56. Vì vậy Lyra là mẫu composition manifest và localized receipt, không phải implementation của Cordis temporal exactness.
+
+UEFN gợi một bề mặt designer tốt: đặt một device, nối reference `@editable`, subscribe event và cancel subscription. KYWorld có thể học bề mặt ấy bằng Actor/Actor Component + DataAsset + typed command/event. Tuy nhiên spatial placement không được biến Actor thành database. Domain owner vẫn giữ canonical state; device chỉ cấu hình, gửi command và trình bày result.
+
+### 6.1. Quy tắc tiếp thu
+
+- Dùng UE Module cho boundary compile ổn định, số lượng ít.
+- Dùng Game Feature Plugin cho bundle có lifecycle/session composition thật, không cho từng class.
+- Dùng Actor Component cho capability gắn lên actor; chỉ dùng Actor khi cần transform, presence, replication hoặc editor placement.
+- Dùng GAS cho action/effect/tag có semantics phù hợp, không bắt mọi transaction đi qua ability.
+- Dùng DataAsset/PrimaryAsset cho definition và authored config.
+- Dùng Blueprint cho data và presentation; C++ giữ C/D gameplay ownership.
+- Dùng integration component/capsule để phá cycle, không cho hai feature import lẫn nhau.
+- Bắt đầu bằng dependency manifest tĩnh và startup validation. Chỉ xây runtime provider registry khi có use case thay provider thật.
+
+---
+
+## 7. Kiến trúc mục tiêu
+
+### 7.1. Topology
+
+```mermaid
+flowchart TB
+  UE["Unreal Engine 5.4 host"] --> Kernel["KY Core · Contracts · Composition"]
+  Kernel --> Profile["Experience-like composition profile"]
+  Profile --> Player["Player capsule"]
+  Profile --> Items["Interaction · Items · Inventory · Equipment"]
+  Profile --> Combat["Combat capsule"]
+  Profile --> Creatures["Pal runtime · AI · Capture · Party"]
+  Profile --> Production["Build · Craft · Cook · Work"]
+  Profile --> World["World · spawn · day/night · flow"]
+  Player --> Integrations["Typed integration seams"]
+  Items --> Integrations
+  Combat --> Integrations
+  Creatures --> Integrations
+  Production --> Integrations
+  World --> Integrations
+  Integrations --> Presentation["Existing UMG · AnimBP · audio/VFX via presenters"]
+```
+
+Kernel nhỏ chứa ID, result/failure, gameplay tags, logging, descriptor, lifecycle receipt và dependency validation. Nó không chứa inventory, combat, capture hoặc work. Một composition profile cho Frontend, Customization và MainWorld chọn desired feature set; nó bổ sung cho GameMode, không thay GameMode.
+
+Feature capsule là đơn vị ownership và lifecycle logic. Package vật lý có thể gộp nhiều capability gần nhau để tránh microplugin explosion. Presentation nằm gần feature owner thông qua presenter/view model; không tạo một “UI god module” có quyền ghi mọi state.
+
+### 7.2. Descriptor đề xuất
+
+```text
+Feature = <Id, Version, Scope, AuthorityRole,
+           Requires, Provides, ActivationActions>
+
+CapabilityId = <NamespacedInterfaceOrGuid, SemanticVersion,
+                Scope, Cardinality, AuthorityRole>
+
+Scope = GameInstance → World → Experience → Player → Actor
+        × Server / OwningClient / Client
+```
+
+Lifecycle:
+
+```text
+Discovered → Loading → Activating → Active
+                              ↓
+Inactive ← Deactivating ← Quiescing
+                ↘ Failed / RolledBack
+```
+
+Quy tắc:
+
+1. activation đang bay mang generation và cancellation fence;
+2. kết quả async đến muộn không được resurrect feature đã quiescing;
+3. provider được đánh dấu unavailable trước khi dependent teardown;
+4. consumer ghi provider identity/generation để tránh ABA;
+5. receipt chạy LIFO nội bộ, reverse dependency order liên feature;
+6. native code có thể vẫn loaded; acceptance là cleanup registration/state view, không phải magical DLL unload;
+7. hai writer lên cùng state cần single owner, precedence edge, broker/aggregator hoặc merge algebra được định nghĩa.
+
+Tên C++ như `FModularFeatureDescriptor`, `FModularCapabilityId`, `IModularFeature`, `FModularFeatureReceipt`, `UModularFeatureCoordinatorSubsystem` mới là API candidate. W1 phải chứng minh use case và lifecycle test trước khi freeze. Không tạo service locator chỉ vì paper có context.
+
+### 7.3. Boundary vật lý đề xuất
+
+| Boundary | Trách nhiệm | Không được sở hữu |
+|---|---|---|
+| `KYCoreRuntime` | IDs, results, tags, log, scope, lifecycle primitives | gameplay domain state |
+| `KYCompositionRuntime` | descriptor, profile reconcile, dependency validation, receipt stack | inventory/damage/capture |
+| `KYGameplayRuntime` | shared Character/GAS/Input primitives và neutral interfaces | feature orchestration toàn cục |
+| `KYMigrationEditor` | Blueprint manifest/export audit/reference reports | runtime dependency |
+| `GF_Frontend` | Start/Customization/Main flow, appearance handoff | player inventory/combat |
+| `GF_Player` | pawn, movement, camera, animation handshake | item quantity hoặc capture |
+| `GF_Items` | interaction, item definitions, inventory, equipment | combat damage hoặc Pal state |
+| `GF_Combat` | weapon action, damage/death, hit feedback | item ledger hoặc creature storage |
+| `GF_Creatures` | Pal base, AI integration, capture/party/PalBox/riding | crafting inventory settlement |
+| `GF_Production` | craft/build/cook/work transactions | player input shell hoặc world clock |
+| `GF_World` | resource/spawn/day-night/minimap/world flow | UI canonical state |
+
+Tên và mức gộp là proposal, không phải lệnh tạo 11 plugin ngay lập tức. Sau W0, dependency graph có thể chứng minh một boundary nên gộp hoặc tách. Mục tiêu là cohesion và parallel write-set, không tối đa số module.
+
+### 7.4. Device façade cho designer
+
+Một device có bốn phần:
+
+```text
+Device = Placement/Lifetime + Editable Definition
+       + Typed Inputs/Commands + Typed Outputs/Events
+```
+
+`UActorComponent` là mặc định khi capability sống cùng actor. `AActor` chỉ dùng khi cần transform, collision, replication hoặc tồn tại độc lập trong level. DataAsset giữ config. Device không tick nếu có thể event-driven; không dùng tag string làm substitute cho typed payload; không tự mutate inventory, damage hoặc capture chỉ vì nhận event.
+
+Ví dụ Workstation Device phát `Craft.Request` chứa station ID, recipe ID, principal và idempotency key. Production owner validate và commit; device nhận `Craft.Accepted/Rejected/Progress` để chạy widget/VFX. Designer lắp ráp được mà không cần biết implementation, nhưng quyền ghi vẫn chứng minh được.
+
+### 7.5. Owner và transaction
+
+| State | Owner duy nhất | Consumer điển hình |
+|---|---|---|
+| Item quantity/slot/container | Inventory | UI, Craft, Build, Equipment |
+| Equipped loadout và active equipment instance | Equipment; possession/quantity vẫn thuộc Inventory | Combat, Anim, HUD |
+| Current HP, health status và death state | Health | Combat, UI, AI, VFX |
+| Attack/hit/damage resolution | Combat; HP mutation chỉ commit qua Health contract | Health, animation, audio/VFX |
+| Pal record/profile/party/PalBox storage | CreatureRoster; Capture chỉ yêu cầu transaction qua contract | Party UI, summon, Work |
+| Capture attempt và resolution | Capture; roster membership chỉ được commit qua CreatureRoster | Inventory sphere, Combat, presentation |
+| Craft/build reservation/output | Production | Inventory, UI, world actor |
+| Assignment/progress/output | Work trong Production | PalBehavior/movement, UI |
+| View state | Presenter/view model | UMG/Anim/audio/VFX |
+
+UI, device và adapter không bao giờ là canonical writer. Event chỉ báo kết quả đã commit; command là yêu cầu chưa tin cậy. External emission qua save/RPC cần idempotency/outbox/compensation, không đưa vào receipt ledger.
+
+---
+
+## 8. Phương pháp chuyển Blueprint sang C++
+
+### 8.1. Branch-by-abstraction
+
+Mỗi migration unit đi qua chuỗi:
+
+```text
+Characterize reference
+→ Add native seam dormant
+→ Shadow-observe read-only nếu phù hợp
+→ Switch một authoritative path
+→ A/B verify
+→ Retire C/D graph cũ
+```
+
+Reference worktree giữ nguyên `a6eab166`/gold decision; candidate worktree ở branch riêng. Không đổi tên, move hoặc gom `/Game/...` path trong parity phase. Blueprint gốc được reparent hoặc gọi native seam có kiểm soát, giữ serialization-visible property, default, component hierarchy, soft/hard reference và presentation asset.
+
+Không giữ `_OLD`, `_BACKUP` trôi nổi trong Content; Git, tag và worktree là backup. Old/new path có thể cùng tồn tại nhưng chỉ một path được phép commit mutation. Shadow path chỉ đo và log.
+
+### 8.2. Phân loại A/B/C/D ở cấp graph
+
+| Loại | Dấu hiệu | Disposition |
+|---|---|---|
+| A — Data-only | defaults, tables, config, asset references | giữ asset; có thể reparent native type |
+| B — Presentation-only | UMG layout/animation, AnimBP, montage, material, audio/VFX | giữ asset; nhận state từ presenter/native owner |
+| C — Gameplay logic | validation, calculation, authoritative mutation, damage/inventory/capture/build rule | chuyển ownership sang C++ |
+| D — Integration/orchestration | level flow, global cast/find, spawn/wiring, bootstrapping | chuyển sang host/subsystem/component/profile |
+| Hybrid | cùng asset có A/B và C/D | tách graph; giữ A/B, migrate C/D |
+
+Phân loại theo từng function/graph, không gắn nhãn cả asset cho tiện. Widget tự add item có phần C dù layout là B. AnimBP quyết định damage có phần C dù animation graph là B. Behavior Tree/EQS có thể vẫn là authored asset; native task/service và domain owner giữ mutation.
+
+### 8.3. Dùng Blueprint → C++ exporter
+
+Exporter là công cụ khai quật và scaffold, không phải source of truth:
+
+1. chỉ chọn graph C/D đã `READY`, không export cả folder;
+2. pin tool version, config hash, input package hash và output hash;
+3. output vào staging, không overwrite production source;
+4. ghi unsupported nodes và warnings;
+5. audit event/evaluation order, Timeline/Delay/Gate/DoOnce, Construction Script, dispatcher bind/unbind, metadata/defaults, references, UMG focus, Enhanced Input, GAS handles, notify/montage, tick và replication;
+6. normalize theo capability contract, không dịch coupling sai 1:1;
+7. thêm native path dormant;
+8. reparent/switch có kiểm soát;
+9. chạy gate rồi mới xóa C/D graph;
+10. ledger ghi `adopted`, `rewritten` hoặc `rejected`.
+
+Compile của generated code chỉ chứng minh cú pháp/type có thể build. Nó không chứng minh latent order, asset reference, gameplay ownership hoặc parity.
+
+### 8.4. Trạng thái của một unit
+
+```text
+DISCOVERED → CLASSIFIED → CHARACTERIZED → READY
+→ GENERATED_STAGING? → NATIVE_DORMANT → NATIVE_SHADOW?
+→ BP_CHILD_ACTIVE → PARITY_PENDING → VERIFIED → C/D_RETIRED
+
+A/B có thể kết thúc ở RETAINED.
+Mọi trạng thái có thể chuyển BLOCKED kèm Question ID.
+```
+
+---
+
+## 9. Reconstruction backlog
+
+### 9.1. Dependency order
+
+```text
+BASE / FLOW
+├─ PLAYER / INPUT / CAMERA / ANIMATION HANDSHAKE
+│  └─ INTERACTION
+├─ ITEM DEFINITIONS
+│  └─ INVENTORY CORE
+│     ├─ PICKUP / CONTAINER / INVENTORY UI
+│     ├─ EQUIPMENT → COMBAT
+│     │               └─ PAL RUNTIME / AI → CAPTURE / PARTY / PALBOX
+│     └─ CRAFT / BUILD / WORK
+└─ PRESENTATION CONTRACTS
+
+ALL PARITY CAPABILITIES
+└─ CROSS-SYSTEM POLISH → UE 5.4 PARITY FREEZE
+   └─ PALDARKKIT ADAPTERS
+      └─ ENGINE UPGRADE, nếu có decision riêng
+```
+
+Presentation được A/B trong mọi wave; sơ đồ chỉ nói dependency của canonical state.
+
+### 9.2. Các wave
+
+| Wave | Phạm vi | Exit evidence |
+|---|---|---|
+| W0 — Freeze & characterize | gold decision, reference/candidate worktree, UE 5.4 matrix, maps/config, Asset Registry, Blueprint manifest, regression atlas | reference flows tái hiện; mỗi capability có owner, scenario, unknown và A/B/C/D manifest |
+| W1 — Minimal native seams | contracts, tags, identity, logs, static dependency manifest, activation receipt ledger | không đổi gameplay; nhiều vòng activate/deactivate không duplicate/leak; không cycle |
+| W2 — Session/player | Start → Customization → Main, appearance, pawn/input/movement/camera, AnimBP handshake | flow và movement/camera/animation A/B pass; asset path giữ nguyên |
+| W3 — Interaction/items | interact/cancel/look/focus/outline, item identity/definition | target và failure giống baseline; item defaults/reference chính xác |
+| W4 — Inventory core | add/find/remove/drop, stack, transfer/swap, slot validation, 42 inventory/4 weapon/5 food | exact state parity; invalid/retry không mutate hoặc duplicate |
+| W5 — Inventory UI/equipment | grid/slot, drag/drop, detail, toast 2 giây, HUD count, equip | UMG/layout/animation giữ; UI không làm owner; human A/B pass |
+| W6 — Combat | GAS/action, bow/handgun, damage/death, montage/notifies, feedback | timing/state/presentation parity; handles cleanup; committed damage tách lifecycle |
+| W7 — Pal runtime | native Pal base, BT/EQS integration, AI, capture, party, PalBox, riding/flying | identity/storage/selection parity; capture success/failure; authored AI assets còn dùng |
+| W8 — Production | craft, build, cook, container, work | transaction atomic; invalid/cancel không mất item; placement/UI/VFX A/B pass |
+| W9 — Cross-system polish | frontend/death UI, minimap, audio/VFX/material, transitions, edge cases | full scripted regression, không reference loss/log error mới, human polish sign-off |
+| W10 — UE 5.4 parity freeze | packaged smoke, performance/reference audit, rollback drill, deviation closure | C/D in-scope native hoặc exception; A/B manifest; candidate tag `KYWorld-CPP-Parity-UE5.4` |
+| W11 — Paldark convergence | capability-by-capability Adopt/Adapt/Keep/Replace/Reject | adapter parity suite; không rewrite hàng loạt |
+| W12 — Engine migration | nâng engine chỉ nếu cần | full parity suite chạy lại; không trộn gameplay/architecture changes |
+
+Wave không phải tuần. Lịch sử gốc giúp đặt dependency, nhưng tốc độ mới phụ thuộc số Blueprint graph, quality exporter, baseline reproducibility và human capacity chưa đo được. Bất kỳ lịch 5 tuần nào ở thời điểm này đều là estimation không có denominator.
+
+### 9.3. First playable proof
+
+Pilot nên là một chuỗi nhỏ nhưng end-to-end:
+
+1. boot → customization → main giữ appearance;
+2. player movement/camera bằng input bình thường;
+3. focus một resource, outline và cancel đúng;
+4. pickup đúng một item vào slot;
+5. HUD phản ánh quantity;
+6. invalid target và retry không đổi/nhân đôi state.
+
+Chuỗi này không làm trong một task. Nó được chia thành behavior rows và gate riêng; chỉ cuối wave mới chạy full slice. Nếu phương pháp không giữ được first slice với same assets, không mở Combat hoặc Pal.
+
+### 9.4. Regression scenarios tối thiểu
+
+- Start/Customization/Main và appearance handoff.
+- Focus/interact/cancel item/object.
+- Pickup mới, merge/full stack, inventory full, remove/drop.
+- Transfer/swap, drag đúng/sai type, 42/4/5 slot.
+- Detail, outline, pickup toast, HUD weapon/ammo/count.
+- Equip/switch bow/handgun, aim/fire/reload, damage/death/restart.
+- Pal detect/AI/combat/capture success/failure.
+- Party carousel/profile/PalBox/summon/recall/riding/flying.
+- Recipe valid/invalid, workbench/cooking, chest transfer.
+- Build preview valid/invalid/cancel/demolish, consume đúng một lần.
+- Full loop với camera, animation, audio/VFX và minimap.
+
+---
+
+## 10. Parity và bảo toàn polish
+
+### 10.1. Năm hợp đồng parity
+
+| Dimension | Điều phải chứng minh |
+|---|---|
+| State | quantity, stack, slot, HP, equipped item, Pal state/profile, recipe/build result |
+| Temporal | event/notify/delegate order và timing trong tolerance đo được |
+| Presentation | cùng UMG layout/animation, montage, material, sound/VFX, camera feedback |
+| Reference | không mất hard/soft reference, object path, class default, editor-exposed value |
+| Runtime | không crash/ensure/Accessed None, double delegate/input/mutation, leak/tick mới; performance trong tolerance |
+
+Giá trị rời rạc và canonical state có tolerance mặc định bằng 0. Movement, animation timing, frame time và load time chỉ có tolerance sau khi đo reference trên cùng map, config, fps cap và hardware. Không đặt “±5%” chung để hợp thức hóa sai khác chưa đo.
+
+### 10.2. Evidence pack
+
+Mỗi gate human hoặc parity lưu:
+
+- reference và candidate commit/build hash;
+- engine, target, map, config, input device, fps cap, hardware;
+- behavior row và Given/When/Then;
+- exact state assertions và timing sample;
+- logs/warnings;
+- observer và timestamp;
+- screenshot/video/report SHA-256 ở private evidence store;
+- deviation ID nếu khác có chủ ý;
+- kết quả `PASS`, `FAIL`, `BLOCKED` hoặc `APPROVED_DEVIATION`.
+
+Site công khai không chứa proprietary media. Hash cho phép chứng minh artifact nào đã được review mà không phân phối nội dung.
+
+### 10.3. Human gate ngắn
+
+Human gate 3–5 phút kiểm tra đúng một seam bằng normal input. Fixture/save seed được phép tạo precondition nhưng không được seed outcome cần chứng minh. Ví dụ gate inventory stack có thể mở map với hai item sẵn; nó không được set trực tiếp quantity cuối rồi tuyên bố pickup pass.
+
+Human tập trung vào thứ máy khó kết luận: target đúng, camera feel, transition, root motion, orientation, focus, layout, âm thanh, VFX và reject clarity. Mỗi lỗi quan sát sinh automated invariant nếu có thể. Candidate commit bị freeze trong lúc chờ observer; evidence của commit A không được tái dùng cho commit B.
+
+### 10.4. Gate map
+
+| Gate | Khi chạy | Điều kiện |
+|---|---|---|
+| G0 Baseline | trước unit/wave | reference scenario tái hiện; nếu fail thì không migrate |
+| G1 Static/build | mỗi commit | module/include, asset reference, Blueprint compile, no cycle |
+| G2 Focused automation | mỗi unit | exact state, reject, retry, idempotency |
+| G3 Lifecycle | feature seam | lặp activate/deactivate hoặc spawn/destroy; không receipt leak |
+| G4 Editor/PIE | mỗi unit | reopen asset/map, nhiều PIE cycle, không Live Coding-only evidence |
+| G5 Human A/B | feel/polish seam | cùng script trên reference/candidate |
+| G6 Wave regression | cuối wave | unit mới và toàn upstream scenario pass |
+| G7 Package/perf | W9–W10 | Win64 smoke, load map/assets, full loop, baseline compare |
+| G8 Fresh Sol review | trước merge | scope, architecture, evidence, rollback; reviewer không sửa code |
+
+CI theo chi phí: PR chạy M0/schema, targeted UE test, non-unity và forced-unity Windows compile; nightly chạy functional map/screenshot; milestone chạy package và human normal-input gate. Warning mới fail hoặc cần allowlist versioned. Full suite không chạy sau từng edit nhỏ nếu focused suite đủ, nhưng không được bỏ ở checkpoint wave.
+
+---
+
+## 11. Harness cộng tác trong ChatGPT/Codex App
+
+### 11.1. Separation of powers
+
+| Vai trò | Trách nhiệm | Bị cấm |
+|---|---|---|
+| Human | duyệt scope, visual truth, asset policy, merge/publish decision | dùng một chữ “works” không build/version |
+| Sol planner/architect | nghiên cứu, dependency/owner, packet, decision, stop condition | lén biến kế hoạch thành implementation |
+| Luna implementer | sửa đúng write-set, chạy focused checks, ghi evidence/question | tự đổi architecture, mở scope hoặc đoán contract |
+| Fresh Sol reviewer | đọc packet + diff + evidence trong context mới; PASS/FAIL/findings | vừa review vừa sửa |
+
+Đây là policy của project, không phải claim rằng model name tự đảm bảo hành vi. Prompt, write-set, gate và artifact mới thực thi separation of powers.
+
+### 11.2. Workflow
 
 ```mermaid
 flowchart LR
-  Input["Input bình thường"] --> Intent["Intent chưa tin cậy"]
-  Intent --> Authority["Kiểm tra authority"]
-  Authority --> Owner["Domain owner"]
-  Owner --> Decision{"Commit hay reject?"}
-  Decision --> Event["Event / snapshot sau commit"]
-  Decision --> Reject["Reject reason"]
-  Event --> Presentation["HUD / animation / audio"]
+  H["Human chọn outcome"] --> SP["Sol lập packet"]
+  SP --> Ready{"Definition of Ready?"}
+  Ready -- No --> SP
+  Ready -- Yes --> L["Luna triển khai"]
+  L --> Block{"Mơ hồ / blocker / scope change?"}
+  Block -- Yes --> Q["BLOCKED + Question ID"]
+  Q --> SP
+  SP --> L
+  Block -- No --> Checks["Focused checks + evidence"]
+  Checks --> SR["Fresh Sol review"]
+  SR -- Findings --> L
+  SR -- Pass --> HG["Human A/B nếu cần"]
+  HG -- Fail --> SP
+  HG -- Pass --> Merge["Merge · update STATUS · next packet"]
 ```
 
-Khi `Inventory` commit xong, nó phát event hoặc snapshot; HUD chỉ đọc. Khi `Interaction` reject vì range, UI có thể hiển thị lý do nhưng không tự sửa quantity. Khi provider đổi generation, consumer phải rebind hoặc deactivate; một pointer cũ không được xem là continuity. Ranh giới này làm cho lỗi có chỗ đứng: nếu quantity sai, tìm ở owner/transaction; nếu UI sai mà state đúng, tìm ở presentation; nếu activation để lại listener, tìm ở ledger/quiescence.
+Tối đa 3–4 stream song song và chỉ khi write-set/asset/contract trực giao. Shared foundation có một owner. Hai task không cùng sửa một `.uasset`; inventory core và UI không chạy song song nếu chúng cùng chạm Widget Blueprint binary.
 
-### 7. Học từ “Everything is a Plugin” trong một ranh giới có ích
+### 11.3. Artifact để sống qua restart
 
-DeepSeek Harness và bài Cordis gợi ra hai cách đặt câu hỏi. Một capability nên có contract, provider/consumer, lifecycle và cách thay thế; một effect chỉ nên được coi là reversible khi inverse thực sự có nghĩa. Các ý tưởng này giúp chúng ta thấy dependency ẩn, nhưng không biến thành bảo đảm sẵn có của Unreal và cũng không cho phép suy ra private chain of thought.
+Private execution area đề xuất `Documents/KYWorld-Reconstruction/`:
 
-“Everything is a Plugin” nên được đọc như heuristic về boundary, không phải khẩu hiệu tạo plugin cho từng helper. Plugin quá nhỏ làm dependency graph, load order và version burden phình ra; plugin quá lớn trở thành god feature. Granularity hợp lý là domain có owner và một seam có thể quan sát: Interaction, Inventory/Crafting, Combat, Creature, Build, Work.
+| Artifact | Nội dung |
+|---|---|
+| `baseline.yaml` | reference/gold commit, engine/plugins/config, maps, args, fps cap, hardware, seed/save, build hash |
+| `blueprints.csv` | object path/hash, parent, interface/component, A/B/C/D per graph, tick/latent/dispatcher/dependency/owner |
+| `capabilities/*.yaml` | contract, owner, requires/provides, scenario, tolerance, non-goals |
+| `migrations/*.yaml` | allowlist, old graph, generated candidate, native target, switch và rollback |
+| `parity-results/*.yaml` | builds, automated/editor/human result, measurements, reviewer, deviations |
+| `decisions.md` | ADR nhỏ: vấn đề, lựa chọn, lý do, hệ quả |
+| `questions.md` | Question ID, evidence, lý do dừng, quyết định Sol/human |
+| `deviations.yaml` | sai khác có chủ ý, impact, approver và xử lý |
+| `STATUS.md` | baseline, candidate, last-known-good, wave/unit, blocker, exact next action |
 
-Lyra Experiences và Game Features minh họa cách chọn ruleset/feature set; Modular Gameplay cho thấy request/extension handle; GAS mạnh ở ability, effect, tag và combat; UEFN devices gợi cách designer nhìn một actor qua config và event. Nhưng không cơ chế nào tự cấp universal rollback, typed provider generation, stable identity qua actor lease hay evidence gate. Vì vậy lab mượn seam, không mượn tên để tuyên bố parity.
+Sau restart, task đầu tiên đọc `STATUS`, baseline, packet hiện tại, ADR liên quan và evidence gần nhất. Chat chỉ là transport; commit và artifact là memory.
 
-### 8. CR-0 đến CR-8 là một hành trình của người chơi
+### 11.4. Definition of Ready
 
-Các stage dưới đây được kể từ outcome mà người quan sát cần thấy. Mỗi stage có packet, prerequisite, automated checks, human gate, exit evidence và stop condition; stage trước không tự động mở stage sau.
+Luna chỉ nhận unit khi đã có:
 
-**CR-0 — Corpus, provenance và specification.** Người chơi chưa nhận feature mới; điều cần nhìn thấy là một contract có reference version, authorization, observer, input bình thường, success, failure, timing tolerance và unknowns. CR-0 khóa census, evidence ledger, provenance manifest, media hashes và first-slice backlog. Nếu behavior chỉ được suy từ binary, version không khớp hoặc quyền quan sát mơ hồ, dừng ở đây.
+- baseline commit/build/map/scenario;
+- scope allowlist cụ thể;
+- classification A/B/C/D theo graph;
+- parent/interface/component/default/property/reference inventory;
+- Timeline/latent/dispatcher/input/notify/construction/tick inventory;
+- Given/When/Then và reference evidence;
+- canonical owner và dependency direction;
+- tolerance được duyệt nếu không exact;
+- non-goals, rollback và stop conditions;
+- test data/map/save với baseline đang pass;
+- exporter version/config/hash nếu dùng;
+- Sol approval rằng không còn architecture decision ẩn.
 
-**CR-1 — Host và lifecycle skeleton.** Người dùng bật một capability trong session, thấy input/listener/provider xuất hiện, tắt nó và thấy registration biến mất mà không leak callback hay duplicate. Foundation, Data, Composition Host, typed resolver và ledger hẹp được dựng trong lab độc lập. Gate này chỉ nâng installation effect lên compile/integrated; nó không chứng minh transaction gameplay.
+Thiếu một mục, packet là `BLOCKED`, không phải “đủ để Luna tự hiểu”.
 
-**CR-2 — First playable slice.** Một session mới khởi động, pawn di chuyển, camera phản hồi, người chơi đi đến resource, nhấn `F`, thấy quantity và HUD đổi đúng một lần; target ngoài range và retry có kết quả rõ. Đây là lát cắt đầu tiên đạt `PLAYER_OBSERVABLE`, rồi `USER_VERIFIED` khi human chạy normal keys với build/map/config đã ghi. Nếu input chỉ chạy bằng debug command, UI ghi canonical quantity hoặc retry nhân đôi, phải quay lại owner/contract.
+### 11.5. Khi Luna bắt buộc dừng
 
-**CR-3 — Combat và crafting.** Resource được kiểm tra, reservation/escrow được giữ, bow/ammo được craft một lần, equip và aim/fire tạo damage feedback bởi authority đúng. Invalid material bị từ chối, grant handle tháo đúng, ammo không tự sinh sau retry. Không dùng unregister để rollback damage; nếu client tự quyết quantity/damage, dừng stage.
+- baseline, spec và runtime observation mâu thuẫn;
+- không xác định được owner;
+- cần chạm ngoài allowlist hoặc protected path;
+- phát hiện cycle hoặc phải thêm module/plugin/dependency;
+- cần đổi public contract, gameplay tag, asset path hoặc serialized property;
+- exporter bỏ sót node ảnh hưởng semantics;
+- cần engine/project setting/build target mới;
+- có hai architecture hợp lý với hệ quả dài hạn khác nhau;
+- reference không tái hiện ổn định;
+- runtime failure giống nhau lặp hai lần hoặc hypothesis thứ hai thất bại;
+- unit vượt guardrail và đòi “sửa tiện” feature khác;
+- cần phán đoán visual/feel hoặc có nguy cơ mất default/reference/save.
 
-**CR-4 — Building/crafting.** Người chơi thấy preview, đặt một workstation ở vị trí hợp lệ, bị từ chối ở vị trí sai, cancel không đốt resource, và demolish/compensation theo contract. Preview actor chưa phải canonical building cho đến commit. Đây là một slice có thể kiểm tra valid/invalid/cancel, không phải tuyên bố đã có toàn bộ building kit.
+Luna trả `BLOCKED` với Question ID, actual/expected, evidence, hypotheses đã thử, files đã chạm, last-known-good và câu hỏi quyết định. Sol sửa packet hoặc thu nhỏ unit; Luna không tiếp tục bằng phỏng đoán.
 
-**CR-5 — Creature, capture và PalBox.** Một creature có stable ID đi qua combat, capture, storage, summon và recall; relation không nhân đôi khi actor lease spawn/despawn. Human kiểm tra escape/failure/interruption, cardinality một slot/một party row và rejection. Tên `BP_PalSphere` không đủ để mở gate; cần behavior contract và observation.
+### 11.6. Prompt contracts dùng trong App
 
-**CR-6 — Work.** Một worker đến một station, assignment/progress/output được Work sở hữu, movement/arrival được `PalBehavior` sở hữu, output có escrow và stale arrival bị từ chối. Đây là stage cần behavior spec/direct observation mới, vì corpus hiện tại chưa đủ proof Work bền vững. Gate đặc biệt nhìn bằng mắt để phát hiện teleport, snap, carry sai hướng và assignment trôi.
-
-**CR-7 — Hardening.** Save/load, migration, authority/replication, reconnect và performance được mở bằng packet riêng. Save fixture không phải normal persistence; offline simulation không phải multiplayer. Không có benchmark hiện tại, nên stage này tạo baseline thay vì bịa con số.
-
-**CR-8 — Adapter Paldark.** Một neutral contract đã đạt parity evidence giới hạn hoặc được human chấp thuận như requirement non-parity được map vào seam PaldarkKit. Protected-path audit, teardown, integration test và human normal-input gate phải pass. Nếu adapter cần donor code/asset, duplicate canonical state hoặc sửa Core không được phép, dừng tích hợp.
-
-Kết quả của hành trình không phải một lời hứa “đã convert toàn bộ”. Nó là chuỗi bằng chứng ngày càng mạnh, trong đó mỗi hệ thống có contract và known delta riêng. Một stage có thể dừng lâu ở `UNKNOWN` mà vẫn là kết quả kỹ thuật đúng hơn một dòng trạng thái xanh nhưng không truy được build và observer.
-
-### 9. Công việc phải sống sót qua một lần tắt máy
-
-Restart-safe không có nghĩa là AI nhớ nguyên cuộc trò chuyện. Nó có nghĩa là người mở máy lại đọc được canonical index, branch/HEAD, dirty status, packet hash, transition cuối, diff, review và human artifact rồi biết chính xác hành động kế tiếp. Mỗi packet đóng một seam: goal, non-goals, allowed/forbidden paths, owner, invariant, acceptance, command, evidence level, attempt, next actor và stop signal.
-
-Chu trình thực tế là: Human phê duyệt architecture và phạm vi; Sol tạo packet; Luna sửa đúng write-set và ghi checkpoint; fresh Sol đọc packet/diff/evidence trong context mới; human chạy normal-input gate; kết quả được persist. Nếu Luna gặp ambiguity kiến trúc, provenance exception, protected path, mismatch baseline hoặc failure lặp lại, Luna tạo escalation packet và quay về Sol thay vì tự mở scope. Sau retry có giới hạn, task phải chuyển `CHANGES_REQUESTED` hoặc `RECONCILIATION_BLOCKED`, không chạy cùng lệnh mãi.
-
-Vai trò không dựa trên tuyên bố model nào “giỏi hơn” một cách bản chất. Authority đến từ packet, context, quyền ghi và gate. Human là người duy nhất xác nhận `USER_VERIFIED` và chấp thuận merge/integration; reviewer không tự sửa implementation; Luna không commit, push, deploy hay approve.
-
-### 10. Quyết định cần có ngay bây giờ
-
-Chúng ta chưa bắt đầu viết C++ và cũng chưa cấp quyền chuyển đổi. Để mở CR-0, con người cần quyết định ít nhất: ai là authorized observer và implementer; reference build/version/map/config nào được khóa; provenance chỉ cho placeholder hay asset có license nào; mục tiêu distribution là học tập riêng hay prototype nội bộ; lab UE 5.6 có được chấp thuận không; first slice có đúng boot → movement → interaction/resource → inventory HUD không; human gate cadence, reviewer identity và stop authority là gì.
-
-Nếu một câu trả lời chưa rõ, hành động đúng là tạo `UNKNOWN` và thêm observation/decision task, không phải code trước rồi hy vọng sẽ hợp thức hóa sau. Khi CR-0 đóng được provenance, contract và unknown register, root mới có thể tạo packet CR-1/CR-2. Từ điểm đó, trang này trở thành master plan chi tiết bên dưới; không stage nào tự động thực thi chỉ vì tài liệu đã được viết.
-
-Điều thay đổi sau quyết định pause là cách chúng ta gọi tên tiến bộ. Trước đây, một commit thêm nhiều feature có thể tạo cảm giác đang đi rất nhanh; trong kế hoạch này, một packet nhỏ đạt được một outcome người chơi có thể lặp lại có giá trị hơn một danh sách dài chưa qua gate. Một ngày làm việc có thể kết thúc bằng việc phát hiện target range chưa rõ, hoặc bằng quyết định trì hoãn Work vì không có observation đủ sạch. Cả hai đều là tiến bộ nếu chúng làm giảm điều chưa biết thay vì che nó.
-
-Bạn cũng không cần học toàn bộ Cordis, Harness, Lyra hay Paldark internals để đọc phần đầu. Chỉ cần giữ ba câu hỏi: người chơi vừa thấy gì, state nào phải đổi để điều đó đúng, và bằng chứng nào cho phép chúng ta nói state đã đổi. Các thuật ngữ như provider generation, actor lease hay quiescence xuất hiện sau khi một câu hỏi thực tế cần chúng; nếu chưa có câu hỏi đó, chúng không phải mục tiêu học thuộc.
-
-Khi đọc tiếp, hãy xem mỗi bảng như một lời mời kiểm tra chứ không phải một bảng thành tích. Dòng `S1` của Inventory không nói inventory không tồn tại; nó nói evidence hiện có chưa đủ cho quantity, authority và save. Dòng `CR-6` của Work không phải lời hứa bỏ qua hệ thống; nó nói Work cần một observation packet riêng. Cách đọc ấy cho phép chúng ta giữ sự tôn trọng với công sức trong corpus mà vẫn bảo vệ quyết định kỹ thuật khỏi overclaim.
-
-## Phần II — Master plan và sổ tham chiếu
-
-### 11. “Tái tạo đầy đủ” được định nghĩa thế nào
-
-Trong brief ban đầu, “hoàn chỉnh” thường được hiểu qua cảm giác: animation di chuyển đã mượt, bow có nhịp, inventory phản hồi giống reference, creature và base không còn là placeholder. Đó là một mục tiêu trải nghiệm hợp lệ, nhưng chưa phải một đơn vị triển khai. Muốn một nhóm có thể làm việc lâu dài mà không tranh cãi về chữ “xong”, chúng ta phải phân rã nó thành những điều quan sát được và điều kiện để chấp nhận.
-
-Một behavior row đầy đủ cần ghi ít nhất: input bình thường; pre-state; điều kiện target/range/LOS; authority và role; state transition; commit point; event hoặc snapshot; presentation; timing tolerance; success; reject; retry; restart; identity relation; persistence/network nếu nằm trong contract; known deltas; provenance và evidence gate. “Inventory giống reference” vì vậy được thay bằng nhiều row có thể chạy: stack, split, swap, drop, weight, reservation, save/load, authority, HUD snapshot và lỗi khi target không hợp lệ.
-
-Định nghĩa full recreation của kế hoạch là một backlog có provenance cho behavior, failure, timing, camera, animation, UI, audio, data, save/network khi được yêu cầu, known delta và asset replacement. Backlog đó chưa tồn tại đầy đủ hôm nay. CR-0 mới là nơi observer tạo census, observation script, evidence ledger, unknown register và behavior contract cho first slice; sau đó các stage mở rộng backlog theo dependency. Trang này là master plan và cấu trúc quyết định, không giả vờ rằng chúng ta đã đọc được toàn bộ graph Blueprint hay có conversion backlog chi tiết cho mọi asset.
-
-Thang evidence giúp giữ câu chữ đúng với những gì đang có:
-
-| Mức | Có thể nói | Chưa thể nói |
-|---|---|---|
-| `DESIGNED` | mục tiêu, giả thuyết hoặc contract đã viết | đã có runtime |
-| `SOURCE_PRESENT` | source, asset hoặc tài liệu trace tồn tại | compile hoặc normal play |
-| `COMPILED` | UHT/compile/link theo command và target đã ghi | player đã nhìn thấy outcome |
-| `INTEGRATED` | seam được nối trong environment chỉ định | human đã xác nhận hoặc parity |
-| `PLAYER_OBSERVABLE` | normal path tạo outcome người chơi có thể thấy | user gate hoặc reference match |
-| `USER_VERIFIED` | người được ủy quyền đã chạy focused gate | parity rộng hơn contract/version |
-| `PARITY_EVIDENCED` | contract khớp reference version, có known delta/provenance | clone hoàn chỉnh hoặc hệ thống không có reference evidence |
-
-Maturity của một row là monotonic trong contract/version cụ thể, không phải nhãn vĩnh viễn cho tên feature. Nếu build hash, map, config hoặc observer metadata bị thiếu, report cũ có thể phải trở về `UNKNOWN`; lịch sử được append finding chứ không xóa. Đây là nguyên tắc để kế hoạch không biến static census thành quảng cáo completion.
-
-### 12. Bản đồ đủ mười lăm hệ thống
-
-Các chương 21–35 trong archive vẫn là nguồn phân tích player-facing. Ở root plan, chúng được gom thành các nhóm để nhìn dependency: movement/input và interaction mở đầu đường chơi; inventory, crafting, combat và building tạo economy hành động; creature, capture, Companion/PalBox và Work tạo quan hệ sống; progression, world/life, dungeon/boss, persistence, multiplayer và breeding/economy làm cho vòng chơi kéo dài. Bảng sau không cấp thêm runtime proof cho KYWorld; nó nói rõ evidence snapshot, lời hứa reconstruction, owner đề xuất, stage và điều CR-0 hoặc observation sau đó còn phải làm.
-
-| Ch. | Hệ thống | Evidence hiện tại | Lời hứa cần tái dựng | Owner đề xuất | Stage | Khoảng trống cần quan sát/đặc tả |
-|---:|---|---|---|---|---|---|
-| 21 | Movement/Input | S2; Enhanced Input, camera-relative movement, input tags và movement component | di chuyển, camera, jump/sprint/crouch/swim/glide/mount theo contract | Movement/Pawn | CR-2 | state chuyển tiếp, cancel, timing và normal-input trace |
-| 22 | Interaction/Gathering | S1–S2; `IInteractInterface`, flow `F`, item/resource docs và asset trace | target query, range/LOS, contention, resource lifecycle, reject/idempotency | Interaction | CR-2 | target invalid, resource respawn, authority và retry |
-| 23 | Inventory | S1; GDD/Blueprint slots và native shell | quantity, stack/split/swap/drop/weight, reservation, view snapshot | Inventory | CR-2 | canonical ledger, save/load, authority và UI failure |
-| 24 | Crafting | S1–S2; workbench docs, recipes/DataTables, commit history | validate, reserve, output, cancel/refund, recipe relation | Crafting + Inventory | CR-3/4 | atomicity, breadth recipe và persistence |
-| 25 | Combat | S2 cho GAS/equipment seam; bow/weapon history | aim/fire, damage authority, death/recovery, effect/status, feedback | Combat + Health | CR-3 | hit authority, normal fire, timing và recovery |
-| 26 | Capture | S1–S2; Pal Sphere/capture docs/assets và commits | failure/escape, capture commit, stable identity, interruption | Capture + Creature | CR-5 | escape probability, relation, persistence và cardinality |
-| 27 | Companion | S1–S2; Pal base, PalBox/UI docs, riding/flying history | summon/recall, party/storage, defeat/recovery, lease replacement | Companion/PalBox | CR-5 | stable ID, slot transaction và normal summon |
-| 28 | Building | S1–S2; tags/assets/commit history, workbench content | preview, valid placement, reject, demolish/compensation | Build + Crafting | CR-4 | collision, quantity commit, preview lifetime |
-| 29 | Work/Automation | S1; WorkMenu/AI/cooking/spawn traces, chưa có robust native owner | suitability, assignment, arrival, progress, output và cancel | Work + PalBehavior + Inventory | CR-6 | direct observation, queue, reservation, offline/authority |
-| 30 | Progression/Technology | S1; stat/level/DataTable assets và level-up traces | XP, unlock graph, stat ownership, migration | Progression | CR-7 | formula, unlock dependencies và save relation |
-| 31 | World/Life | S1; map, day/night, spawn box, stamina traces | clock, weather, population, respawn, deterministic seed | World/Life | CR-7 | normal clock, population, lifecycle và seed |
-| 32 | Dungeon/Boss | S0–S1; names/roadmap/content trace hạn chế | room/boss/reward loop, resume và normal claim | Dungeon/Boss | sau CR-6/7 | owned encounter, reward transaction, resume |
-| 33 | Persistence | S0; chưa có save/load proof trực tiếp, binary có thể che behavior | save/quit/load, schema, migration, relation integrity | Persistence | CR-7 | build/config, crash boundary và human restart |
-| 34 | Multiplayer | S0–S1; dependencies/config, chưa có build/multiplayer proof | authority, replication, travel, reconnect, host/join, identity | Network + domain owners | CR-7 | role matrix, packet loss/retry và reconnect |
-| 35 | Breeding/Economy | S0–S1; roadmap/data references | formula, sacrifice/shop/stock, save và normal UI | Breeding + Economy | sau backlog | behavior source, formula, stock và transaction |
-
-Bảng này cho thấy tại sao “có asset” không đồng nghĩa “có hệ thống”. Movement có native seam mạnh hơn Work; capture có flow tài liệu nhưng chưa có identity proof; persistence và multiplayer không được suy ra từ `Build.cs`. First slice vẫn là movement/input → interaction/resource → inventory HUD. Combat/crafting và building mở khi quantity/authority đã ổn; creature mở khi stable record và combat contract đủ; Work, persistence, multiplayer và breeding/economy chỉ mở bằng observation hoặc requirement packet mới.
-
-### 13. Bản đồ module C++ và quyền sở hữu
-
-Topology đề xuất cố định một số trust boundary, nhưng không đóng API trước CR-0/CR-1. `Foundation` là module thấp tầng, không biết PaldarkKit private seam; nó cung cấp `StableId`, `PrincipalId`, `CorrelationId`, `IdempotencyKey`, typed `Result/Failure`, authority role, lifecycle scope, clock/random policy và narrow installation ledger. `Data` cung cấp schema/definition, validator và bridge tới `PrimaryAsset`/`DataRegistry`; data chỉ mô tả, không tự commit.
-
-`CompositionHost` là nơi bootstrap Experience/ruleset, resolve capability graph, theo dõi provider generation, quyết định activation/quiescence và kiểm tra teardown. Game Feature Plugin có thể chứa domain cohesive sau khi host và first slice ổn định. Không tạo plugin cho mỗi class, và không gom tất cả vào một “Paldark framework” khổng lồ. Một domain boundary tồn tại khi nó có owner, lifecycle, contract và observation seam riêng.
-
-Các domain modules hoặc Game Features đề xuất gồm `Interaction`, `Inventory`, `Crafting`, `Build`, `Health`, `Combat`, `Creature`, `Capture`, `Companion/PalBox` và `Work`. `Presentation` chứa view model, HUD, animation, audio/VFX bridge; nó nhận snapshot/event và được phép giữ transient state của view. `PaldarkAdapter` là module/feature chỉ mở ở CR-8, map neutral IDs/commands/results và không thay canonical owner.
-
-State ownership cần được đọc như một bảng quyền ghi chứ không chỉ là danh sách class:
-
-| State | Writer duy nhất trong scope/generation | Actor/UI được phép làm gì |
-|---|---|---|
-| principal/player relation | `PlayerState` hoặc principal record | Pawn phát intent; HUD đọc snapshot |
-| pawn/input embodiment | Pawn/Controller boundary | phát `MoveIntent`, không settle inventory |
-| creature identity | Creature record | Actor lease hiển thị và thực thi embodiment |
-| inventory quantity/reservation | Inventory domain | Crafting/Interaction yêu cầu, HUD đọc |
-| health/damage settlement | Health/Combat authority | GAS là mechanism, domain quyết định semantics |
-| capture/party/PalBox | Capture/Companion | UI gửi request, domain giữ relation/cardinality |
-| assignment/progress/output | Work | PalBehavior di chuyển; Presentation hiển thị |
-| movement/arrival | PalBehavior/Movement | arrival có correlation/target lease |
-| HUD/animation/audio | Presentation | không ghi canonical gameplay |
-| durable save record | Persistence | serialize owner theo schema/version |
-
-Stable record và Actor lease là ranh giới quan trọng. Creature record giữ `StableCreatureId`, owner relation, progression, party/storage relation; Actor lease giữ transform, embodiment, generation, spawn correlation và teardown handle. Summon tạo lease mới cho cùng record; recall thu lease mà không nhân đôi record. Tương tự, arrival của Work chỉ settle khi worker ID, station ID, generation và task correlation còn khớp. Nếu một contract thật sự buộc Actor là persistence, nó phải ghi limitation thay vì lén coi pointer là identity.
-
-Luồng command/event/transaction được giữ ngắn và có thể audit:
+**Sol planning task**
 
 ```text
-normal input
-  → intent chưa tin cậy
-  → authority + identity + range/LOS + capability/lease check
-  → reservation/escrow nếu có quantity
-  → domain commit với correlation/idempotency
-  → durable record hoặc post-commit event/snapshot
-  → presentation view model
+Bạn là planner/architect. Đọc STATUS, baseline, decisions và evidence được chỉ định.
+Không viết gameplay code. Tạo đúng một task packet nhỏ: outcome quan sát được,
+owner/dependencies, allowlist, non-goals, A/B/C/D scope, acceptance, rollback,
+human gate và stop conditions. Mọi unknown phải có Question ID.
 ```
 
-`requires/provides` phải ghi capability, semantic version/range, required/optional, scope, network role, cardinality, provider identity/generation, resolution policy, timeout/quiescence, teardown, owner và provenance. Resolver reject missing provider, cycle, generation mismatch hoặc ambiguous cardinality trước khi consumer thấy view nửa cài đặt. Nếu provider thay generation, consumer rebind/deactivate; không giữ pointer vĩnh viễn. Đây là contract proposal, chưa phải header/API đã tồn tại trong PaldarkKit.
+**Luna implementation task**
 
-### 14. Content, presentation và pipeline polish
+```text
+Bạn là implementer. Chỉ thực hiện packet đã duyệt trong allowlist.
+Không thay architecture hoặc mở scope. Nếu gặp stop condition, dừng ngay và
+trả BLOCKED packet; không đoán. Chạy focused checks, cập nhật evidence/STATUS,
+và không gọi task done nếu thiếu mức bằng chứng bắt buộc.
+```
 
-Một reconstruction chỉ “đúng” ở quantity nhưng camera giật, bow release sai nhịp, animation chuyển pose gãy hoặc HUD che mất lý do reject thì vẫn chưa đạt lời hứa người chơi. Vì vậy presentation không được để đến cuối như một lớp sơn. Nó phải đi theo behavior row, với tolerance quan sát được và provenance riêng.
+**Fresh Sol review task**
 
-Camera/movement bắt đầu từ một cảnh cụ thể: người chơi đổi hướng quanh resource, camera-relative movement giữ cảm giác liên tục, stop/cancel không làm pawn snap, mount hoặc glide có chuyển state dễ nhận biết. CR-2 chưa cần art cuối nhưng cần camera policy, input mapping, acceleration/deceleration, collision và failure script đủ để human ghi “cảm giác đúng trong contract” hoặc “UNKNOWN”. Các tolerance như độ trễ HUD, thời điểm input lock hay góc aim không được bịa; CR-0 phải quan sát hoặc ghi là quyết định mới.
+```text
+Bạn là reviewer trong context mới. Chỉ đọc task packet, diff/commit, logs,
+parity result và decisions. Không sửa file. Trả PASS hoặc FAIL với findings
+có severity, path/evidence và acceptance bị vi phạm. Không suy ra human parity
+từ compile hoặc static test.
+```
 
-Animation và bow timing cần contract theo checkpoint: montage bắt đầu khi nào, input release được nhận ở frame/phase nào trong tolerance, projectile/damage commit ở đâu, cancel hoặc miss hiển thị gì, và teardown có để lại state không. Một screenshot không chứng minh sequence; media hash và normal-input recording giúp fresh reviewer quay lại đúng artifact. Visual gate cần đủ ngắn để người thật chạy, nhưng đủ cụ thể để bắt drift, carry upside-down, snap hoặc orientation sai.
+Trong Codex App, ba vai trò nên là các task riêng, với branch/worktree riêng khi có thay đổi. Architecture task của Sol có thể được pin làm cửa vào; implementation task không trở thành nơi quyết định scope. Fresh review không fork từ lịch sử hội thoại triển khai nếu có thể tránh, vì mục tiêu là kiểm tra artifact chứ không đồng cảm với quá trình.
 
-HUD và layout phải là read-only view model. Pickup thành công tạo snapshot có quantity, slot và feedback; pickup bị reject tạo reason code hiển thị; reload HUD không increment state. Layout acceptance ghi vùng nhìn thấy, thứ tự thông tin, focus/input feedback và breakpoint cần thiết, không nói “giống hệt trade dress”. Audio/VFX là post-commit hoặc transient cue theo consequence: mất một toast khác mất event capture. Khi cần rebind presentation, không được spawn duplicate Actor hay write quantity.
+---
 
-Asset pipeline tách ba nguồn: asset tự tạo; asset có license/provenance rõ; placeholder được tạo để kiểm tra behavior. Manifest mỗi asset/code ghi `origin`, license/evidence, hash, allowed-use, reviewer và distribution scope. Không dùng asset, audio, animation, tên/trade dress hoặc extracted data của KYWorld/Palworld làm donor. Nếu một behavior chỉ tái hiện được bằng asset không rõ nguồn, stop ở provenance gate và dùng placeholder hoặc viết lại contract.
+## 12. Commit, rollback và merge policy
 
-“Polish đạt” không phải đánh giá chủ quan không thể lặp. Mỗi row có human observation checklist, visual tolerance, known delta và evidence level; human ghi build/version/map/config, timestamp, checkpoint và media hash. Điều này không biến cảm giác thành con số giả, nhưng biến một nhận xét mơ hồ thành một gate có thể kiểm tra lại.
+Một migration unit thường có tối đa bốn commit logic:
 
-Pipeline nội dung nên đi từ rẻ đến đắt theo đúng ranh giới của behavior. Ở CR-2, một resource hình hộp, một âm thanh placeholder và một widget đơn giản vẫn đủ nếu chúng giữ được vị trí target, feedback quantity và nhịp input. Khi contract ổn định, presentation track thay placeholder bằng asset tự author hoặc có license, nhưng không được thay đổi owner hay transaction để làm art “dễ hơn”. Mỗi lần thay asset lớn cần chạy lại focused gate vì collision, socket, montage hoặc bounds có thể làm behavior đổi theo cách code không báo.
+1. `test/characterize`: contract và regression evidence, không đổi behavior;
+2. `refactor/native-seam`: native seam dormant, build xanh;
+3. `migrate`: switch đúng một behavior sang native path;
+4. `verify/cleanup`: evidence và retire graph C/D sau sign-off.
 
-Camera, animation và HUD cũng cần tách “tolerance” khỏi “style”. Tolerance là điều kiện người chơi phải nhận ra để contract còn đúng: input không bị nuốt, aim không snap sai target, resource feedback không trễ đến mức gây double press, text không che checkpoint quan trọng. Style là lựa chọn màu, hình khối, âm thanh và nhịp trang trí có thể thay bằng bản nguyên bản. Tách hai loại này giúp chúng ta học từ polish của KYWorld mà không tuyên bố sao chép trade dress, đồng thời giúp reviewer biết một visual delta là blocker hay chỉ là việc của presentation backlog.
+Mỗi commit buildable, reviewable, revertable và chỉ có một thay đổi player-observable hoặc một thay đổi infrastructure được định nghĩa. Không trộn engine upgrade, asset move, framework refactor và gameplay migration. Binary asset edit ở commit nhỏ riêng kèm object path và before/after evidence. Generated code có provenance trailer.
 
-Một content packet nên có `BehaviorRowId`, asset manifest, input script, expected visual checkpoint, timing tolerance, known delta và replacement status. Reviewer kiểm tra asset provenance cùng behavior evidence, còn human kiểm tra sequence bằng normal input. Nếu asset mới làm montage dài hơn, camera offset khác hoặc widget thay đổi focus, packet phải cập nhật tolerance và chạy lại gate; không giữ một chữ `USER_VERIFIED` cũ như thể content là bất biến. Đây là cách polish trở thành một phần của acceptance mà vẫn giữ được khả năng thay thế.
+Trailer đề xuất:
 
-### 15. Quyết định phiên bản và nền tảng
+```text
+Baseline: a6eab166
+Capability: KY-INV-STACK-001
+Contract: inventory.stack.merge.v1
+Parity-Result: PR-KY-INV-STACK-001
+Generated-From: <tool/version/input-hash>, nếu có
+```
 
-Corpus technical plan ghi reference source-architecture ở Unreal **5.4**, trong khi lab đề xuất **UE 5.6** để phù hợp nền tảng Paldark hiện hành. Hai số này không được trộn: hành vi quan sát từ reference version cần được khóa bằng build/map/config; API hoặc behavior engine ở 5.6 phải được kiểm chứng bằng compatibility spike. Một commit hoặc README nói “UE 5.4” không tự chứng minh feature behavior; một compile ở 5.6 không tự chứng minh parity với 5.4.
+Blueprint graph cũ chỉ bị xóa sau parity; fallback tồn tại nhưng exclusive. Rollback drill phải chứng minh có thể quay lại old path bằng một revert/unit độc lập. Freeze/revert ngay khi có asset corruption, missing reference, lost/duplicated state, old/new double mutation, repeated crash/ensure, accidental engine change hoặc rollback không còn độc lập.
 
-CR-0 cần tạo version matrix cho engine, target, platform, plugin, Game Feature, GAS, Enhanced Input, rendering mode, input device, save format và network mode. Compatibility spike nhỏ nên kiểm tra boot, module load, Enhanced Input, Game Feature lifecycle, data loading, animation asset placeholder và packaging boundary; nó không mở rộng thành build toàn bộ hệ thống. Nếu provider hoặc API khác biệt làm contract không còn đứng được, fallback là giữ contract trung lập, chọn UE version khác đã được phê duyệt, giảm scope hoặc dừng. Không thêm dependency/package manager mới trong tài liệu này.
+Luna có thể commit task branch sau checks nếu packet cho phép; fresh Sol review commit ấy; human duyệt gate cần thiết rồi mới merge. Push/merge chỉ theo quyền được ghi trong packet. Một commit gốc không tương ứng một commit mới: commit history mới tối ưu cho review và rollback, không tái diễn nhiễu merge/import của năm 2024.
 
-Platform matrix cũng phải tách “có thể compile” khỏi “có thể quan sát”. Editor/Win64 Development là target kỹ thuật phổ biến cho compile; human gate cần map/config và normal input tương ứng. Dedicated server, client, console hoặc mobile không được coi là được hỗ trợ chỉ vì module không báo lỗi. CR-7 mới tạo packet network/platform nếu behavior thật sự nằm trong phạm vi.
+---
 
-### 16. Workstreams, dependency và parallelism
+## 13. Điều kiện hội tụ vào PaldarkKit
 
-Critical path là `CR-0 provenance/specification → CR-1 host/lifecycle → CR-2 first slice → CR-3 combat/crafting và CR-4 building → CR-5 creature → CR-6 Work → CR-7 hardening → CR-8 adapter`. Mỗi mũi có thể có track song song, nhưng prerequisite và owner không thể bỏ qua. Một branch chuẩn bị data không được tự tạo canonical writer; một presentation track không được tự settle quantity để “đỡ chờ domain”.
+Không bắt đầu adapter cho đến khi có tag candidate `KYWorld-CPP-Parity-UE5.4` thỏa:
 
-Các track an toàn để chạy song song sau khi packet cho phép gồm:
+- toàn bộ C/D in-scope đã native hoặc có exception được duyệt;
+- A/B retained có manifest và owner seam;
+- không missing reference, Blueprint compile error, crash/ensure hoặc severe log mới;
+- full regression và packaged smoke pass;
+- human sign-off movement, UI, combat, Pal, production và cross-system polish;
+- performance trong tolerance đo được;
+- rollback drill pass;
+- không còn deviation nghiêm trọng mở.
 
-- **Corpus/provenance:** index reference, hash, asset manifest, public-source pin và unknown register; không đụng implementation room.
-- **Behavior specification:** viết trace normal/reject/retry cho một hệ thống; chỉ dùng output được authorized observer cung cấp.
-- **Foundation/composition:** resolver, lifecycle, ledger và test missing provider/cycle; không phát minh behavior domain.
-- **Domain slices:** Interaction/Inventory rồi Crafting/Combat/Build theo owner; mỗi packet một seam, protected paths rõ.
-- **Presentation/assets:** view model, HUD, animation/audio placeholder và replacement inventory; không chép donor, không ghi canonical state.
-- **Validation:** schema lint, static checks, integration test, failure injection và media/hash bookkeeping; không nâng evidence nếu thiếu human gate.
-- **Adapter:** chỉ chờ CR-8; có thể chuẩn bị mapping document nhưng không link PaldarkKit sớm.
+Sau đó từng capability được quyết định riêng:
 
-Safe parallelism có nghĩa là chia câu hỏi, không nhân đôi quyền ghi. Chúng ta không để hai agent cùng sở hữu `Inventory.Quantity`, hai registry cùng resolve một provider, hoặc một adapter và domain cùng commit capture. Packet phải ghi owner, expected HEAD, allowed write-set và artifact authority; dirty baseline hoặc conflict làm restart reconciliation dừng.
+| Quyết định | Khi dùng |
+|---|---|
+| Adopt | contract PaldarkKit tương đương và parity suite chứng minh |
+| Adapt | semantics giống nhưng interface/lifecycle khác; viết adapter |
+| Keep KYWorld | abstraction PaldarkKit hiện làm mất behavior/polish |
+| Replace later | lợi ích có thật nhưng migration risk cao; hoãn |
+| Reject | speculative/coupled hoặc không có use case |
 
-Retrospective Paldark cho thấy breadth trước normal path, task nhiều outcome, late Editor discovery, status fragmentation, nhầm Unreal `Owner` với principal, human gate quá dài và manual assignment setup nặng là các nguồn rework. Cách tối ưu ở đây là packet một seam, human gate sớm, compile/static hẹp và chỉ cook/package/multiplayer/CI khi acceptance criteria yêu cầu. Git elapsed time là wall-clock envelope, không chuyển thành person-hours hay so sánh model/người.
+PaldarkKit không phải donor architecture toàn phần. Stable identity, authority, transaction và evidence ladder nên được tái dùng; 21 always-active plugin, stub registry, synchronous event bus và god component không được copy. Engine upgrade là wave độc lập sau convergence decision.
 
-### 17. Gate, stop condition và kế hoạch đo
+---
 
-Chín parity gates được giữ nguyên nhưng giải thích bằng câu hỏi người đọc có thể kiểm tra:
+## 14. Evaluation plan
 
-| Gate | Câu hỏi | Bằng chứng bắt buộc | Không được suy ra |
-|---|---|---|---|
-| PG-0 | observer, authorization và provenance có rõ? | decision, hashes, unknowns, manifest | technical review đã cho phép ship |
-| PG-1 | reference behavior và failure đã ghi? | traceability row, media/log, version | parity từ asset name/README |
-| PG-2 | owner, authority, identity, lifecycle đã đóng? | graph, invariant review | UI hoặc unregister là owner/rollback |
-| PG-3 | target/build compile đúng? | command log, target, diff | player behavior, pose, persistence |
-| PG-4 | success/reject/retry/idempotency có giữ invariant? | tests, authority log, transaction record | conservation từ happy path duy nhất |
-| PG-5 | seam cross-domain chạy trong lab? | integrated test và snapshot | human normal-input proof |
-| PG-6 | human đã chạy focused normal input? | report build/map/config/checkpoint | “works” không có bước gate |
-| PG-7 | contract có version-locked parity? | comparison, known deltas, provenance | full clone hoặc absent-system parity |
-| PG-8 | clean-room/adapter và human approval đã pass? | fresh findings, protected audit, decision | tự động bắt đầu integration |
+### 14.1. Metric chính
 
-Compile chỉ trả lời source và toolchain hiện có thể tạo target; observation trả lời người chơi thấy gì ở input bình thường. Human gate không thay automated test, nhưng automated test cũng không thay mắt người ở camera, animation, timing, orientation hoặc UI. Một row chỉ báo cáo gate mạnh nhất đã thật sự có artifact; header cũ không được ghi đè execution report mới.
+- số behavior row đạt từng rung và số đạt `PARITY_EVIDENCED` mỗi tuần;
+- first-pass automated/editor/human gate rate;
+- implementation-to-gate latency và thời gian chờ observer;
+- rework commit sau handoff/review;
+- số escaped bug theo capability;
+- evidence freshness so với candidate HEAD;
+- warning debt và allowlist age;
+- lifecycle leak count;
+- asset/reference regression;
+- activation, command, frame, memory và load delta sau khi có baseline.
 
-Failure injection đi theo owner: provider mất giữa activation; provider generation đổi; callback đến sau teardown; retry cùng idempotency key; reservation hết hạn; authority/range/LOS sai; actor lease despawn trước arrival; stale arrival sau reassign; capture ngắt giữa validate/commit; preview bị cancel; save crash trước/trong/sau commit; synchronous listener throw sau domain commit; network duplicate/out-of-order; human observer không tái hiện. Mỗi lỗi cần expected invariant, recovery, evidence và stop reason. Có lỗi phải reject trước commit, có lỗi cần compensation, durable recovery hoặc human escalation; không gọi tất cả là rollback.
+Không dùng LOC, commit count, plugin count, countdown hoặc “% game hoàn thành” không có denominator làm KPI chính.
 
-Kế hoạch đo sau khi contract ổn định gồm behavior correctness (tỷ lệ case đạt, quantity/identity/cardinality, reject reason, duplicate/ghost actor), composition health (missing provider, cycle, leak listener/timer/grant, generation rebind), integration cost (changed files/lines theo packet, protected-path violation, finding/correction loop, wall-clock), player-observable reliability (fresh-session success, reject clarity, restart/rebind, visual defects) và performance (activation latency, command latency, memory, replication bytes, save/load, frame impact). Hiện chưa có benchmark baseline; kế hoạch không bịa số.
+### 14.2. Failure injection
 
-Stop hoặc quay về architecture khi provenance/authorization mơ hồ, contract mâu thuẫn, owner không duy nhất, resolver không deterministic, UI/adapter ghi canonical state, activation leak, retry nhân đôi, stale arrival settle output, save mất relation, multiplayer claim thiếu authority evidence, human gate chỉ dùng debug command hoặc cần donor code/asset để tiếp tục. Stop là một kết quả evidence hợp lệ: ta có thể thu nhỏ slice, tạo placeholder, viết observation mới hoặc quyết định không triển khai.
+- provider mất giữa activation;
+- async activation hoàn tất sau deactivation;
+- provider generation đổi/ABA;
+- callback/timer/latent task còn sau teardown;
+- retry cùng idempotency key;
+- reservation hết hạn giữa validate/commit;
+- target ngoài range/LOS hoặc authority sai;
+- actor lease despawn trước arrival;
+- capture/craft/build bị ngắt ở từng phase;
+- message duplicate/out-of-order;
+- asset/reference mất sau reparent;
+- editor restart/PIE restart và packaged launch;
+- root motion/orientation sai trong normal input;
+- rollback candidate về Blueprint path.
 
-### 18. CR-0 phải tạo ra những gì
+### 14.3. Ablation nhỏ để kiểm chứng architecture
 
-CR-0 là cầu nối giữa master plan và execution packet, không phải tên khác của “bắt đầu code”. Exit của CR-0 phải có một bộ artifact mà fresh Sol, Luna và human có thể đọc lại sau restart:
+Không cần xây framework lớn rồi mới biết có ích. W1 có thể dùng ba thí nghiệm:
 
-1. **Corpus index và evidence ledger:** reference build/version/commit, source/document path, snapshot date, claim, evidence label, observation limit và link/section/page/commit.
-2. **Provenance manifest:** origin, license/evidence, hash, allowed use, reviewer, distribution scope cho code, data, asset, audio, animation, media và placeholder.
-3. **Behavior inventory cho first slice:** movement, camera, interaction, resource, inventory HUD, success, failure, timing, retry, restart và unknowns; không giả vờ inventory toàn bộ opaque Blueprint đã xong.
-4. **Observation scripts:** normal keys, precondition, expected checkpoint, invalid target, retry, teardown và media/hash capture; có authorized observer và stop authority.
-5. **Reference/media manifest:** map/config, build identity, timestamp, input device, recording/screenshot hash và known delta; thiếu metadata thì giữ `UNKNOWN`.
-6. **Unknown register:** câu hỏi chưa thể trả lời từ static evidence, giả thuyết cạnh tranh, signal để phân biệt và task observation tương ứng.
-7. **API/ADR decisions:** neutral IDs, owner, authority, stable record/Actor lease, requires/provides, transaction semantics, version/platform spike và fallback; API vẫn là proposal cho đến CR-1.
-8. **Feature backlog và dependency graph:** 15 systems, stages, owner, prerequisite, acceptance, risk, safe parallel track và forbidden path.
-9. **Asset replacement inventory:** những gì cần self-author hoặc license rõ cho camera, animation, bow, HUD, audio/VFX, creature, building và environment; không dùng donor asset để lấp.
-10. **Gate cards:** PG-0…PG-8, test card, human visual card, failure injection và exact validation command; compile, integration, observation và parity được tách.
-11. **Packet mở CR-1/CR-2:** write-set nhỏ, expected HEAD, packet hash, non-goals, next actor/action, attempt number, stop signals và reviewer context.
+1. activate/deactivate cùng feature 100 vòng và đo duplicate/leak;
+2. thay provider generation trong test world và xác nhận dependent rebind/quiesce;
+3. chạy cùng một inventory behavior bằng BP owner rồi native owner, so exact state/event trace.
 
-Chỉ sau khi con người phê duyệt architecture, provenance, observer và first slice, root mới tạo packet `CR-0` trạng thái approved. Kế hoạch kỹ thuật local vẫn là **version 0.1 — `PROPOSED — AWAITING ARCHITECTURE APPROVAL`**; không CR stage nào đang mở, không conversion nào được ủy quyền.
+Nếu manifest tĩnh và explicit handles đủ, không xây registry động. Nếu branch-by-abstraction không rollback sạch với một pilot, dừng trước khi mở rộng. Đây là cách cho phép giả thuyết kiến trúc thất bại với chi phí nhỏ.
 
-### 19. Rủi ro, quyết định còn mở và nguồn
+---
 
-#### 19.1. Những rủi ro không được viết nhỏ đi
+## 15. Rủi ro và quyết định còn mở
 
-**Blueprint và binary opacity.** Static census, tên asset, README và commit history không cho thấy toàn bộ graph, latent timing, collision, replication, persistence, state machine hoặc balance. Native C++ ít không chứng minh behavior ít; native C++ nhiều không chứng minh normal path. Authorized observation hoặc dump có provenance mới thu hẹp được khoảng trống.
+### 15.1. Rủi ro chính
 
-**Clean-room và IP.** Không thấy `LICENSE`/`NOTICE` không chứng minh có quyền, và thấy file có thể đọc không chứng minh quyền phân phối. KYWorld được dùng như reference behavior trong phạm vi được phép, không phải donor code/asset. Legal/provenance review, original/licensed replacement và private-learning distribution decision là prerequisite; kế hoạch không đưa ra legal clearance.
+**Binary opacity.** Tên asset và Git path không cho biết toàn graph. W0 cần Blueprint/exporter manifest và Asset Registry; không bắt đầu conversion từ census.
 
-**Behavior còn thiếu.** Work, persistence, multiplayer, dungeon/boss, breeding/economy và nhiều polish detail chưa có direct evidence đủ mạnh. Chúng được đặt trong backlog hoặc requirement mới, không tự nâng từ tên asset. CR-0 phải ưu tiên unknowns có ảnh hưởng tới owner, identity, transaction và human gate.
+**Asset corruption/reference drift.** Reparent, property rename và component hierarchy có thể làm mất default dù compile xanh. Vì vậy reference parity là dimension độc lập.
 
-**Giới hạn human gate.** Người quan sát có thể bỏ sót race hiếm, timing dài, multiplayer edge hoặc state sau nhiều giờ. Một report có build/version/checkpoint/media hash là evidence cho contract đã chạy, không phải chứng minh hệ thống hoàn hảo. Lặp fresh session, failure injection và wording giới hạn claim là bắt buộc.
+**False modularity.** Nhiều plugin có thể che god component hoặc dependency qua `GetSubsystem`, cast và component discovery. Review kiểm owner/contract, không đếm folder.
 
-**Giới hạn analogy.** Cordis cung cấp vocabulary effects/coeffects và temporal/spatial composability; DeepSeek Harness cung cấp heuristic plugin/service boundary công khai; Lyra, Game Features, Modular Gameplay, GAS và UEFN chỉ là correspondence. Không nguồn nào tự cung cấp universal inverse, transaction rollback, stable identity, provider generation hay evidence ladder của Paldark. Không có private chain of thought để suy đoán.
+**Lifecycle overclaim.** Unreal native code, UObject, CDO, reflection, NetGUID và asset cooking không tương đương TypeScript closure/module cache/GC. Mục tiêu là deterministic deactivation của instance/registration, không exact binary unload.
 
-**Đánh giá tiến độ.** Git wall-clock, số file, số dòng, số plugin, thời gian command, countdown và documentation volume là các measurement khác nhau. Snapshot KYWorld **10.173 paths / 10.040 `.uasset` / 51 `.umap` / 34 `.cpp` / 36 `.h` / 3 `.cs` / khoảng 2.919 dòng native** là số liệu census, không phải completion. Paldark history và Task 55 là retrospective/process evidence; `Task 55` phải giữ `UNKNOWN`/paused vì thiếu editor build/version ID, map/config, observer timestamp và media SHA-256 cho runtime report. Không dùng compile hash hoặc header cũ để nâng human gate.
+**Polish loss.** Cùng asset không đảm bảo cùng timing nếu event order, notify, component transform hoặc input focus đổi. Mọi slice cần A/B normal-input gate.
 
-#### 19.2. Quyết định con người cần ghi thành record
+**Human capacity.** Observer có thể trở thành bottleneck. Gate phải ngắn, candidate frozen, queue rõ và metric chờ được ghi.
 
-Trước khi mở CR-0, decision record phải trả lời: authorized observer và implementer là ai; implementer có được xem donor ở mức nào; exception provenance xử lý ra sao; asset policy là placeholder, self-author hay license nào; distribution intent là gì; reference build/map/config và engine version nào; first slice có thu nhỏ hơn không; UE 5.6 lab có được chấp thuận không; human gate cadence, evidence retention, reviewer identity và stop authority là gì. Đây là quyết định về phạm vi và quyền, không phải một việc Luna tự suy ra từ task.
+**IP/distribution.** Công việc là nghiên cứu cá nhân; proprietary assets/media ở private workspace. Public docs không cấp license và không chứa asset. Bất kỳ distribution khác cần decision riêng.
 
-#### 19.3. Nguồn có thể kiểm chứng
+### 15.2. Sáu decision cần human duyệt trước W0 exit
 
-Nguồn local được dẫn như parent-workspace provenance reference, không phải public link: kế hoạch `../Documents/KYWorld/ke-hoach-tai-dung-kyworld-clean-room-cpp.md` (version 0.1, trạng thái đề xuất); `../Documents/KYWorld/claudecode_note.txt`; `../Documents/KYWorld/paper-review.txt`; `../Documents/KYWorld/LyraFramework_Overview.pdf`; và corpus `../02.Palworld/Source` cùng `../02.Palworld/Documents`. Các path này giúp người có workspace tương ứng truy trace; chúng không cấp license và không nên xuất hiện như đường dẫn máy cá nhân trong site công khai.
+1. Gold baseline là gameplay main `dc776d8f`/current tree `a6eab166`, hay nhận thêm unmerged `0fbf2517` sau A/B?
+2. Máy, fps cap, map/config và input device chuẩn cho baseline là gì?
+3. Blueprint exporter hỗ trợ node/metadata nào, version nào được pin?
+4. Evidence media private được lưu ở đâu và retention ra sao?
+5. Human gate cadence/capacity và ai có quyền approve deviation?
+6. Target engine của PaldarkKit sau parity là gì, và điều kiện nào thật sự buộc upgrade?
 
-Các nguồn public primary để kiểm chứng mechanism ở CR-0 gồm [Cordis paper repository](https://github.com/cordiverse/paper), [Cordis source](https://github.com/cordiverse/cordis), [DeepSeek Harness](https://github.com/deepseek-ai/deepseek-harness), [tài liệu kiến trúc Harness](https://raw.githubusercontent.com/deepseek-ai/deepseek-harness/master/docs/architecture.md), [Lyra Sample Game](https://dev.epicgames.com/documentation/en-us/unreal-engine/lyra-sample-game-in-unreal-engine), [Game Features and Experiences](https://dev.epicgames.com/documentation/en-us/unreal-engine/game-features-and-experiences-in-unreal-engine), [Modular Gameplay](https://dev.epicgames.com/documentation/en-us/unreal-engine/modular-gameplay-in-unreal-engine), [Gameplay Ability System](https://dev.epicgames.com/documentation/en-us/unreal-engine/gameplay-ability-system-for-unreal-engine), và [UEFN devices](https://dev.epicgames.com/documentation/en-us/fortnite/getting-started-with-devices-in-fortnite). Official docs nói cơ chế công khai; chúng không chứng minh KYWorld đã có behavior tương ứng.
+### 15.3. Stop conditions cấp chương trình
 
-Nghiên cứu nền trước đây ở [NghienCuu/paldark-composability-harness.md](/NghienCuu/paldark-composability-harness) giữ lại evidence ladder, retrospective PaldarkKit, mô hình composability và giới hạn nguồn. Sáu quyển archive, mục lục và phụ lục vẫn giữ route; root này chỉ đổi lời hứa chính sang kế hoạch KYWorld C++.
+Dừng hoặc quay lại architecture nếu reference không build/reproduce; owner không thể đơn nhất; conversion đòi move asset hàng loạt; candidate mất serialized defaults; old/new path double commit; human parity fail lặp mà không định lượng được delta; framework phình trước pilot; hoặc phải nâng engine để tiếp tục một task parity.
 
-## Kết luận
+Stop là kết quả hợp lệ. Có thể thu nhỏ unit, viết observation mới, giữ BP exception hoặc reject abstraction. Không tiếp tục chỉ vì đã đầu tư thời gian.
 
-KYWorld đáng giá vì cho chúng ta một reference về những lời hứa player-facing đã được polish ở các lát cắt cụ thể, không phải vì nó cho phép copy một architecture hay một kho asset. PaldarkKit đáng giữ vì nó đã tạo ra những boundary và bài học; cần tạm dừng mở rộng breadth để một lab sạch chứng minh behavior, failure, ownership, presentation và evidence bằng C++ độc lập.
+---
 
-Đường đi được đề xuất là quan sát → specification → lab → first slice → các domain stage → hardening → adapter. Mỗi bước có gate và stop condition; compile không được nói thay normal play, asset census không được nói thay parity, và reviewer không được nói thay human. Quyết định tiếp theo của con người là phê duyệt phạm vi, provenance, observer, version và CR-0. Cho đến khi quyết định ấy được ghi, **chưa có code conversion nào bắt đầu**.
+## 16. Hành động tiếp theo
+
+Sau khi human duyệt chuyên khảo, chỉ mở **W0 — Freeze & characterize**, chưa mở gameplay conversion:
+
+1. ghi decision baseline và xử lý riêng `origin/TestTest@0fbf2517`;
+2. tạo reference worktree bất biến và candidate branch/worktree;
+3. xác nhận UE 5.4 build, maps/config và packaged/editor launch;
+4. tạo Asset Registry/reference dump và Blueprint A/B/C/D manifest;
+5. tạo Graft graph riêng cho native source và text export của submodule; root graph hiện không thay thế graph của nested repository;
+6. quay private baseline evidence cho regression scenarios;
+7. chạy exporter pilot trên đúng một graph C/D nhỏ, không overwrite production;
+8. Sol lập packet W1 hoặc trả `BLOCKED` nếu pilot làm mất semantics/default/reference.
+
+Không có lý do kỹ thuật để bắt đầu Combat, Capture hay Work trước khi first slice và rollback method đã được chứng minh.
+
+---
+
+## 17. Kết luận
+
+KYWorld không chỉ có “nhiều feature”; nó chứa một asset/reference/presentation graph đã được bốn workstream tích hợp và polish. Giá trị ấy sẽ mất nếu conversion đồng thời đổi engine, path, architecture và gameplay. PaldarkKit không chỉ có “nhiều code”; nó chứa những bài học đúng về identity, authority, transaction và evidence, cùng bằng chứng rằng breadth và gate lớn tạo review/rework khó kiểm soát.
+
+Giải pháp không phải copy một bên sang bên kia. Giải pháp là giữ KYWorld làm control, thay từng ownership path bằng C++, đo parity đa chiều và chỉ hội tụ vào PaldarkKit sau một mốc UE 5.4 được chứng minh. Cordis cho vocabulary về effect/coeffect và lifecycle; Unreal cung cấp mechanism cục bộ; project phải tự trả phần còn thiếu bằng owner, receipt, transaction, generation, gate và evidence.
+
+Kiến trúc chỉ đứng vững khi nó cho phép ba điều cùng lúc: một feature có thể được hiểu độc lập, một thay đổi có thể được tháo hoặc rollback trong đúng boundary, và người chơi vẫn nhận cùng lời hứa. Harness chỉ đứng vững khi task mới có thể tiếp tục từ artifact sau restart, Luna biết lúc phải dừng, Sol review mà không tự bào chữa cho implementation, và human chỉ phải xác nhận những gì máy thật sự chưa thấy.
+
+Quyết định hiện tại vì vậy là đơn giản nhưng nghiêm ngặt: **duyệt hoặc sửa chuyên khảo; sau đó characterize reference; chưa code gameplay**.
+
+---
+
+# Phụ lục A — Commit landmarks của KYWorld
+
+## A.1. Bootstrap/native spine
+
+- `69f9d86b` — prototype map/widget.
+- `50b27182` — xóa prototype cũ.
+- `4f970528` — tạo `Palworld_Base`, player/controller/input/startup/native module.
+- `043d61cb` — modular player animation hierarchy.
+- `f7560a10` — `GA_Run`, `GA_Jump`, `GA_Roll` và startup grants.
+- `67bc28ba` — chuyển project lên root, materialize native/content base.
+
+## A.2. Player, item, AI và combat foundation
+
+- `88bb8eff`, `61e0e5c3`, `561a8b11`, `b8464328` — Pal base và AI.
+- `0e02adc1`, `57041ac8`, `235109f3`, `67026cc1`, `71ac2314` — item/equipment/inventory/data.
+- `c913e823`, `0db6ffff`, `1cc4cda1`, `66fc3ac0` — bow/arrow/aim/shoot.
+- `69cf16e7`, `86a7f002`, `2fffd8a2` — build/craft prototype.
+- `7b6ae73c` — WorldMap/Dreamscape integration.
+
+## A.3. Capture và production integration
+
+- `1e88b6c8`, `f5fe5ace`, `e2f7d2dd` — Pal data/inventory.
+- `ba142197`, `3208266d`, `43d9e7ea`, `0326bd13` — resource/capture/storage/profile.
+- `5c0c7828`, `d723d145`, `d5da2a82` — build on player, ability/input, material checks.
+- `f5f848b9`, `fe394cf7`, `0a342481`, `379df3ce` — production craft/minimap/workbench.
+- `69c5ad8f` — per-species startup/skill/montage integration.
+- `41baf4cc` — riding/flying completion.
+- `659eab68`, `324e400a` — start/customization flow.
+
+## A.4. Polish và packaging
+
+- `785caecf`, `a881620a`, `9d8c7c9d`, `ecab0496` — bonfire/kitchen/recipe/cooking.
+- `5378f967` — day/night/spawn box.
+- `e9214148`, `0c5d98f6` — minimap.
+- `3fa8f1ec`, `5114ed5b`, `a3f8dc95` — audio integration.
+- `73f3bd2d`, `f065b7ad` — sleep và preview camera tuning.
+- `5f8ea96b`, `3ea11482`, `e015ef35` — demolition flow.
+- `75bfbf71` — crafting Niagara.
+- `6f7bba31`, `dc776d8f` — packaging repair.
+
+---
+
+# Phụ lục B — Task packet và evidence schema
+
+## B.1. Migration unit
+
+```yaml
+id: KY-INV-STACK-001
+baseline: a6eab166
+capability: inventory.stack
+scope_allowlist:
+  blueprints: []
+  source: []
+classification:
+  retained: [A, B]
+  migrated: [C, D]
+contract:
+  scenarios: []
+  exact_state_assertions: []
+  timing_tolerances: []
+dependencies: []
+owner: null
+non_goals: []
+tool_provenance:
+  exporter_version: null
+  config_hash: null
+  input_hash: null
+  output_hash: null
+rollback:
+  checkpoint: null
+  procedure: []
+stop_conditions: []
+gates:
+  automated: []
+  editor: []
+  human: []
+status: DISCOVERED
+next_action: ""
+```
+
+## B.2. Escalation packet
+
+```yaml
+question_id: Q-KY-0001
+task: KY-INV-STACK-001
+status: BLOCKED
+expected: ""
+actual: ""
+evidence: []
+hypotheses_tried: []
+files_touched: []
+last_known_good: ""
+decision_needed: ""
+safe_options: []
+```
+
+## B.3. Human parity result
+
+```yaml
+result_id: PR-KY-INV-STACK-001
+reference_commit: a6eab166
+candidate_commit: null
+engine: 5.4
+map: null
+config: null
+hardware: null
+fps_cap: null
+observer: null
+timestamp: null
+behavior_row: KY-INV-STACK-001
+normal_input_steps: []
+state_assertions: []
+visual_checkpoints: []
+known_deltas: []
+media_sha256: []
+result: BLOCKED
+reviewer: null
+```
+
+---
+
+# Phụ lục C — Nguồn
+
+## C.1. Corpus cục bộ đã kiểm toán
+
+1. `02.Palworld/Source@a6eab166` và full Git history của main/TestTest.
+2. `02.Palworld/Documents/PalWorld_Development_Specifications_compressed.pdf` — specification gốc, text-only.
+3. `Documents/KYWorld/paper.pdf` — *A Programming Paradigm for Spatiotemporal Composability*, text-only.
+4. `Documents/KYWorld/paper-review.txt` — secondary review, chỉ dùng để đặt câu hỏi.
+5. `Documents/KYWorld/claudecode_note.txt` — ghi chú *How I Tamed Claude*.
+6. `Documents/KYWorld/guide.txt` — inventory tài nguyên/hệ thống.
+7. `Documents/KYWorld/LyraFramework_Overview.pdf` — secondary synthesis, text-only.
+8. `PaldarkKit` Git history, manifests, tests, reports và `Documents` packets.
+
+## C.2. Nguồn public primary
+
+- [Cordis paper repository](https://github.com/cordiverse/paper) và [Cordis](https://github.com/cordiverse/cordis).
+- [DeepSeek Harness](https://github.com/deepseek-ai/deepseek-harness), [architecture](https://raw.githubusercontent.com/deepseek-ai/deepseek-harness/master/docs/architecture.md), [Cordis primer](https://raw.githubusercontent.com/deepseek-ai/deepseek-harness/master/docs/cordis-primer.md) và [capability seams](https://raw.githubusercontent.com/deepseek-ai/deepseek-harness/master/docs/capability-seams.md).
+- Epic Games: [Game Features and Modular Gameplay](https://dev.epicgames.com/documentation/en-us/unreal-engine/game-features-and-modular-gameplay-in-unreal-engine), [Lyra Sample Game](https://dev.epicgames.com/documentation/en-us/unreal-engine/lyra-sample-game-in-unreal-engine), [Game Framework Component Manager](https://dev.epicgames.com/documentation/en-us/unreal-engine/game-framework-component-manager-in-unreal-engine), [Gameplay Modules](https://dev.epicgames.com/documentation/en-us/unreal-engine/gameplay-modules-in-unreal-engine), [Plugins](https://dev.epicgames.com/documentation/en-us/unreal-engine/plugins-in-unreal-engine), [Mass Entity](https://dev.epicgames.com/documentation/unreal-engine/overview-of-mass-entity-in-unreal-engine), [Subsystems](https://dev.epicgames.com/documentation/en-us/unreal-engine/programming-subsystems-in-unreal-engine), [UEFN Devices](https://dev.epicgames.com/documentation/en-us/fortnite/using-devices-in-fortnite) và [Editable Properties in Verse](https://dev.epicgames.com/documentation/en-us/fortnite/editable-properties-in-verse).
+- OpenAI: [GPT-5.6 Sol](https://developers.openai.com/api/docs/models/gpt-5.6-sol) và [GPT-5.6 Luna](https://developers.openai.com/api/docs/models/gpt-5.6-luna). Model descriptions support routing choices; project policy and gates enforce the roles.
+
+## C.3. Quy tắc đọc nguồn
+
+Primary mechanism docs chứng minh API hoặc architecture được công khai; chúng không chứng minh KYWorld/PaldarkKit đã dùng đúng mechanism. Local source chứng minh snapshot, không cấp quyền phân phối. Secondary review giải thích vocabulary, không được đứng cao hơn paper/source. Mọi claim thiếu build/version/runtime evidence giữ `UNKNOWN`.

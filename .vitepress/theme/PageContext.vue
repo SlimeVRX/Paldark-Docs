@@ -18,9 +18,11 @@ const sections: Array<[string, string]> = [
 ]
 
 const historicalPages = new Set([
+  'NghienCuu/paldark-composability-harness.md',
   'Q2-Van-De-Nghin-Nguoi/11-luat-kien-truc-paldark.md',
   'Q3-Bo-Khung/13-ban-do-module.md',
   'Q3-Bo-Khung/15-dang-ky-khong-can-file-dung-chung.md',
+  'Q6-Kien-Truc-VibeCoding/39-kien-truc-hoi-tu-vibecoding.md',
 ])
 
 const snapshotPages = new Set([
@@ -30,7 +32,7 @@ const snapshotPages = new Set([
 ])
 
 const section = computed(() => {
-  if (page.value.relativePath === 'index.md') return 'Paldark · Online book'
+  if (page.value.relativePath === 'index.md') return 'Paldark · Chuyên khảo canonical'
   if (page.value.relativePath === '00-MucLuc.md') return 'Paldark · Bản đồ đọc'
   return sections.find(([prefix]) => page.value.relativePath.startsWith(prefix))?.[1] ?? 'Paldark Docs'
 })
@@ -39,11 +41,11 @@ const tocLink = computed(() => withBase('/00-MucLuc'))
 
 const status = computed(() => {
   const path = page.value.relativePath
-  if (path === 'Q6-Kien-Truc-VibeCoding/39-kien-truc-hoi-tu-vibecoding.md') {
+  if (path === 'index.md') {
     return {
       kind: 'current',
-      label: 'Kiến trúc hiện hành',
-      detail: 'ADR-001 · APPROVED ngày 04/08/2026',
+      label: 'Nguồn quyết định hiện hành',
+      detail: 'Chuyên khảo KYWorld C++ parity · phiên bản bằng chứng 2026-08-16',
       link: '',
     }
   }
@@ -51,8 +53,8 @@ const status = computed(() => {
     return {
       kind: 'historical',
       label: 'Lớp kiến trúc lịch sử',
-      detail: 'Giữ để giải thích quá trình ra quyết định; đọc kết luận hiện hành ở ADR-001.',
-      link: withBase('/Q6-Kien-Truc-VibeCoding/39-kien-truc-hoi-tu-vibecoding'),
+      detail: 'Giữ để truy vết quá trình; không dùng để mở scope hoặc ghi đè chuyên khảo hiện hành.',
+      link: withBase('/'),
     }
   }
   if (snapshotPages.has(path)) {
@@ -76,7 +78,7 @@ const status = computed(() => {
     <div v-if="status" class="page-status" :class="`is-${status.kind}`">
       <strong>{{ status.label }}</strong>
       <span>{{ status.detail }}</span>
-      <a v-if="status.link" :href="status.link">Mở ADR-001</a>
+      <a v-if="status.link" :href="status.link">Mở chuyên khảo hiện hành</a>
     </div>
   </div>
 </template>
