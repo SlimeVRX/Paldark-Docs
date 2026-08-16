@@ -7,10 +7,10 @@ const siteUrl = 'https://slimevrx.github.io/Paldark-Docs/'
 export default withMermaid(
   defineConfig({
     lang: 'vi-VN',
-    title: 'KYWorld C++ parity — Paldark',
+    title: 'Paldark V5 — UE 5.6.1',
     titleTemplate: ':title · Paldark',
     description:
-      'Chuyên khảo tái cấu trúc KYWorld bằng C++ trên UE 5.4: composability, parity, bảo toàn polish và cộng tác Sol–Luna.',
+      'Decision package cho Paldark V5: refactor toàn bộ KYWorld trên UE 5.6.1 với Core được khóa trước, gameplay parity và human gate.',
     base: '/Paldark-Docs/',
     cleanUrls: true,
     lastUpdated: true,
@@ -22,18 +22,18 @@ export default withMermaid(
       ['meta', { property: 'og:type', content: 'website' }],
       ['meta', { property: 'og:site_name', content: 'Paldark Docs' }],
       ['meta', { property: 'og:locale', content: 'vi_VN' }],
-      ['meta', { property: 'og:title', content: 'Tái cấu trúc KYWorld bằng C++ mà không đánh mất gameplay' }],
+      ['meta', { property: 'og:title', content: 'Paldark V5 — KYWorld C++ parity trên UE 5.6.1' }],
       [
         'meta',
         {
           property: 'og:description',
-          content: 'Chuyên khảo canonical: branch-by-abstraction trên UE 5.4, parity đa chiều, feature capsule và quy trình Sol–Luna–review.',
+          content: 'Core Technical Design, gameplay dependency roadmap, Blueprint conversion standard và Completion Contract trước khi code.',
         },
       ],
       ['meta', { property: 'og:image', content: `${siteUrl}og.png` }],
       ['meta', { property: 'og:image:width', content: '1734' }],
       ['meta', { property: 'og:image:height', content: '907' }],
-      ['meta', { property: 'og:image:alt', content: 'Tái cấu trúc KYWorld bằng C++ mà không đánh mất gameplay' }],
+      ['meta', { property: 'og:image:alt', content: 'Paldark V5 — KYWorld C++ parity trên UE 5.6.1' }],
       ['meta', { name: 'twitter:card', content: 'summary_large_image' }],
       ['meta', { name: 'twitter:image', content: `${siteUrl}og.png` }],
     ],
@@ -65,10 +65,12 @@ export default withMermaid(
       },
     },
     themeConfig: {
-      siteTitle: 'Paldark — KYWorld C++ parity',
+      siteTitle: 'Paldark V5 · UE 5.6.1',
       nav: [
-        { text: 'Chuyên khảo canonical', link: '/' },
-        { text: 'Sách Paldark', link: '/00-MucLuc' },
+        { text: 'V5 · Quyết định hiện hành', link: '/V5/' },
+        { text: 'Core TDD', link: '/V5/02-core-technical-design' },
+        { text: 'Gameplay roadmap', link: '/V5/03-gameplay-roadmap' },
+        { text: 'V4 · Lưu trữ', link: '/V4/' },
         {
           text: 'Nghiên cứu & bằng chứng',
           items: [
@@ -143,7 +145,7 @@ export default withMermaid(
       skipToContentLabel: 'Đi tới nội dung',
       externalLinkIcon: true,
       footer: {
-        message: 'Chuyên khảo KYWorld C++ parity canonical và kho lưu trữ kiến trúc, evidence, giáo trình của Paldark.',
+        message: 'Paldark V5 là nguồn quyết định hiện hành; Paldark V4 được giữ như evidence và hồ sơ lịch sử.',
         copyright: 'Paldark Docs · SlimeVRX',
       },
     },

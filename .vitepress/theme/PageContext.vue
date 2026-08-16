@@ -5,6 +5,8 @@ import { useData, withBase } from 'vitepress'
 const { page } = useData()
 
 const sections: Array<[string, string]> = [
+  ['V5/', 'Paldark V5 · Decision package'],
+  ['V4/', 'Paldark V4 · Hồ sơ lưu trữ'],
   ['Q1-', 'Quyển 1 · Đọc một game'],
   ['Q2-', 'Quyển 2 · Vấn đề của nghìn người'],
   ['Q3-', 'Quyển 3 · Bộ khung'],
@@ -31,30 +33,47 @@ const snapshotPages = new Set([
   'Q6-Kien-Truc-VibeCoding/43-human-gate-adr-001-capture-to-work.md',
 ])
 
+const v4Prefixes = [
+  'Q1-',
+  'Q2-',
+  'Q3-',
+  'Q4-',
+  'Q5-',
+  'Q6-',
+  'KhoaHoc/',
+  'DanhMuc/',
+  'PhuLuc/',
+  'Templates/',
+  'NghienCuu/',
+]
+
 const section = computed(() => {
-  if (page.value.relativePath === 'index.md') return 'Paldark · Chuyên khảo canonical'
-  if (page.value.relativePath === '00-MucLuc.md') return 'Paldark · Bản đồ đọc'
+  if (page.value.relativePath === 'index.md') return 'Paldark V5 · Cổng quyết định'
+  if (page.value.relativePath === '00-MucLuc.md') return 'Paldark V4 · Bản đồ đọc lưu trữ'
   return sections.find(([prefix]) => page.value.relativePath.startsWith(prefix))?.[1] ?? 'Paldark Docs'
 })
 
-const tocLink = computed(() => withBase('/00-MucLuc'))
+const tocLink = computed(() => {
+  const path = page.value.relativePath
+  return withBase(path.startsWith('V5/') || path === 'index.md' ? '/V5/' : '/00-MucLuc')
+})
 
 const status = computed(() => {
   const path = page.value.relativePath
   if (path === 'index.md') {
     return {
       kind: 'current',
-      label: 'Nguồn quyết định hiện hành',
-      detail: 'Chuyên khảo KYWorld C++ parity · phiên bản bằng chứng 2026-08-16',
+      label: 'Paldark V5 · nguồn quyết định hiện hành',
+      detail: 'UE 5.6.1-only · PRE-CODE · Core và gameplay plan đang chờ owner duyệt',
       link: '',
     }
   }
-  if (historicalPages.has(path)) {
+  if (path.startsWith('V5/')) {
     return {
-      kind: 'historical',
-      label: 'Lớp kiến trúc lịch sử',
-      detail: 'Giữ để truy vết quá trình; không dùng để mở scope hoặc ghi đè chuyên khảo hiện hành.',
-      link: withBase('/'),
+      kind: 'current',
+      label: 'V5 · design review',
+      detail: 'Proposal trước code; chỉ decision ghi ACCEPTED BY OWNER mới là constraint đã chốt.',
+      link: withBase('/V5/07-open-decisions'),
     }
   }
   if (snapshotPages.has(path)) {
@@ -63,6 +82,19 @@ const status = computed(() => {
       label: 'Hồ sơ theo thời điểm',
       detail: 'Các trạng thái và phần trăm chỉ áp dụng cho commit được ghi trong trang.',
       link: '',
+    }
+  }
+  if (
+    path.startsWith('V4/')
+    || path === '00-MucLuc.md'
+    || historicalPages.has(path)
+    || v4Prefixes.some((prefix) => path.startsWith(prefix))
+  ) {
+    return {
+      kind: 'historical',
+      label: 'Paldark V4 · archived',
+      detail: 'Giữ để truy vết và làm evidence; không được ghi đè decision V5.',
+      link: withBase('/V5/'),
     }
   }
   return null
@@ -78,7 +110,7 @@ const status = computed(() => {
     <div v-if="status" class="page-status" :class="`is-${status.kind}`">
       <strong>{{ status.label }}</strong>
       <span>{{ status.detail }}</span>
-      <a v-if="status.link" :href="status.link">Mở chuyên khảo hiện hành</a>
+      <a v-if="status.link" :href="status.link">Mở nguồn quyết định V5</a>
     </div>
   </div>
 </template>

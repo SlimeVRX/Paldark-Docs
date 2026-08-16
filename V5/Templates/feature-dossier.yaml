@@ -1,0 +1,114 @@
+schema: PaldarkV5FeatureDossier/v2
+
+feature_id: ""
+title: ""
+status: discovered # discovered | characterized | target_approved | gate_rehearsed | ready | blocked
+parent_capability: ""
+
+player_promise: ""
+reference:
+  commit: ""
+  build_hash: ""
+  engine: "5.6.1-<P1_APPROVED_CHANGELIST>"
+  maps: []
+  profile_or_game_mode: ""
+  save_or_seed: ""
+  input_device: ""
+  fps_cap: null
+  resolution: ""
+  hardware_profile: ""
+  config_digest: ""
+
+source_inventory:
+  packages: []
+  graph_units: [] # object path + graph/function name + GUID + hash
+  native_symbols: []
+  dynamic_references: []
+  presentation_assets: []
+
+first_principles:
+  preconditions: []
+  actions: []
+  state_transitions: []
+  new_affordances: []
+  failure_and_retry_paths: []
+
+current_model:
+  state_owner: ""
+  authoritative_paths: []
+  dependencies: []
+  invariants: []
+
+target_model:
+  capability_id: ""
+  contract_version: ""
+  state_owner: ""
+  scope: ""
+  authority_role: ""
+  owned_state_keys: []
+  commands: []
+  queries: []
+  events: []
+  required_capabilities: []
+  provider_module_or_plugin: ""
+
+traceability:
+  observable_atlas:
+    - observable_id: ""
+      source: "" # regression video/card/presentation inventory/variant manifest
+      behavior_row_ids: []
+  source_surfaces:
+    - source_unit_id: "" # graph/property/default/SCS component/binding/dependency/mutation/reference
+      kind: ""
+      behavior_row_ids: []
+      non_behavior_disposition: ""
+      disposition_approver: ""
+
+behavior_rows:
+  - behavior_id: ""
+    given: []
+    when: []
+    reference_observation:
+      state: []
+      temporal: []
+      presentation: []
+      references: []
+      runtime_health: []
+    approved_target_expectation:
+      state: []
+      temporal: []
+      presentation: []
+      references: []
+      runtime_health: []
+    equivalence_class: ""
+    variants_accounted: []
+    gold_decision: preserve_reference # preserve_reference | known_reference_bug | inconclusive
+    decision_id: ""
+    deviation_id: "" # required when approved target intentionally differs
+    tolerance: {}
+    evidence: []
+
+human_gate:
+  card_id: ""
+  reference_rehearsal_result: "" # pass | fail | blocked
+  rehearsal_evidence: []
+
+migration_units:
+  - unit_id: ""
+    behavior_rows: []
+    prerequisites: []
+    write_set: []
+    forbidden_paths: []
+    rollback_switch: ""
+    human_gate_required: true
+
+unknowns: [] # each: question_id, owner, blocks_unit, evidence_needed
+non_goals: []
+stop_conditions: []
+
+approval:
+  planner: ""
+  architecture_reviewer: ""
+  product_owner: ""
+  target_approved_at: ""
+  notes: ""

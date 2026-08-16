@@ -1,0 +1,51 @@
+schema: PaldarkV5UnknownRegister/v1
+
+questions:
+  - id: Q-V5-001
+    blocks: P0
+    question: "Gold dùng main@a6eab166 hay cộng TestTest@0fbf2517?"
+  - id: Q-V5-002
+    blocks: P1
+    question: "Owner duyệt full-history fork/clone + one-way UE5.6.1 upgrade không?"
+  - id: Q-V5-003
+    blocks: P1
+    question: "Project/module/content identity có được defer rename tới sau parity không?"
+  - id: Q-V5-004
+    blocks: P1
+    question: "Tên/remote/visibility của game repository PaldarkV5 là gì?"
+  - id: Q-V5-013
+    blocks: P1
+    question: "Owner approve exact UE 5.6.1 changelist, target, compiler/SDK và plugin artifact nào?"
+  - id: Q-V5-005
+    blocks: P2
+    question: "Release target solo, listen co-op hay dedicated-ready?"
+  - id: Q-V5-006
+    blocks: P2
+    question: "Persistence scope là session, local disk hay production recovery?"
+  - id: Q-V5-007
+    blocks: P2
+    question: "Paldark-compatible là V5 contract hay binary compatibility với V4 plugins?"
+  - id: Q-V5-007A
+    blocks: P2
+    question: "Owner duyệt package/Game Feature topology và exact allowed-edge DAG không?"
+  - id: Q-V5-007B
+    blocks: P2
+    question: "Owner duyệt Player/Pal ASC host và multi-owner atomic transaction policy không?"
+  - id: Q-V5-008
+    blocks: P3
+    question: "Map nào shipping, fixture, vendor/demo hoặc dead?"
+  - id: Q-V5-009
+    blocks: P3
+    question: "Canonical playthrough/save/input/video nào là gold?"
+  - id: Q-V5-010
+    blocks: P3
+    question: "Reference bug được preserve hay sửa theo contract nào?"
+  - id: Q-V5-014
+    blocks: P3
+    question: "Hardware profile và performance/presentation tolerance nào là oracle?"
+  - id: Q-V5-011
+    blocks: P4
+    question: "Fork/commit/version nào của Soliz-Blueprint-C sẽ được qualification?"
+  - id: Q-V5-012
+    blocks: P4
+    question: "Human gate capacity và capture environment là gì?"

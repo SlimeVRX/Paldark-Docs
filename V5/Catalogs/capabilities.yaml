@@ -1,0 +1,203 @@
+schema: PaldarkV5CapabilityCatalog/v2
+
+capabilities:
+  - id: paldark.world.kernel
+    owner: World
+    capsule: PaldarkWorld
+    requires: []
+    wave: W1
+
+  - id: paldark.session.flow
+    owner: FrontendSession
+    capsule: PaldarkFrontend
+    requires: []
+    wave: W2
+
+  - id: paldark.player.profile
+    owner: PlayerProfile
+    capsule: PaldarkPlayer
+    requires: [paldark.session.flow]
+    wave: W2
+
+  - id: paldark.attributes.runtime
+    owner: Attributes
+    capsule: PaldarkAbilitySystem
+    requires: []
+    wave: W2
+    owned_state: [attack, defense, work_speed, stamina_current_max, carry_capacity, resistance, modifier_sets]
+    excludes: [effective_max_hp, current_hp, death, hunger, sleep_need, xp, level, inventory_carried_weight]
+
+  - id: paldark.progression.level
+    owner: Progression
+    capsule: PaldarkPlayer
+    requires: [paldark.attributes.runtime]
+    wave: W2
+
+  - id: paldark.survival.needs
+    owner: SurvivalNeeds
+    capsule: PaldarkPlayer
+    requires: [paldark.attributes.runtime]
+    wave: W2
+
+  - id: paldark.creature.identity
+    owner: CreatureRepository
+    capsule: PaldarkCreatures
+    requires: []
+    wave: W2
+
+  - id: paldark.player.locomotion
+    owner: Locomotion
+    capsule: PaldarkPlayer
+    requires: [paldark.player.profile, paldark.attributes.runtime]
+    wave: W3
+
+  - id: paldark.interaction.focus
+    owner: Interaction
+    capsule: PaldarkInteraction
+    requires: [paldark.player.locomotion]
+    wave: W4
+
+  - id: paldark.items.catalog
+    owner: ItemCatalog
+    capsule: PaldarkItems
+    requires: []
+    wave: W4
+
+  - id: paldark.world.resource_node
+    owner: WorldResources
+    capsule: PaldarkWorld
+    requires: [paldark.world.kernel]
+    wave: W4
+
+  - id: paldark.resource.interaction
+    owner: ResourceInteractionIntegration
+    capsule: PaldarkWorldItemsIntegration
+    requires: [paldark.world.resource_node, paldark.interaction.focus, paldark.items.catalog]
+    wave: W4
+    authoritative_state: false
+
+  - id: paldark.inventory.transaction
+    owner: Inventory
+    capsule: PaldarkItems
+    requires: [paldark.items.catalog]
+    wave: W5
+
+  - id: paldark.resource.settlement
+    owner: ResourceSettlement
+    capsule: PaldarkWorldItemsIntegration
+    requires: [paldark.resource.interaction, paldark.inventory.transaction]
+    wave: W5
+
+  - id: paldark.equipment.loadout
+    owner: Equipment
+    capsule: PaldarkItems
+    requires: [paldark.inventory.transaction, paldark.attributes.runtime]
+    wave: W5
+
+  - id: paldark.health.vitals
+    owner: Health
+    capsule: PaldarkCombat
+    requires: [paldark.attributes.runtime]
+    wave: W6
+    owned_state: [effective_max_hp, current_hp, death, max_health_modifier_set]
+    invariant: "EffectiveMaxHP and CurrentHP commit atomically in one Health revision; CurrentHP <= EffectiveMaxHP."
+
+  - id: paldark.combat.action
+    owner: Combat
+    capsule: PaldarkCombat
+    requires: [paldark.equipment.loadout, paldark.health.vitals, paldark.attributes.runtime]
+    wave: W6
+
+  - id: paldark.creature.runtime
+    owner: CreatureRepository
+    capsule: PaldarkCreatures
+    requires: [paldark.creature.identity, paldark.attributes.runtime, paldark.health.vitals]
+    wave: W7
+
+  - id: paldark.creature.behavior
+    owner: CreatureBehavior
+    capsule: PaldarkCreatures
+    requires: [paldark.creature.runtime]
+    wave: W7
+
+  - id: paldark.creature.combat
+    owner: CreatureCombatIntegration
+    capsule: PaldarkCreatureCombatIntegration
+    requires: [paldark.creature.behavior, paldark.combat.action]
+    wave: W7
+    authoritative_state: false
+
+  - id: paldark.capture.attempt
+    owner: Capture
+    capsule: PaldarkCreatures
+    requires: [paldark.creature.behavior, paldark.inventory.transaction, paldark.combat.action]
+    wave: W8
+
+  - id: paldark.creature.roster
+    owner: CreatureRepository
+    capsule: PaldarkCreatures
+    requires: [paldark.capture.attempt]
+    wave: W8
+
+  - id: paldark.creature.traversal
+    owner: CreatureTraversal
+    capsule: PaldarkCreatures
+    requires: [paldark.creature.roster, paldark.player.locomotion]
+    wave: W8
+
+  - id: paldark.production.transaction
+    owner: ProductionCoordinator
+    capsule: PaldarkProduction
+    requires: [paldark.inventory.transaction, paldark.interaction.focus]
+    wave: W9
+
+  - id: paldark.production.container
+    owner: Inventory
+    capsule: PaldarkProduction
+    requires: [paldark.production.transaction, paldark.inventory.transaction]
+    wave: W9
+
+  - id: paldark.craft.job
+    owner: Craft
+    capsule: PaldarkProduction
+    requires: [paldark.production.transaction]
+    wave: W9
+
+  - id: paldark.cook.job
+    owner: Craft
+    capsule: PaldarkProduction
+    requires: [paldark.production.transaction, paldark.survival.needs]
+    wave: W9
+
+  - id: paldark.build.structure
+    owner: Build
+    capsule: PaldarkProduction
+    requires: [paldark.production.transaction, paldark.world.kernel]
+    wave: W9
+
+  - id: paldark.world.runtime
+    owner: World
+    capsule: PaldarkWorld
+    requires: [paldark.world.kernel, paldark.world.resource_node]
+    wave: W10
+
+  - id: paldark.work.assignment
+    owner: Work
+    capsule: PaldarkProduction
+    requires: [paldark.craft.job, paldark.build.structure, paldark.creature.behavior, paldark.world.runtime]
+    wave: W10
+
+  - id: paldark.presentation.readmodel
+    owner: Presentation
+    capsule: PaldarkPresentation
+    requires: []
+    wave: W2-W11
+    authoritative_state: false
+
+scope_overlays:
+  disk_persistence:
+    decision_gate: P3
+    inject_units: [PERSISTENCE-001, PROFILE-SAVE-001, INV-SAVE-001, RESOURCE-SAVE-001, PAL-SAVE-001, CAPTURE-SAVE-001, PROD-SAVE-001, WORLD-SAVE-001, SAVE-MIGRATION-001]
+  listen_or_dedicated_network:
+    decision_gate: P3
+    inject_units: [NET-001, SESSION-NET-001, PLAYER-NET-001, INV-NET-001, COMBAT-NET-001, PAL-NET-001, PROD-NET-001, WORLD-NET-001, RECONNECT-001]

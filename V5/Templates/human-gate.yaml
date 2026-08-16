@@ -1,0 +1,61 @@
+schema: PaldarkV5HumanGate/v3
+
+gate_id: ""
+feature_id: ""
+behavior_row_ids: []
+phase: reference_rehearsal # reference_rehearsal | candidate_acceptance
+expectation_source: reference_observation # reference_observation | approved_target_expectation
+decision_id: ""
+deviation_id: ""
+
+build:
+  commit: ""
+  artifact_hash: ""
+  engine: "5.6.1-<P1_APPROVED_CHANGELIST>"
+  map: ""
+  profile_or_game_mode: ""
+  config_digest: ""
+
+environment:
+  save_or_seed: ""
+  input_device: ""
+  fps_cap: null
+  resolution: ""
+  hardware_profile: ""
+
+preconditions: []
+steps:
+  - step: 1
+    action: ""
+    reference_expected:
+      state_or_ui: ""
+      animation_camera: ""
+      audio_vfx: ""
+      timing_or_tolerance: ""
+    candidate_expected:
+      state_or_ui: ""
+      animation_camera: ""
+      audio_vfx: ""
+      timing_or_tolerance: ""
+    capture: ""
+
+failure_cases: []
+reset_procedure: []
+expected_logs: []
+correlation_rule: "one root correlation id from input to committed state and presentation"
+
+report:
+  tester: ""
+  verdict: "" # pass | fail | blocked
+  last_correct_step: null
+  first_wrong_observation: ""
+  timestamp_or_correlation_id: ""
+  reproduced_twice: false
+  media_paths: []
+  state_correctness_notes: ""
+  game_feel_notes: ""
+  environment_deviation: ""
+
+evidence:
+  digest: ""
+  ledger_update: ""

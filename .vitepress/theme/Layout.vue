@@ -64,9 +64,9 @@ onBeforeUnmount(() => {
 
     <template #sidebar-nav-after>
       <div class="book-stats" aria-label="Thống kê sách">
-        <span>6 quyển</span>
-        <span>46 chương</span>
-        <span>69 trang</span>
+        <span>V5 · design review</span>
+        <span>V4 · 46 chương</span>
+        <span>82 trang Markdown</span>
       </div>
     </template>
   </Layout>
