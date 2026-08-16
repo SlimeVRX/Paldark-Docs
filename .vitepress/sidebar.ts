@@ -7,8 +7,9 @@ export const bookSidebar: DefaultTheme.SidebarItem[] = [
     text: 'Bắt đầu',
     collapsed: false,
     items: [
-      page('Bài nghiên cứu canonical', '/'),
-      page('Kho lưu trữ chương và mục lục', '/00-MucLuc'),
+      page('Kế hoạch KYWorld C++', '/'),
+      page('Nền nghiên cứu composability', '/NghienCuu/paldark-composability-harness'),
+      page('Sách Paldark và mục lục', '/00-MucLuc'),
       page('Kiến trúc hiện hành · ADR-001', '/Q6-Kien-Truc-VibeCoding/39-kien-truc-hoi-tu-vibecoding'),
     ],
   },

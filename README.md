@@ -1,12 +1,13 @@
 # Paldark Docs
 
-Paldark Docs hiện có một bài nghiên cứu canonical ở trang chủ: **Paldark: từ scaffolding tính năng đến gameplay có thể kiểm chứng**. Bài viết hợp nhất chẩn đoán 15 hệ thống, evidence ladder, mô hình component, clean-room reconstruction và harness Human/Sol/Luna; các chương cũ vẫn được giữ như archive/reference corpus.
+Paldark Docs hiện có kế hoạch canonical ở trang chủ: **Tái dựng KYWorld bằng C++ — từ hành vi đã quan sát đến gameplay có thể kiểm chứng**. Kế hoạch giải thích vì sao tạm dừng mở rộng PaldarkKit, cách dùng KYWorld như behavioral reference trong clean-room lab, lộ trình CR-0…CR-8, các gate human và điều kiện adapter tích hợp về sau. [Nghiên cứu composability và harness](NghienCuu/paldark-composability-harness.md) được giữ như nền tảng bằng chứng; sáu quyển cũ vẫn là archive/reference corpus.
 
 Đọc tại: **https://slimevrx.github.io/Paldark-Docs/**
 
 ## Nội dung
 
-- bài nghiên cứu canonical ở index.md
+- kế hoạch tái dựng KYWorld C++ canonical ở index.md
+- nghiên cứu composability/harness ở NghienCuu/paldark-composability-harness.md
 - 6 quyển, 46 chương chính làm kho lưu trữ và nguồn truy vết
 - giáo trình thực hành và danh mục sống
 - phụ lục nguồn, bằng chứng, ADR, template và câu hỏi mở

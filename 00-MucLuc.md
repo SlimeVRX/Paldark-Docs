@@ -1,8 +1,18 @@
-# Thiết kế Paldark — Mục lục
+# Paldark — Mục lục và đường đọc
 
 Một mục lục thường chỉ cho biết bài nào nằm ở đâu. Mục lục của Paldark còn phải cho thấy vì sao bài sau cần bài trước, bởi cuốn sách này theo đuổi một câu hỏi xuyên suốt: **làm sao để rất nhiều người, hoặc rất nhiều AI agent, cùng dựng lại một game như Palworld mà công việc của họ vẫn ghép được vào nhau?**
 
 Ta sẽ không nhảy thẳng vào module và pipeline. Trước hết, ta học cách đọc một game từ cảm giác người chơi; sau đó nhìn những vết nứt xuất hiện khi nhiều người cùng viết; cuối cùng mới đóng các kết luận ấy thành hợp đồng, quyền ghi, test và CI. Bạn có thể nhảy vào giữa để tra cứu, nhưng đọc tuần tự sẽ giúp những quyết định tưởng như cứng nhắc trở nên có nguyên nhân.
+
+## Tài liệu ưu tiên
+
+Nếu bạn đến đây để hiểu quyết định hiện tại, hãy đọc theo thứ tự này:
+
+1. [Kế hoạch tái dựng KYWorld bằng C++](/) — trang canonical: vì sao pause PaldarkKit, clean-room lab, CR-0…CR-8, ownership, polish và điều kiện tích hợp.
+2. [Nền nghiên cứu composability và harness](/NghienCuu/paldark-composability-harness) — bằng chứng, mô hình effects/coeffects, retrospective và các giới hạn đã dùng để lập kế hoạch.
+3. [Sáu quyển sách Paldark](#quyển-1--đọc-một-game) — archive/reference corpus từ cách đọc trải nghiệm đến kiến trúc, gameplay, lộ trình và hợp tác người–AI.
+
+Root plan là lời hứa chính của site; nghiên cứu và sáu quyển giải thích, cung cấp provenance hoặc giữ lịch sử. Các route archive bên dưới không bị đổi để những liên kết cũ tiếp tục tra cứu được.
 
 ## Quyển 1 — Đọc một game
 
