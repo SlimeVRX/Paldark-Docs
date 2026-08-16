@@ -7,10 +7,10 @@ const siteUrl = 'https://slimevrx.github.io/Paldark-Docs/'
 export default withMermaid(
   defineConfig({
     lang: 'vi-VN',
-    title: 'Paldark Docs',
-    titleTemplate: ':title · Paldark Docs',
+    title: 'Paldark — Gameplay có thể kiểm chứng',
+    titleTemplate: ':title · Paldark',
     description:
-      'Sách kiến trúc game Paldark: từ trải nghiệm Palworld tới kiến trúc modular, Unreal Engine và hợp tác đa tác nhân.',
+      'Bài nghiên cứu Paldark về evidence ladder, composability, clean-room reconstruction và gameplay có thể kiểm chứng.',
     base: '/Paldark-Docs/',
     cleanUrls: true,
     lastUpdated: true,
@@ -22,18 +22,18 @@ export default withMermaid(
       ['meta', { property: 'og:type', content: 'website' }],
       ['meta', { property: 'og:site_name', content: 'Paldark Docs' }],
       ['meta', { property: 'og:locale', content: 'vi_VN' }],
-      ['meta', { property: 'og:title', content: 'Paldark Docs — Sách kiến trúc game đa tác nhân' }],
+      ['meta', { property: 'og:title', content: 'Paldark — Gameplay có thể kiểm chứng' }],
       [
         'meta',
         {
           property: 'og:description',
-          content: 'Toàn bộ tài liệu Paldark được biên soạn thành một cuốn sách kỹ thuật trực tuyến.',
+          content: 'Bài nghiên cứu canonical về evidence, component, clean-room reconstruction và harness khởi động lại an toàn.',
         },
       ],
       ['meta', { property: 'og:image', content: `${siteUrl}og.png` }],
       ['meta', { property: 'og:image:width', content: '1731' }],
-      ['meta', { property: 'og:image:height', content: '877' }],
-      ['meta', { property: 'og:image:alt', content: 'Paldark Docs — Thiết kế game cho nhiều người và AI cùng xây' }],
+      ['meta', { property: 'og:image:height', content: '909' }],
+      ['meta', { property: 'og:image:alt', content: 'Paldark — Gameplay có thể kiểm chứng' }],
       ['meta', { name: 'twitter:card', content: 'summary_large_image' }],
       ['meta', { name: 'twitter:image', content: `${siteUrl}og.png` }],
     ],
@@ -65,10 +65,10 @@ export default withMermaid(
       },
     },
     themeConfig: {
-      siteTitle: 'Paldark Docs',
+      siteTitle: 'Paldark — Bài nghiên cứu',
       nav: [
-        { text: 'Đọc sách', link: '/' },
-        { text: 'Mục lục', link: '/00-MucLuc' },
+        { text: 'Bài nghiên cứu', link: '/' },
+        { text: 'Kho lưu trữ', link: '/00-MucLuc' },
         {
           text: 'Tra cứu',
           items: [
@@ -141,7 +141,7 @@ export default withMermaid(
       skipToContentLabel: 'Đi tới nội dung',
       externalLinkIcon: true,
       footer: {
-        message: 'Tài liệu kiến trúc và giáo trình kỹ thuật của dự án Paldark.',
+        message: 'Bài nghiên cứu canonical và kho lưu trữ kiến trúc, evidence, giáo trình của Paldark.',
         copyright: 'Paldark Docs · SlimeVRX',
       },
     },
