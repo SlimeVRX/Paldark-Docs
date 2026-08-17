@@ -4,17 +4,35 @@ const page = (text: string, link: string): DefaultTheme.SidebarItem => ({ text, 
 
 export const bookSidebar: DefaultTheme.SidebarItem[] = [
   {
-    text: 'Bắt đầu',
+    text: 'Paldark V5 · Design review',
     collapsed: false,
     items: [
-      page('Chuyên khảo canonical', '/'),
-      page('Tư liệu nghiên cứu · lưu trữ', '/NghienCuu/paldark-composability-harness'),
-      page('Sách Paldark và mục lục', '/00-MucLuc'),
-      page('Hồ sơ kiến trúc lịch sử · ADR-001', '/Q6-Kien-Truc-VibeCoding/39-kien-truc-hoi-tu-vibecoding'),
+      page('Cổng quyết định V5', '/'),
+      page('Hiến chương & sổ quyết định', '/V5/'),
+      page('Project & baseline UE 5.6.1', '/V5/01-project-baseline-ue561'),
+      page('Core Technical Design', '/V5/02-core-technical-design'),
+      page('Gameplay dependency roadmap', '/V5/03-gameplay-roadmap'),
+      page('Feature Dossier & Human Gate', '/V5/04-feature-dossier-human-gate'),
+      page('Blueprint→C++ conversion', '/V5/05-blueprint-conversion'),
+      page('Completion Contract', '/V5/06-completion-contract'),
+      page('Quyết định cần người duyệt', '/V5/07-open-decisions'),
+      page('Catalog V5 máy đọc được', '/V5/Catalogs/'),
+      page('Mẫu V5 máy đọc được', '/V5/Templates/'),
     ],
   },
   {
-    text: 'Quyển 1 · Đọc một game',
+    text: 'Paldark V4 · Lưu trữ',
+    collapsed: true,
+    items: [
+      page('Cổng lưu trữ V4', '/V4/'),
+      page('Chuyên khảo KYWorld UE 5.4', '/V4/kyworld-cpp-parity-ue54'),
+      page('Sáu quyển Paldark V4', '/00-MucLuc'),
+      page('Tư liệu composability', '/NghienCuu/paldark-composability-harness'),
+      page('ADR-001 lịch sử', '/Q6-Kien-Truc-VibeCoding/39-kien-truc-hoi-tu-vibecoding'),
+    ],
+  },
+  {
+    text: 'V4 · Quyển 1 · Đọc một game',
     collapsed: true,
     items: [
       page('01 · Nhìn một game thì nhìn cái gì', '/Q1-Doc-Mot-Game/01-nhin-mot-game-thi-nhin-cai-gi'),
@@ -25,7 +43,7 @@ export const bookSidebar: DefaultTheme.SidebarItem[] = [
     ],
   },
   {
-    text: 'Quyển 2 · Vấn đề nghìn người',
+    text: 'V4 · Quyển 2 · Vấn đề nghìn người',
     collapsed: true,
     items: [
       page('06 · Vì sao codebase vỡ', '/Q2-Van-De-Nghin-Nguoi/06-vi-sao-codebase-vo-khi-dong-nguoi'),
@@ -37,7 +55,7 @@ export const bookSidebar: DefaultTheme.SidebarItem[] = [
     ],
   },
   {
-    text: 'Quyển 3 · Bộ khung',
+    text: 'V4 · Quyển 3 · Bộ khung',
     collapsed: true,
     items: [
       page('12 · Khái niệm và quyền ghi', '/Q3-Bo-Khung/12-danh-muc-khai-niem-va-quyen-ghi'),
@@ -52,7 +70,7 @@ export const bookSidebar: DefaultTheme.SidebarItem[] = [
     ],
   },
   {
-    text: 'Quyển 4 · Dựng lại Palworld',
+    text: 'V4 · Quyển 4 · Dựng lại Palworld',
     collapsed: true,
     items: [
       page('20 · Nền và cách đọc', '/Q4-Dung-Lai-Palworld/20-nen-va-cach-doc-quyen-nay'),
@@ -74,7 +92,7 @@ export const bookSidebar: DefaultTheme.SidebarItem[] = [
     ],
   },
   {
-    text: 'Quyển 5 · Lộ trình và giáo trình',
+    text: 'V4 · Quyển 5 · Lộ trình và giáo trình',
     collapsed: true,
     items: [
       page('37 · Độ phức tạp và lộ trình', '/Q5-Lo-Trinh/37-do-phuc-tap-va-lo-trinh'),
@@ -82,7 +100,7 @@ export const bookSidebar: DefaultTheme.SidebarItem[] = [
     ],
   },
   {
-    text: 'Quyển 6 · VibeCoding đa tác nhân',
+    text: 'V4 · Quyển 6 · VibeCoding đa tác nhân',
     collapsed: true,
     items: [
       page('39 · Kiến trúc hội tụ', '/Q6-Kien-Truc-VibeCoding/39-kien-truc-hoi-tu-vibecoding'),

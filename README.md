@@ -1,12 +1,14 @@
 # Paldark Docs
 
-Paldark Docs có một nguồn quyết định canonical ở trang chủ: **Tái cấu trúc KYWorld bằng C++ mà không đánh mất gameplay**. Chuyên khảo hợp nhất source audit, chronology 539 commit, retrospective PaldarkKit, Cordis/DeepSeek Harness, Lyra/UEFN, kiến trúc feature capsule, branch-by-abstraction, parity gates và quy trình Sol–Luna–fresh review. Sáu quyển, ADR và route nghiên cứu cũ là archive/reference corpus; chúng không tự mở scope triển khai.
+Paldark Docs tách rõ hai thế hệ. **Paldark V5** là nguồn quyết định hiện hành cho một target duy nhất UE 5.6.1: full-project seed từ KYWorld, Core Technical Design, gameplay dependency roadmap, Feature Dossier/Human Gate và Completion Contract. **Paldark V4** gồm chuyên khảo UE 5.4, sáu quyển, ADR và snapshot cũ; toàn bộ được giữ làm archive/evidence và không tự mở scope implementation mới.
 
 Đọc tại: **https://slimevrx.github.io/Paldark-Docs/**
 
 ## Nội dung
 
-- chuyên khảo KYWorld C++ parity canonical ở index.md
+- cổng chọn phiên bản ở `index.md`
+- decision package V5 trong `V5/`
+- hồ sơ V4 trong `V4/` và các route sách cũ được giữ nguyên
 - route nghiên cứu cũ ở NghienCuu/paldark-composability-harness.md được giữ như trang lưu trữ/link compatibility
 - 6 quyển, 46 chương chính làm kho lưu trữ và nguồn truy vết
 - giáo trình thực hành và danh mục sống

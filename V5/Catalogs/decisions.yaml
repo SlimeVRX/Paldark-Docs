@@ -1,0 +1,54 @@
+schema: PaldarkV5DecisionRegister/v1
+version: 2026-08-16
+
+decisions:
+  - id: V5-ADR-001
+    status: accepted_by_owner
+    statement: "Paldark V5 chỉ build và chạy trên Unreal Engine 5.6.1; không có runtime/backport path 5.4."
+    owner_evidence: "Owner statement: toàn bộ code chỉ chạy ở Unreal 5.6.1."
+    observed_candidate_build: "Installed Launcher Build.version: 5.6.1, CL 44394996; exact lock remains pending P1 approval."
+
+  - id: V5-ADR-002
+    status: recommended
+    statement: "Game repo V5 là full-history fork/clone của KYWorld, one-way upgrade rồi refactor tại chỗ; historyless snapshot không đạt P1."
+    rejects: [blank_project_selective_copy]
+
+  - id: V5-ADR-003
+    status: recommended
+    statement: "Archive 5.4 bất biến; gold và candidate đều sinh từ upgraded UE 5.6.1 tag."
+
+  - id: V5-ADR-004
+    status: proposed
+    statement: "PaldarkKit V4 là donor; PaldarkV5 là target codebase duy nhất, không có second convergence."
+
+  - id: V5-ADR-005
+    status: proposed
+    statement: "Capability + single state owner là semantic unit; plugin chỉ là package/lifecycle boundary."
+
+  - id: V5-ADR-006
+    status: proposed
+    statement: "Core chỉ chứa universal primitives; domain contract ở semantic owner; dependency public/acyclic được phép; bidirectional seam ở integration leaf."
+
+  - id: V5-ADR-007
+    status: proposed
+    statement: "Lifecycle receipt chỉ tháo installation effect; committed gameplay dùng typed transaction/compensation."
+
+  - id: V5-ADR-008
+    status: proposed
+    statement: "GAS là action/effect provider; Inventory/Capture/Build/Persistence giữ domain transaction riêng."
+
+  - id: V5-ADR-009
+    status: proposed
+    statement: "Data policy hybrid: manifest/ADR/evidence canonical text; designer data/presentation canonical Unreal asset có deterministic text index."
+
+  - id: V5-ADR-010
+    status: proposed
+    statement: "Mọi feature có dossier + gold human rehearsal trước code; task branch tự do trong approved target/write-set."
+
+  - id: V5-ADR-011
+    status: proposed
+    statement: "Soliz-Blueprint-C là pinned project-local Editor staging tool: fixture-only trước TQ0, representative pilot sau TQ0, general gameplay conversion/cutover chỉ sau P4; generated output không là parity evidence."
+
+  - id: V5-ADR-012
+    status: proposed
+    statement: "Full completion yêu cầu zero authoritative Blueprint exception và closed-world certificate."

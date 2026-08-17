@@ -1,0 +1,97 @@
+schema: PaldarkV5OwnershipCatalog/v2
+
+state:
+  - key: session.flow
+    owner: FrontendSession
+    scope: game_instance
+  - key: player.identity_profile
+    owner: PlayerProfile
+    scope: player_state
+  - key: attributes.combat_mobility_work_modifiers
+    owner: Attributes
+    scope: actor_or_record
+    includes: [attack, defense, work_speed, stamina_current_max, carry_capacity, resistance, modifier_sets]
+    excludes: [effective_max_hp, current_hp, death, hunger, sleep_need, xp, level, inventory_carried_weight]
+  - key: progression.xp_level
+    owner: Progression
+    scope: progression_subject
+  - key: survival.hunger_sleep
+    owner: SurvivalNeeds
+    scope: actor_or_record
+  - key: player.transform_movement
+    owner: Locomotion
+    scope: pawn
+  - key: interaction.focus_target
+    owner: Interaction
+    scope: player
+  - key: items.definitions
+    owner: ItemCatalog
+    scope: product
+  - key: inventory.quantities_slots_carried_weight
+    owner: Inventory
+    scope: container
+  - key: equipment.loadout
+    owner: Equipment
+    scope: player_or_creature
+  - key: combat.action_attack
+    owner: Combat
+    scope: actor
+  - key: health.effective_max_current_hp_death
+    owner: Health
+    scope: actor
+    includes: [effective_max_hp, current_hp, death, max_health_modifier_set]
+  - key: creature.record_party_palbox
+    owner: CreatureRepository
+    scope: player
+  - key: creature.active_actor_lease
+    owner: CreatureRepository
+    scope: world
+  - key: creature.ai_intent
+    owner: CreatureBehavior
+    scope: actor
+  - key: capture.attempt_outcome
+    owner: Capture
+    scope: transaction
+    durability: conditional_by_Q-V5-006
+    session_only: in_memory
+    local_disk_or_production_durable: journal_before_participant_commit
+  - key: production.reservation_transaction
+    owner: ProductionCoordinator
+    scope: transaction
+    durability: conditional_by_Q-V5-006
+    session_only: in_memory
+    local_disk_or_production_durable: journal_before_participant_commit
+  - key: craft.job_recipe_progress
+    owner: Craft
+    scope: world
+  - key: build.structure_placement
+    owner: Build
+    scope: world
+  - key: work.assignment_progress
+    owner: Work
+    scope: world
+  - key: world.resource_node_state
+    owner: WorldResources
+    scope: world
+  - key: resource.settlement_transaction
+    owner: ResourceSettlement
+    scope: transaction
+    durability: conditional_by_Q-V5-006
+    session_only: in_memory
+    local_disk_or_production_durable: journal_before_participant_commit
+  - key: world.clock_spawn
+    owner: World
+    scope: world
+  - key: presentation.view_state
+    owner: Presentation
+    scope: local_player
+    canonical_gameplay_state: false
+
+mutation_rules:
+  - "Attributes never owns effective max/current HP, death, hunger/sleep need, XP/level, or Inventory carried weight; those belong to Health, SurvivalNeeds, Progression, and Inventory respectively."
+  - "Locomotion requests stamina consumption/recovery from Attributes; it never writes stamina."
+  - "Equipment requests modifier-set changes from Attributes; it never writes derived stats."
+  - "Combat requests committed damage from Health; it never writes HP/death."
+  - "CreatureCombatIntegration requests Combat actions; it owns no attack or damage state."
+  - "ResourceSettlement owns reservation/commit-decision state only; WorldResources owns node state and Inventory owns item quantities."
+  - "ProductionCoordinator owns reservation/commit-decision state only; Craft owns craft jobs, Build owns structures, and Inventory owns quantities/slots."

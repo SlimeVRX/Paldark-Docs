@@ -1,0 +1,67 @@
+{
+  "schema": "PaldarkV5ToolchainLock/v2",
+  "status": "PROPOSED_PENDING_P1",
+  "engine": {
+    "major": 5,
+    "minor": 6,
+    "patch": 1,
+    "changelist": 44394996,
+    "compatibleChangelist": 43139311,
+    "branch": "++UE5+Release-5.6",
+    "distribution": "Epic Games Launcher"
+  },
+  "target": {
+    "platform": "Win64",
+    "compiler": "Visual Studio 2022",
+    "windowsSdk": "TO_BE_PINNED"
+  },
+  "plugins": [],
+  "converters": {
+    "integrationMode": "project_local_editor_plugins",
+    "qualificationHost": "TO_BE_PINNED",
+    "runtimeModuleDependencyAllowed": false,
+    "profiles": {
+      "production_extraction": {
+        "profileId": "production_extraction_v1",
+        "settings": {
+          "Tolerance": false,
+          "AutoGenerate": false,
+          "OfflineTranslation": false,
+          "LLMBundle": true,
+          "StagingOnly": true
+        },
+        "settingsDigest": "TO_BE_QUALIFIED"
+      },
+      "isolated_translator_qualification": {
+        "profileId": "isolated_translator_qualification_v1",
+        "settings": {
+          "Tolerance": false,
+          "AutoGenerate": false,
+          "OfflineTranslation": true,
+          "LLMBundle": true,
+          "StagingOnly": true,
+          "ProductionAdoptionAllowed": false
+        },
+        "settingsDigest": "TO_BE_QUALIFIED"
+      }
+    },
+    "bpScaffold": {
+      "repository": "https://github.com/SlimeVRX/Soliz-Blueprint-C",
+      "commit": "TO_BE_QUALIFIED",
+      "pluginPath": "Plugins/BPScaffold",
+      "qualificationCertificate": "TO_BE_QUALIFIED"
+    },
+    "nodeToCode": {
+      "version": "1.2.2",
+      "pluginPath": "Plugins/NodeToCode",
+      "commitOrArtifactDigest": "TO_BE_PINNED"
+    },
+    "sourcify": {
+      "enabled": false,
+      "version": "1.4.876",
+      "pluginPath": "Plugins/Sourcify",
+      "artifactDigest": "NOT_PROVIDED",
+      "licenseEvidence": "NOT_PROVIDED"
+    }
+  }
+}

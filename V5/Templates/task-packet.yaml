@@ -1,0 +1,106 @@
+schema: PaldarkV5TaskPacket/v3
+
+task_id: ""
+feature_id: ""
+unit_id: ""
+title: ""
+status: proposed # proposed | approved | implementing | automated_pass | human_gate | accepted | blocked
+
+outcome: ""
+behavior_row_ids: []
+prerequisite_certificate_ids: []
+
+reference:
+  build_hash: ""
+  maps: []
+  setup_fixture: ""
+  evidence: []
+
+architecture:
+  capability_id: ""
+  contract_version: ""
+  current_owner: ""
+  target_owner: ""
+  required_capabilities: []
+  invariants: []
+  commands: []
+  queries: []
+  events: []
+
+scope:
+  allowed_paths: []
+  forbidden_paths: []
+  protected_asset_paths: []
+  protected_defaults: []
+  public_api_delta: none # none | separate_adr_required
+  explicitly_out_of_scope: []
+
+conversion:
+  qualification_certificate: "" # exact TQ0 result digest
+  source_units:
+    - source_unit_id: ""
+      object_path: ""
+      asset_class: ""
+      package_hash: ""
+      graph_name: ""
+      graph_guid: ""
+      graph_hash: ""
+      node_count: 0
+      property_default_digest: ""
+      scs_component_digest: ""
+      binding_digest: ""
+      dependency_digest: ""
+      surface_manifest_path: ""
+      surface_manifest_digest: ""
+  toolchain:
+    bpscaffold_commit: ""
+    nodetocode_version_or_commit: ""
+    sourcify_artifact_digest: "" # blank only when explicitly disabled
+  profile_id: "" # production_extraction_v1 for normal feature export
+  profile_settings_digest: ""
+  staging_output: ""
+  translator_manifest:
+    path: ""
+    digest: ""
+    totals:
+      recognized: 0
+      partial: 0
+      unsupported: 0
+      todo: 0
+    unit_records:
+      - source_unit_id: ""
+        surface_id: ""
+        surface_kind: "" # graph | node | property_default | scs_component | binding | dependency | anim_graph
+        status: "" # recognized | partial | unsupported
+        handler_or_reason: ""
+  unsupported_surfaces: []
+  provenance_manifest: ""
+  native_target: ""
+  authoritative_switch: ""
+  rollback_switch: ""
+  legacy_retirement_condition: ""
+
+acceptance:
+  automated: []
+  editor: []
+  human_gate_id: ""
+  parity_dimensions: [state, temporal, presentation, references, runtime_health]
+  upstream_regression: []
+
+stop_conditions: []
+escalation_questions: []
+
+handoff:
+  candidate_commit: ""
+  build_hash: ""
+  test_result_digest: ""
+  evidence_paths: []
+  coverage_ledger_delta: ""
+  known_deviations: []
+
+approval:
+  planner: ""
+  architecture_approved_at: ""
+  implementer: ""
+  fresh_reviewer: ""
+  product_owner_gate: ""

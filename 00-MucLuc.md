@@ -1,4 +1,8 @@
-# Paldark — Mục lục và đường đọc
+# Paldark V4 — Mục lục và đường đọc lưu trữ
+
+::: warning Trạng thái phiên bản
+Sáu quyển dưới đây là corpus Paldark V4. Chúng được giữ để học và truy vết, nhưng [Paldark V5](/V5/) là nguồn quyết định hiện hành cho project UE 5.6.1.
+:::
 
 Một mục lục thường chỉ cho biết bài nào nằm ở đâu. Mục lục của Paldark còn phải cho thấy vì sao bài sau cần bài trước, bởi cuốn sách này theo đuổi một câu hỏi xuyên suốt: **làm sao để rất nhiều người, hoặc rất nhiều AI agent, cùng dựng lại một game như Palworld mà công việc của họ vẫn ghép được vào nhau?**
 
@@ -8,11 +12,12 @@ Ta sẽ không nhảy thẳng vào module và pipeline. Trước hết, ta học
 
 Nếu bạn đến đây để hiểu quyết định hiện tại, hãy đọc theo thứ tự này:
 
-1. [Tái cấu trúc KYWorld bằng C++ mà không đánh mất gameplay](/) — chuyên khảo canonical: source audit, chronology, retrospective, lý thuyết composability, branch-by-abstraction, parity, backlog và harness Sol–Luna.
-2. [Tư liệu nghiên cứu composability và harness](/NghienCuu/paldark-composability-harness) — route lưu trữ để giữ liên kết cũ; nội dung hiện hành đã được hợp nhất vào chuyên khảo.
-3. [Sáu quyển sách Paldark](#quyển-1--đọc-một-game) — archive/reference corpus từ cách đọc trải nghiệm đến kiến trúc, gameplay, lộ trình và hợp tác người–AI.
+1. [Paldark V5](/V5/) — hiến chương, Core Technical Design, gameplay roadmap và Completion Contract hiện hành.
+2. [Chuyên khảo KYWorld UE 5.4](/V4/kyworld-cpp-parity-ue54) — proposal canonical cũ, nay là evidence/archive.
+3. [Tư liệu nghiên cứu composability và harness](/NghienCuu/paldark-composability-harness) — nguồn nghiên cứu lịch sử.
+4. [Sáu quyển sách Paldark](#quyển-1--đọc-một-game) — corpus V4 từ cách đọc trải nghiệm đến kiến trúc, gameplay, lộ trình và hợp tác người–AI.
 
-Chuyên khảo ở root là nguồn quyết định duy nhất; sáu quyển, ADR, snapshot và route nghiên cứu giữ provenance/lịch sử. Các route archive bên dưới không bị đổi để những liên kết cũ tiếp tục tra cứu được, nhưng không được dùng để tự động mở scope mới.
+Các route V4 bên dưới không bị đổi để liên kết cũ tiếp tục tra cứu được. Chúng không được tự động mở scope hoặc ghi đè ADR V5.
 
 ## Quyển 1 — Đọc một game
 
@@ -132,7 +137,7 @@ Phụ lục là nơi cuốn sách để lộ đường chỉ khâu của mình. 
 ## Trạng thái
 
 ::: info Lưu ý biên tập
-Phần dưới là snapshot lịch sử theo commit, không phải trạng thái hiện hành. Nguồn quyết định hiện tại là [chuyên khảo KYWorld C++ parity](/); ADR-001 và hồ sơ ở Chương 36, 42, 43 được giữ để truy vết quá trình.
+Phần dưới là snapshot lịch sử theo commit, không phải trạng thái hiện hành. Nguồn quyết định hiện tại là [Paldark V5](/V5/); ADR-001 và hồ sơ ở Chương 36, 42, 43 được giữ để truy vết quá trình.
 :::
 
 Snapshot kiểm toán PR #135–#157 là `5e70218d`; mốc #178 được static-audit là `09e9b5e7`; vertical spine mới nằm ở `61c3aaac`. Sau #157, điểm ước lượng là 56,7% engineering, 7,0% normal-play path và 9,5% Palworld parity; ở #178 là 61,9%, 15,0% và 12,0%; sau `61c3aaac` là 65,9%, 25,7% và 14,2%. Các điểm có sai số ±5; cột normal-play sau `61c3aaac` mới là static path coverage và chưa thay thế human runtime acceptance.

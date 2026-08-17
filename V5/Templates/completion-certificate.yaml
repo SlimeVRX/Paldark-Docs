@@ -1,0 +1,153 @@
+schema: PaldarkV5CompletionCertificate/v2
+
+certificate: KYWORLD_CPP_PALDARK_V5_COMPLETE
+status: draft # draft | complete | hybrid | parity_with_deviations | failed
+
+scope:
+  persistence: "" # session_only | local_disk | production_durable
+  network: "" # solo | listen | dedicated
+  topology: ""
+  decision_ids: []
+
+reference:
+  commit: ""
+  build_hash: ""
+candidate:
+  commit: ""
+  build_hash: ""
+engine: "5.6.1-<P1_APPROVED_CHANGELIST>"
+platform: Win64
+
+digests:
+  evidence_manifest: ""
+  field_source_map: ""
+  scope_decisions: ""
+  unknown_register: ""
+  tracked_inventory: ""
+  package_inventory: ""
+  executable_graphs: ""
+  mutations: ""
+  state_ownership: ""
+  references: ""
+  blueprint_allowlist: ""
+  behavior_atlas: ""
+  observable_atlas: ""
+  source_traceability: ""
+  native_convergence: ""
+  approved_deviations: ""
+  automated_results: ""
+  human_evidence: ""
+  performance_profile: ""
+  rollback_report: ""
+  paldark_conformance: ""
+
+field_sources:
+  scope:
+    source_ledgers: [product-scope.yaml, decisions.yaml]
+    digest_refs: [digests.scope_decisions, digests.evidence_manifest]
+    recomputed_query: "selected scope and decision IDs are accepted, present, and internally consistent"
+  closure:
+    tracked_paths: {source: tracked-content.csv, digest_ref: digests.tracked_inventory, query: "count total and terminal"}
+    packages: {source: packages.csv, digest_ref: digests.package_inventory, query: "count total and lifecycle terminal"}
+    graphs: {source: graphs.csv, digest_ref: digests.executable_graphs, query: "count role terminal and C/D native verified"}
+    mutations: {source: mutations.csv, digest_ref: digests.mutations, query: "count total and native owned"}
+    observables: {source: observables.csv, digest_ref: digests.observable_atlas, query: "count total and linked to behavior"}
+    source_surfaces: {source: traceability.csv, digest_ref: digests.source_traceability, query: "count behavior-linked or approved non-behavior"}
+    behaviors: {source: behaviors/, digest_ref: digests.behavior_atlas, query: "count total, exact, accepted deviation, validated"}
+    deviations: {source: deviations.yaml, digest_ref: digests.approved_deviations, query: "count accepted and unapproved by severity"}
+    references: {source: references.csv, digest_ref: digests.references, query: "count total and resolved+cooked+loaded"}
+    native_symbols: {source: native-convergence.csv, digest_ref: digests.native_convergence, query: "count total and terminal"}
+  zero_gates:
+    source: evidence-manifest.yaml
+    digest_refs: [digests.evidence_manifest, digests.field_source_map, digests.unknown_register]
+    recomputed_query: "run every named zero-gate query against pinned ledger digests; no handwritten override"
+
+positive_gates:
+  editor_build: {required: true, result: pending, digest: ""}
+  blueprint_compile: {required: true, result: pending, digest: ""}
+  data_validation: {required: true, result: pending, digest: ""}
+  map_check: {required: true, result: pending, digest: ""}
+  cook: {required: true, result: pending, digest: ""}
+  package: {required: true, result: pending, digest: ""}
+  cold_launch: {required: true, result: pending, digest: ""}
+  automated_behavior: {required: true, result: pending, digest: ""}
+  human_feature_and_wave_gates: {required: true, result: pending, digest: ""}
+  canonical_playthrough: {required: true, result: pending, digest: ""}
+  reference_closure: {required: true, result: pending, digest: ""}
+  performance: {required: true, result: pending, digest: ""}
+  rollback: {required: true, result: pending, digest: ""}
+  paldark_conformance: {required: true, result: pending, digest: ""}
+  independent_review: {required: true, result: pending, digest: ""}
+  save_roundtrip_recovery: {required: false, result: not_applicable, digest: "", decision_id: ""}
+  network_matrix: {required: false, result: not_applicable, digest: "", decision_id: ""}
+
+closure:
+  tracked_paths_total: 0
+  tracked_paths_terminal: 0
+  runtime_packages_total: 0
+  runtime_packages_lifecycle_terminal: 0
+  graph_units_total: 0
+  graph_units_role_terminal: 0
+  cd_graphs_total: 0
+  cd_graphs_native_verified: 0
+  mutations_total: 0
+  mutations_native_owned: 0
+  observable_atlas_total: 0
+  observable_atlas_linked_to_behavior: 0
+  source_surfaces_total: 0
+  source_surfaces_behavior_or_nonbehavior_disposition: 0
+  behavior_rows_total: 0
+  behavior_rows_exact_passed: 0
+  behavior_rows_accepted_deviation: 0
+  behavior_rows_validated: 0
+  accepted_deviations_total: 0
+  runtime_reference_edges_total: 0
+  runtime_reference_edges_resolved_cooked_loaded: 0
+  legacy_native_symbols_total: 0
+  legacy_native_symbols_terminal: 0
+
+zero_gates:
+  unknown: 0
+  unassigned: 0
+  unallowlisted_runtime_blueprint: 0
+  permanent_executable_blueprint_exception: 0
+  forbidden_blueprint_mutation: 0
+  duplicate_state_owner: 0
+  legacy_authoritative_path: 0
+  unresolved_adapter: 0
+  dependency_cycle: 0
+  orphan_observable: 0
+  orphan_source_surface: 0
+  unapproved_deviation: 0
+  open_high_or_critical_deviation: 0
+  stale_evidence: 0
+  new_error_ensure_missing_reference: 0
+
+approval:
+  architecture_reviewer: ""
+  test_reviewer: ""
+  independent_reviewer: ""
+  product_owner: ""
+  issued_at: ""
+
+validation_rules:
+  - "A terminal status requires non-empty reference/candidate commit+build, required digests, scope decision IDs, approvals, and issued_at."
+  - "tracked paths, packages, graph units, C/D graphs, mutations, observables, source surfaces, behavior rows, runtime references, and legacy native symbols must have non-zero denominators."
+  - "Every closure numerator must equal its denominator; zero totals cannot satisfy closure by vacuous truth."
+  - "behavior_rows_validated must equal behavior_rows_exact_passed + behavior_rows_accepted_deviation and must equal behavior_rows_total."
+  - "The validator recomputes every count from the named ledger digest; handwritten counts or digest/count mismatch are invalid."
+  - "Every scope, closure, and zero-gate field must resolve through field_sources to a pinned source ledger, digest, and deterministic query."
+  - "No terminal status may be emitted when any consistency, closure, positive, zero, freshness, or required-field rule fails."
+  - "Every required positive gate must be pass with a non-empty digest."
+  - "not_applicable is legal only when scope plus decision_id proves the overlay is disabled."
+  - "complete requires exact_passed == total, accepted_deviation == 0, and every zero gate == 0."
+  - "parity_with_deviations requires exact_passed + accepted_deviation == total and accepted_deviation > 0."
+  - "hybrid requires validated == total plus an allowlisted permanent executable Blueprint count > 0; it is not full conversion."
+
+invalidated_by:
+  - source_or_content_change
+  - config_or_plugin_change
+  - engine_or_target_change
+  - inventory_digest_change
+  - scope_decision_change
+  - stale_evidence
