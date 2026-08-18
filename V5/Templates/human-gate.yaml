@@ -11,7 +11,7 @@ deviation_id: ""
 build:
   commit: ""
   artifact_hash: ""
-  engine: "5.6.1-<P1_APPROVED_CHANGELIST>"
+  engine: "5.8.1-56057345"
   map: ""
   profile_or_game_mode: ""
   config_digest: ""

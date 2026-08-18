@@ -15,7 +15,7 @@ reference:
 candidate:
   commit: ""
   build_hash: ""
-engine: "5.6.1-<P1_APPROVED_CHANGELIST>"
+engine: "5.8.1-56057345"
 platform: Win64
 
 digests:

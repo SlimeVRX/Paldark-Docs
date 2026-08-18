@@ -7,10 +7,10 @@ const siteUrl = 'https://slimevrx.github.io/Paldark-Docs/'
 export default withMermaid(
   defineConfig({
     lang: 'vi-VN',
-    title: 'Paldark V5 — UE 5.6.1',
+    title: 'Paldark V5 — UE 5.8.1',
     titleTemplate: ':title · Paldark',
     description:
-      'Decision package cho Paldark V5: refactor toàn bộ KYWorld trên UE 5.6.1 với Core được khóa trước, gameplay parity và human gate.',
+      'Decision package cho Paldark V5: refactor toàn bộ KYWorld trên UE 5.8.1 với Core được khóa trước, gameplay parity và human gate.',
     base: '/Paldark-Docs/',
     cleanUrls: true,
     lastUpdated: true,
@@ -22,7 +22,7 @@ export default withMermaid(
       ['meta', { property: 'og:type', content: 'website' }],
       ['meta', { property: 'og:site_name', content: 'Paldark Docs' }],
       ['meta', { property: 'og:locale', content: 'vi_VN' }],
-      ['meta', { property: 'og:title', content: 'Paldark V5 — KYWorld C++ parity trên UE 5.6.1' }],
+      ['meta', { property: 'og:title', content: 'Paldark V5 — KYWorld C++ parity trên UE 5.8.1' }],
       [
         'meta',
         {
@@ -33,7 +33,7 @@ export default withMermaid(
       ['meta', { property: 'og:image', content: `${siteUrl}og.png` }],
       ['meta', { property: 'og:image:width', content: '1734' }],
       ['meta', { property: 'og:image:height', content: '907' }],
-      ['meta', { property: 'og:image:alt', content: 'Paldark V5 — KYWorld C++ parity trên UE 5.6.1' }],
+      ['meta', { property: 'og:image:alt', content: 'Paldark V5 — KYWorld C++ parity trên UE 5.8.1' }],
       ['meta', { name: 'twitter:card', content: 'summary_large_image' }],
       ['meta', { name: 'twitter:image', content: `${siteUrl}og.png` }],
     ],
@@ -65,7 +65,7 @@ export default withMermaid(
       },
     },
     themeConfig: {
-      siteTitle: 'Paldark V5 · UE 5.6.1',
+      siteTitle: 'Paldark V5 · UE 5.8.1',
       nav: [
         { text: 'V5 · Quyết định hiện hành', link: '/V5/' },
         { text: 'Core TDD', link: '/V5/02-core-technical-design' },

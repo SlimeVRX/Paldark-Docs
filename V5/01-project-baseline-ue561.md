@@ -5,6 +5,8 @@ description: Quyết định seed toàn bộ KYWorld, nâng engine một chiều
 
 # V5.1 — Chiến lược project và baseline UE 5.6.1
 
+> **STALE HISTORICAL EVIDENCE — SUPERSEDED.** Target hiện hành là Unreal Engine **5.8.1 only**. Trang này được giữ để truy vết proposal/audit cũ; không dùng build, changelist, test hoặc gate UE5.6.1 ở đây làm current evidence. Xem [Project baseline UE 5.8.1](/V5/01-project-baseline-ue581).
+
 ## 1. Quyết định cần đạt
 
 Ta cần đồng thời giữ bốn điều:

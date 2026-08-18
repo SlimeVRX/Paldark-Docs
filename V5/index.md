@@ -41,9 +41,9 @@ V5 chỉ được gọi hoàn tất khi cùng lúc đạt bốn mục tiêu:
 
 | ID | Quyết định | Trạng thái | Hệ quả |
 |---|---|---|---|
-| `V5-ADR-001` | Một target duy nhất: Unreal Engine 5.6.1 | **ACCEPTED BY OWNER** | Không có nhánh runtime 5.4, không backport, không parity hai engine; exact Launcher CL/toolset/plugin lock còn chờ P1 |
+| `V5-ADR-001` | Một target duy nhất: Unreal Engine 5.8.1, CL `56057345` | **ACCEPTED BY OWNER** | Không có nhánh runtime 5.4/5.6, không backport, không parity nhiều engine; full toolset/plugin lock còn chờ P1 |
 | `V5-ADR-002` | Seed PaldarkV5 từ toàn bộ KYWorld rồi nâng một chiều; không dùng project rỗng | **RECOMMENDED** | Giữ package identity/default/reference và tránh copy feature nhiều lần |
-| `V5-ADR-003` | Archive 5.4 bất biến; tạo gold 5.6.1 engine-only và candidate từ cùng tag | **RECOMMENDED** | Có oracle A/B mà mọi implementation active đều ở 5.6.1 |
+| `V5-ADR-003` | Archive/reference bất biến; tạo gold 5.8.1 engine-only và candidate từ cùng tag | **RECOMMENDED** | Có oracle A/B mà mọi implementation active đều ở 5.8.1; gold hiện chưa tag |
 | `V5-ADR-004` | PaldarkKit V4 là donor; PaldarkV5 là target codebase duy nhất | **PROPOSED** | Không tạo một cuộc convergence thứ hai |
 | `V5-ADR-005` | Capability + single state owner là semantic unit; plugin chỉ là package/lifecycle boundary | **PROPOSED** | Không lặp plugin-per-class hoặc duplicate authority |
 | `V5-ADR-006` | Core chỉ giữ universal primitives; domain contract ở semantic owner, dependency explicit/acyclic | **PROPOSED** | Không tạo god CoreContracts mới |
@@ -81,13 +81,16 @@ Nguồn thấp hơn được phép đặt câu hỏi; không được âm thầm
 
 ## 7. Trạng thái hiện tại
 
-- `V5-ADR-001` đã chốt version 5.6.1; exact installed build/toolchain pin vẫn là proposal của P1.
+- `V5-ADR-001` đã chuyển và chốt target UE5.8.1; installed engine đang quan sát là CL `56057345`. Full compiler/plugin/config lock vẫn là proposal của P1.
 - Tài liệu Core, gameplay roadmap, conversion workflow và Completion Contract đang ở trạng thái proposal.
-- Chưa có PaldarkV5 project/repository.
-- Chưa upgrade hoặc resave asset.
-- Chưa chạy converter vào production source.
-- Chưa có gameplay code V5.
+- PaldarkV5 candidate đã tồn tại và mở/build bằng UE5.8.1; chưa có immutable owner-approved gold tag.
+- MCP + BPScaffold + NodeToCode v3 giữ 11 graph/169 raw node/164 semantic node + 5 knots, 604/604 pins, 65/65 exec edges và 145/145 data edges; 7 analysis artifacts byte-identical qua hai fresh Editor processes.
+- UE5.8.1 build, BPScaffold 43/43 và ConversionPilot 3/3 tests pass. Tool vẫn fail-closed đúng: 59 partial nodes, 74 warnings, non-topology closure false, `graph_coverage_complete=false`, `conversion_ready=false`. `TQ0 NOT PASSED`, `P4 NOT PASSED`, bulk conversion vẫn khóa.
+- Converter chỉ ghi `Saved/BPScaffold` staging; chưa được phép overwrite production `Content/Source`.
+- Native `ABPPlayerCharacterNativePilot` tồn tại ở dormant posture cho 11/11 surface, không reparent/không Content change/không authority switch; parity vẫn partial và chưa có unit nào được approved/cutover theo P4.
 
 Quyết định cần human được tập trung tại [V5/07-open-decisions](/V5/07-open-decisions), không rải thành câu hỏi ẩn trong prose.
 
 Decision, capability, ownership, unknown và toolchain pin còn có [catalog máy đọc được](/V5/Catalogs/) để automation và agent không phải suy trạng thái từ văn xuôi.
+
+Baseline hiện hành: [Project baseline UE 5.8.1](/V5/01-project-baseline-ue581). Quy trình tool: [MCP + Blueprint conversion pipeline](/V5/08-mcp-conversion-pipeline). Lộ trình học/triển khai 18 module, 127 bài: [Evidence-Driven Blueprint-to-C++ Migration](/V5/Course/).

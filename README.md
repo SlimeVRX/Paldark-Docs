@@ -1,6 +1,6 @@
 # Paldark Docs
 
-Paldark Docs tách rõ hai thế hệ. **Paldark V5** là nguồn quyết định hiện hành cho một target duy nhất UE 5.6.1: full-project seed từ KYWorld, Core Technical Design, gameplay dependency roadmap, Feature Dossier/Human Gate và Completion Contract. **Paldark V4** gồm chuyên khảo UE 5.4, sáu quyển, ADR và snapshot cũ; toàn bộ được giữ làm archive/evidence và không tự mở scope implementation mới.
+Paldark Docs tách rõ hai thế hệ. **Paldark V5** là nguồn quyết định hiện hành cho một target duy nhất UE 5.8.1: KYWorld reference, PaldarkV5 candidate, Core Technical Design, gameplay dependency roadmap, MCP/conversion pipeline, Feature Dossier/Human Gate và Completion Contract. **Paldark V4** gồm chuyên khảo UE 5.4, sáu quyển, ADR và snapshot cũ; toàn bộ được giữ làm archive/evidence và không tự mở scope implementation mới.
 
 Đọc tại: **https://slimevrx.github.io/Paldark-Docs/**
 

@@ -9,7 +9,7 @@ player_promise: ""
 reference:
   commit: ""
   build_hash: ""
-  engine: "5.6.1-<P1_APPROVED_CHANGELIST>"
+  engine: "5.8.1-56057345"
   maps: []
   profile_or_game_mode: ""
   save_or_seed: ""

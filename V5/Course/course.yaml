@@ -1,0 +1,393 @@
+schema_version: 1
+course_id: paldark-v5-evidence-driven-blueprint-to-cpp
+title: "Paldark V5 — Evidence-Driven Blueprint-to-C++ Migration"
+language: vi-VN
+status: designed_execution_locked
+engine:
+  policy: exact_only
+  version: 5.8.1
+  branch: "++UE5+Release-5.8"
+  changelist: 56057345
+counts:
+  modules: 18
+  lessons: 127
+execution_lock:
+  tq0: not_passed
+  p4: not_passed
+  bulk_conversion_authorized: false
+pilot:
+  asset: "/Game/Blueprint/Character/Player/BP_PlayerCharacter.BP_PlayerCharacter"
+  surface_nodes:
+    surfaces: 11
+    raw_k2_nodes: 169
+    semantic_nodes: 164
+    explicit_routing_knots: 5
+    status: pass
+  old_edge_audit:
+    source_data_edges: 145
+    legacy_graph_json_data_edges: 129
+    missing_directed_targets: 16
+    cause: "one-target TMap could not represent fan-out"
+    old_bundle_status: superseded
+  schema_v2_reexport:
+    status: analysis_export_ok_conversion_not_ready
+    run_labels:
+      - bp-player-character-v3-a-20260819
+      - bp-player-character-v3-b-20260819
+    separate_editor_processes: true
+    package_clean: true
+    package_md5: 8596606bf1ce0861c885097e927e23ed
+    counts:
+      source_pins: 604
+      serialized_pins: 604
+      source_execution_edges: 65
+      serialized_execution_edges: 65
+      source_data_edges: 145
+      serialized_data_edges: 145
+    artifact_determinism:
+      non_receipt_artifacts_identical: "7/7"
+      sha256:
+        cpp: 462a5368c13c9851f71e4190b944307880df8c547d244fa81b90b1d75f6242e1
+        header: 64e589f79f80734487d3499644de8ea6167ebe0fcfee4343c8494eaad32caed2
+        build_cs_hint: 1018bca73490b1dc640bc12d4db9ff9324c54500e56a27046d1553190386633a
+        codegen: 85f79013ccf97541240fa4370e52eb53033ae33856f4e18cbb952661f8604bb0
+        graph: fe58321d87ee68f45a0a8c6ec5596fd42269c514d0014581929c78d7acfe13d3
+        prompt: 2a45f0c7e3056aa126e3041842f294f5d25617e83c7dd17cae6073c36f7e1d7a
+        manifest: 50f583ae656828eedeee8c2f8a5e1dbf283b4ab86b849ac8659155a64f81132d
+      receipt_md5:
+        codegen: 15a1a2bbf53a6f3bdeaae9f6468eeb78
+        graph: 8d469a24ccd96b3966f7041ca4457fbd
+        prompt: ca468ec1d4f9d795b1789cd2610e41d1
+        manifest: dec983560c4c6cc0b3a0b5147e7eec93
+  latest_patch_verification:
+    ue_build: pass
+    engine: "5.8.1-56057345"
+    bp_scaffold_tests: "43/43 PASS"
+    bp_scaffold_log: PaldarkV5/Saved/Logs/BPScaffoldFull-v5-stable-pin.log
+    conversion_pilot_tests: "3/3 PASS"
+    conversion_pilot_log: PaldarkV5/Saved/Logs/ConversionPilot-v3.log
+  extractor_result:
+    errors: 0
+    warnings: 74
+    processor_success: 105
+    partial_nodes: 59
+    partial_breakdown:
+      no_processor: 28
+      processor_failed: 21
+      structural_port_mapping_missing: 9
+      rejected_runtime_class: 1
+    analysis_export_ok: true
+    receipt_ok: false
+    graph_coverage_complete: false
+    graph_topology_complete: false
+    conversion_ready: false
+    conversion_complete: false
+    cutover_ready: false
+    non_topology_dimensions:
+      member_identity_complete: false
+      class_defaults_complete: false
+      component_hierarchy_complete: false
+      related_type_coverage_complete: false
+      referenced_graph_coverage_complete: false
+      native_compile_complete: false
+  native_candidate:
+    class: ABPPlayerCharacterNativePilot
+    source_surfaces_implemented: "11/11"
+    posture: native_dormant
+    content_modified: false
+    original_blueprint_reparented: false
+    authority_switched: false
+    behavior_parity: partial_not_certified
+lesson_pattern:
+  - outcome
+  - first_principles
+  - archaeology
+  - design
+  - practice
+  - proof
+  - anti_pattern
+  - handoff
+required_evidence:
+  - pinned_reference
+  - stable_surface_ids
+  - stable_node_and_pin_ids
+  - closed_denominator
+  - authoritative_execution_and_data_edges
+  - edge_identity_digest
+  - processor_dispositions
+  - strict_serializer_round_trip
+  - automated_proof
+  - human_gate_when_player_facing
+  - rollback
+  - artifact_digest
+modules:
+  - id: M01
+    title: "Conversion contract"
+    wave: pre-bulk
+    lesson_count: 6
+    outcome: "Định nghĩa conversion bằng authority closure và bằng chứng có thể bác bỏ."
+    exit_artifact: A00-program-charter
+    lessons:
+      - { id: M01-L01, stage: theory, title: "Bắt đầu từ outcome, không bắt đầu từ file", proof: "Viết observable contract cho một capability." }
+      - { id: M01-L02, stage: theory, title: "Phân lớp A/B/C/D/DCL", proof: "Phân loại surface mẫu với owner và lý do." }
+      - { id: M01-L03, stage: design, title: "Một authoritative writer", proof: "Vẽ state owner và cấm dual mutation." }
+      - { id: M01-L04, stage: design, title: "Operational 12-state workflow", proof: "Mọi state có entry, exit và rollback rule." }
+      - { id: M01-L05, stage: archaeology, title: "Metric giả và completion thật", proof: "Bác bỏ LOC/function/node percentage bằng counterexample." }
+      - { id: M01-L06, stage: proof, title: "Khóa Program Charter", proof: "Charter có scope, non-goal, gates và denominator." }
+
+  - id: M02
+    title: "Freeze gold/reference"
+    wave: W0
+    lesson_count: 6
+    outcome: "Tạo oracle UE5.8.1 bất biến và tái tạo được."
+    exit_artifact: A01-gold-baseline-lock
+    lessons:
+      - { id: M02-L01, stage: theory, title: "Oracle là gì", proof: "Tách archive, gold và candidate." }
+      - { id: M02-L02, stage: archaeology, title: "Pin source, engine và plugin", proof: "Lưu commit, CL, compiler, config và plugin digests." }
+      - { id: M02-L03, stage: archaeology, title: "Map, startup flow và runtime roots", proof: "Tái tạo Start → Customization → Main." }
+      - { id: M02-L04, stage: practice, title: "Canonical playthrough", proof: "Chạy success/failure/cancel checkpoints trên gold." }
+      - { id: M02-L05, stage: design, title: "Known bug và accepted deviation", proof: "Mỗi khác biệt có decision ID và severity." }
+      - { id: M02-L06, stage: proof, title: "Baseline lock rehearsal", proof: "Clean recipe tái tạo đúng build/hash và observation." }
+
+  - id: M03
+    title: "Build the closed corpus"
+    wave: W0
+    lesson_count: 7
+    outcome: "Biết chính xác những surface nào phải có terminal disposition."
+    exit_artifact: A02-closed-corpus-ledger
+    lessons:
+      - { id: M03-L01, stage: theory, title: "Closed world và open-world trap", proof: "Nêu denominator thay cho top-N search." }
+      - { id: M03-L02, stage: archaeology, title: "Asset Registry census", proof: "Đếm Blueprint, Widget, AnimBP, struct, enum và table." }
+      - { id: M03-L03, stage: archaeology, title: "Config, string và dynamic load", proof: "Mỗi root ngoài registry có source span/disposition." }
+      - { id: M03-L04, stage: archaeology, title: "Map và plugin content", proof: "Phân loại shipping, fixture, donor và dead roots." }
+      - { id: M03-L05, stage: design, title: "Stable asset và surface identity", proof: "GUID/path/hash policy không collision." }
+      - { id: M03-L06, stage: practice, title: "Closure query deterministic", proof: "Hai census độc lập cho cùng ordered digest." }
+      - { id: M03-L07, stage: proof, title: "Unknown và unassigned ledger", proof: "UNKNOWN=0 hoặc gate bị block rõ ràng." }
+
+  - id: M04
+    title: "Qualify Epic MCP and conversion tools"
+    wave: W0-W1
+    lesson_count: 8
+    outcome: "Chứng minh tool không bỏ surface im lặng và không sai semantics đã qualify."
+    exit_artifact: A03-tq0-certificate
+    lessons:
+      - { id: M04-L01, stage: theory, title: "Tách observation, extraction, reasoning và proof", proof: "Gán quyền rõ cho MCP, bridge, converter, LLM và human." }
+      - { id: M04-L02, stage: archaeology, title: "Epic recursive graph oracle", proof: "Giải thích UBlueprint::GetAllGraphs và outer chain." }
+      - { id: M04-L03, stage: lab, title: "Laboratory 11 graph so với 8", proof: "Khôi phục ba owned timer graph có parent edge." }
+      - { id: M04-L04, stage: lab, title: "Laboratory 123 node so với 118", proof: "Chứng minh 118 = 123 − 5 routing knots." }
+      - { id: M04-L05, stage: lab, title: "Laboratory 145 data edge so với 129", proof: "Chứng minh TMap mất 16 fan-out targets; data_edges array là authority." }
+      - { id: M04-L06, stage: design, title: "Pin provenance, edge identity và processor disposition", proof: "Counts + ordered identity digests match; missing/unexpected/partial đều zero." }
+      - { id: M04-L07, stage: practice, title: "Strict round-trip semantic fixtures", proof: "Fan-out, Branch/Sequence/Switch pins, hidden/map metadata, structs và exact int64 enum survive." }
+      - { id: M04-L08, stage: proof, title: "TQ0 qualification decision", proof: "Deterministic v2 export + build/test/differential/cook/package evidence hoặc NOT PASSED." }
+
+  - id: M05
+    title: "Run a representative P4 pilot"
+    wave: P4
+    lesson_count: 8
+    outcome: "Đưa một representative unit qua toàn bộ method, không chỉ extraction."
+    exit_artifact: A04-p4-pilot-packet
+    lessons:
+      - { id: M05-L01, stage: design, title: "Chọn representative unit", proof: "Selection matrix bao phủ state, latent, dependency và presentation." }
+      - { id: M05-L02, stage: archaeology, title: "Feature dossier và gold rehearsal", proof: "Behavior rows có success/failure/cancel/timing." }
+      - { id: M05-L03, stage: practice, title: "Closed deterministic bundle", proof: "Surface/node/edge identity, processor dispositions, round-trip và two-run hashes pass." }
+      - { id: M05-L04, stage: analysis, title: "LLM behavior và unknown ledger", proof: "Mọi inference cite graph/default/parent API." }
+      - { id: M05-L05, stage: design, title: "Target owner và retained surfaces", proof: "Core/design review duyệt trước source draft." }
+      - { id: M05-L06, stage: practice, title: "Native dormant và shadow trace", proof: "11/11 surface seams, no Content/reparent, old authority duy nhất, compile + read-only diff." }
+      - { id: M05-L07, stage: proof, title: "Switch, A/B và rollback", proof: "Một switch, automated + human pass, rollback rehearsal." }
+      - { id: M05-L08, stage: review, title: "P4 sign-off hoặc method correction", proof: "S0→S11 evidence và owner approval; nếu thiếu thì NOT PASSED." }
+
+  - id: M06
+    title: "Core foundations"
+    wave: W1
+    lesson_count: 7
+    outcome: "Khóa nền native đủ nhỏ, acyclic và chịu được project lớn."
+    exit_artifact: A05-core-contract-pack
+    lessons:
+      - { id: M06-L01, stage: archaeology, title: "Retrospective Paldark V1–V4", proof: "Decision ledger tách lesson khỏi inherited constraint." }
+      - { id: M06-L02, stage: theory, title: "Capability, owner, identity và tag", proof: "Mỗi state có đúng một semantic owner." }
+      - { id: M06-L03, stage: design, title: "Module DAG và allowed edges", proof: "Static dependency graph không cycle." }
+      - { id: M06-L04, stage: design, title: "Contracts không tạo god Core", proof: "Domain contract ở semantic owner." }
+      - { id: M06-L05, stage: design, title: "Lifecycle receipt", proof: "Deactivate chỉ tháo installation effect." }
+      - { id: M06-L06, stage: design, title: "Transaction và compensation", proof: "Committed gameplay không rollback bằng deactivate." }
+      - { id: M06-L07, stage: proof, title: "Core no-gameplay-delta gate", proof: "100 activation cycles không duplicate/leak và behavior unchanged." }
+
+  - id: M07
+    title: "Session and player profile"
+    wave: W2
+    lesson_count: 7
+    outcome: "Native seam cho session, identity, profile và appearance."
+    exit_artifact: A06-session-profile-dossier
+    lessons:
+      - { id: M07-L01, stage: theory, title: "Session lifetime và player lifetime", proof: "Owner survives đúng travel boundary." }
+      - { id: M07-L02, stage: archaeology, title: "Start → Customization → Main", proof: "Flow graph, maps, defaults và failure observations." }
+      - { id: M07-L03, stage: archaeology, title: "Player profile surface", proof: "Variables/functions/timers có stable provenance." }
+      - { id: M07-L04, stage: design, title: "Identity và profile schema", proof: "Stable ID, version và persistence seam." }
+      - { id: M07-L05, stage: design, title: "Appearance command/read model", proof: "UI không sở hữu authoritative profile." }
+      - { id: M07-L06, stage: practice, title: "Travel/retry native seam", proof: "Không duplicate state hoặc lose appearance." }
+      - { id: M07-L07, stage: proof, title: "Session/profile parity gate", proof: "Flow, defaults, references và human A/B pass." }
+
+  - id: M08
+    title: "Pawn, input, movement and camera"
+    wave: W2
+    lesson_count: 7
+    outcome: "Tái tạo locomotion/camera mà giữ AnimBP handshake."
+    exit_artifact: A07-locomotion-dossier
+    lessons:
+      - { id: M08-L01, stage: theory, title: "Controller, PlayerState, Pawn và ASC lifetime", proof: "Possess/respawn ownership matrix." }
+      - { id: M08-L02, stage: archaeology, title: "Enhanced Input context", proof: "Action, trigger, mapping và enable conditions." }
+      - { id: M08-L03, stage: archaeology, title: "Movement mode và camera baseline", proof: "Vector, speed, rotation, boom và framing observations." }
+      - { id: M08-L04, stage: design, title: "Native input intent seam", proof: "Input phát intent, domain quyết định mutation." }
+      - { id: M08-L05, stage: design, title: "AnimBP signal contract", proof: "Pose asset retained, state inputs có owner." }
+      - { id: M08-L06, stage: practice, title: "Dormant/shadow locomotion", proof: "Trace không gửi input hai lần." }
+      - { id: M08-L07, stage: proof, title: "Movement/camera/animation A/B", proof: "Automated state + human framing/timing pass." }
+
+  - id: M09
+    title: "Interaction and item identity"
+    wave: W3
+    lesson_count: 7
+    outcome: "Tái tạo focus/interact/cancel bằng item identity rõ ràng."
+    exit_artifact: A08-interaction-item-dossier
+    lessons:
+      - { id: M09-L01, stage: theory, title: "Player intention và target policy", proof: "Input, query, eligibility và command tách lớp." }
+      - { id: M09-L02, stage: archaeology, title: "Trace, look, focus và outline", proof: "Target ordering/range/channel/defaults được ghi." }
+      - { id: M09-L03, stage: archaeology, title: "Failure và cancel path", proof: "No target, out of range, busy và destroyed target observations." }
+      - { id: M09-L04, stage: design, title: "Item definition so với item instance", proof: "Stable identity và mutable state không trộn." }
+      - { id: M09-L05, stage: design, title: "Interactable contract", proof: "Query/read không mutate; command có result." }
+      - { id: M09-L06, stage: practice, title: "Native focus/interact seam", proof: "Outline/prompt là projection của focus state." }
+      - { id: M09-L07, stage: proof, title: "Interaction parity gate", proof: "Target, feedback, cancel, defaults và refs pass." }
+
+  - id: M10
+    title: "Inventory core"
+    wave: W4
+    lesson_count: 7
+    outcome: "Inventory atomic, deterministic và không phụ thuộc UI."
+    exit_artifact: A09-inventory-core-dossier
+    lessons:
+      - { id: M10-L01, stage: theory, title: "Inventory invariant", proof: "Capacity, uniqueness, stack và slot type được formalize." }
+      - { id: M10-L02, stage: archaeology, title: "Gold operations và dimensions", proof: "Add/find/remove/drop/transfer/swap; 42/4/5 slots." }
+      - { id: M10-L03, stage: archaeology, title: "Invalid và retry behavior", proof: "No mutation/no duplication observations." }
+      - { id: M10-L04, stage: design, title: "Revisioned inventory transaction", proof: "Validate/reserve/commit/result contract." }
+      - { id: M10-L05, stage: design, title: "Stack and slot algorithms", proof: "Deterministic ordering và remainder policy." }
+      - { id: M10-L06, stage: practice, title: "Property and sequence tests", proof: "Random operations preserve invariant." }
+      - { id: M10-L07, stage: proof, title: "Exact state parity", proof: "Gold/candidate state diff pass mọi operation." }
+
+  - id: M11
+    title: "Inventory UI and equipment"
+    wave: W5
+    lesson_count: 7
+    outcome: "Giữ UMG polish trong khi chuyển authority ra native core."
+    exit_artifact: A10-inventory-presentation-dossier
+    lessons:
+      - { id: M11-L01, stage: theory, title: "Presentation is not ownership", proof: "UMG mutation bị thay bằng command." }
+      - { id: M11-L02, stage: archaeology, title: "Grid, slot và drag/drop", proof: "Bindings, payload, hover và invalid drop observations." }
+      - { id: M11-L03, stage: archaeology, title: "Detail, toast và HUD count", proof: "Content, duration 2 giây và timing checkpoints." }
+      - { id: M11-L04, stage: design, title: "Inventory read model", proof: "Stable slot view và change notification." }
+      - { id: M11-L05, stage: design, title: "Equipment command seam", proof: "Equip/unequip và weapon/food validation có owner." }
+      - { id: M11-L06, stage: practice, title: "Retain UMG, replace orchestration", proof: "Widget layout/animation untouched; native command active." }
+      - { id: M11-L07, stage: proof, title: "UI/equipment human gate", proof: "Drag/drop/detail/toast/count/equip A/B pass." }
+
+  - id: M12
+    title: "Combat"
+    wave: W6
+    lesson_count: 7
+    outcome: "Combat native có timing và feedback đúng gold."
+    exit_artifact: A11-combat-dossier
+    lessons:
+      - { id: M12-L01, stage: theory, title: "Action, cost, commit và effect", proof: "GAS boundary không nuốt domain transaction." }
+      - { id: M12-L02, stage: archaeology, title: "Bow và handgun flows", proof: "Input, ammo/cost, spawn/hit và cooldown observations." }
+      - { id: M12-L03, stage: archaeology, title: "Damage, death và feedback", proof: "Ordering, montage, notify, UI, audio/VFX trace." }
+      - { id: M12-L04, stage: design, title: "Combat state owner", proof: "Committed damage tách activation lifecycle." }
+      - { id: M12-L05, stage: design, title: "Montage/notify contract", proof: "Authored timing retained, native event validated." }
+      - { id: M12-L06, stage: practice, title: "Cancel/death cleanup", proof: "Handles/timers/effects không leak hoặc double fire." }
+      - { id: M12-L07, stage: proof, title: "Combat parity gate", proof: "State, timing, presentation và failure paths pass." }
+
+  - id: M13
+    title: "Pal species, runtime and AI"
+    wave: W7
+    lesson_count: 7
+    outcome: "Native Pal runtime giữ authored BT/EQS và stable identity."
+    exit_artifact: A12-pal-runtime-ai-dossier
+    lessons:
+      - { id: M13-L01, stage: theory, title: "Persistent record so với active actor", proof: "UObject lifetime không bị serialize làm identity." }
+      - { id: M13-L02, stage: archaeology, title: "Species/data/default inventory", proof: "Data assets, class defaults và spawn paths có provenance." }
+      - { id: M13-L03, stage: archaeology, title: "Perception, BT và EQS", proof: "Authored decision surfaces và blackboard ownership." }
+      - { id: M13-L04, stage: design, title: "Native Pal base contract", proof: "Identity, stats, lifecycle và capability seams." }
+      - { id: M13-L05, stage: design, title: "AI intent/action boundary", proof: "BT requests action; domain validates mutation." }
+      - { id: M13-L06, stage: practice, title: "Spawn/despawn shadow parity", proof: "Record/actor mapping và AI trace stable." }
+      - { id: M13-L07, stage: proof, title: "Pal runtime/AI gate", proof: "Identity, selection, AI behavior và references pass." }
+
+  - id: M14
+    title: "Capture, party, PalBox and riding"
+    wave: W7
+    lesson_count: 7
+    outcome: "Pal acquisition/storage/mobility giữ identity và atomicity."
+    exit_artifact: A13-capture-party-ride-dossier
+    lessons:
+      - { id: M14-L01, stage: theory, title: "Capture as multi-owner transaction", proof: "Probability, target, resource, storage và result owners rõ." }
+      - { id: M14-L02, stage: archaeology, title: "Capture success/failure/cancel", proof: "Gold trace gồm full capacity và invalid target." }
+      - { id: M14-L03, stage: archaeology, title: "Party và PalBox semantics", proof: "Slot, selection, transfer và active Pal observations." }
+      - { id: M14-L04, stage: design, title: "Capture coordinator", proof: "Reservation/commit/idempotent roll-forward contract." }
+      - { id: M14-L05, stage: design, title: "Mount, ride và fly lifecycle", proof: "Possession, movement, camera và dismount owners." }
+      - { id: M14-L06, stage: practice, title: "Identity-preserving storage transition", proof: "Same Pal ID qua party/box/world/mount." }
+      - { id: M14-L07, stage: proof, title: "Capture/party/ride gate", proof: "All outcomes, selection và presentation A/B pass." }
+
+  - id: M15
+    title: "Craft, build, cook and containers"
+    wave: W8
+    lesson_count: 7
+    outcome: "Production transactions không mất hoặc nhân resource."
+    exit_artifact: A14-production-dossier
+    lessons:
+      - { id: M15-L01, stage: theory, title: "Production transaction invariant", proof: "Input reservation, output commit và compensation formalized." }
+      - { id: M15-L02, stage: archaeology, title: "Craft and cook flows", proof: "Recipe, quantity, duration, cancel và collection observations." }
+      - { id: M15-L03, stage: archaeology, title: "Build placement flow", proof: "Ghost, validity, cost, commit, UI và VFX trace." }
+      - { id: M15-L04, stage: archaeology, title: "Container transfer", proof: "Capacity, split/merge, retry và destruction behavior." }
+      - { id: M15-L05, stage: design, title: "Production coordinator", proof: "No duplicate Inventory/Station owner." }
+      - { id: M15-L06, stage: practice, title: "Invalid/cancel/retry tests", proof: "No loss/no duplication under repeated commands." }
+      - { id: M15-L07, stage: proof, title: "Production parity gate", proof: "State, placement, timing, UI và VFX pass." }
+
+  - id: M16
+    title: "Work automation and world"
+    wave: W8
+    lesson_count: 7
+    outcome: "Nối work/world systems bằng coordinator nhỏ và explicit contract."
+    exit_artifact: A15-work-world-dossier
+    lessons:
+      - { id: M16-L01, stage: theory, title: "Work intention, assignment and progress", proof: "Worker/station/resource owners không chồng lấn." }
+      - { id: M16-L02, stage: archaeology, title: "Assign, reassign and cancel", proof: "Gold ordering và edge cases được ghi." }
+      - { id: M16-L03, stage: archaeology, title: "Day/night and world transitions", proof: "Time, map, minimap và feedback observations." }
+      - { id: M16-L04, stage: design, title: "Resource settlement boundary", proof: "Coordinator chỉ sở hữu transaction state." }
+      - { id: M16-L05, stage: design, title: "World event/read model", proof: "Consumers không ghi ngược world owner." }
+      - { id: M16-L06, stage: practice, title: "Cancellation and travel tests", proof: "No orphan assignment/reservation/timer." }
+      - { id: M16-L07, stage: proof, title: "Work/world parity gate", proof: "Assignment, progress, transitions và presentation pass." }
+
+  - id: M17
+    title: "Cross-system integration and polish"
+    wave: W9
+    lesson_count: 7
+    outcome: "Chứng minh các capability lắp lại thành KYWorld đã polish."
+    exit_artifact: A16-regression-atlas
+    lessons:
+      - { id: M17-L01, stage: theory, title: "Integration failure taxonomy", proof: "State, order, timing, presentation, reference và performance classes." }
+      - { id: M17-L02, stage: archaeology, title: "Frontend, death and return", proof: "Full flow checkpoints và reset recipe." }
+      - { id: M17-L03, stage: archaeology, title: "Minimap, audio, VFX and material", proof: "Human-visible retained surface ledger." }
+      - { id: M17-L04, stage: design, title: "Scripted regression atlas", proof: "Capability rows compose without hidden setup." }
+      - { id: M17-L05, stage: practice, title: "Reference and log health", proof: "Zero new missing reference/error/ensure." }
+      - { id: M17-L06, stage: practice, title: "Performance and transition profile", proof: "Pinned hardware/tolerance trace." }
+      - { id: M17-L07, stage: proof, title: "Human polish sign-off", proof: "Canonical playthrough and edge-case A/B pass." }
+
+  - id: M18
+    title: "Closure, Paldark convergence and release"
+    wave: W10-W12
+    lesson_count: 8
+    outcome: "Đóng toàn bộ corpus và phát hành certificate nói đúng mức hoàn tất."
+    exit_artifact: A18-completion-certificate
+    lessons:
+      - { id: M18-L01, stage: theory, title: "UE5.8.1 parity freeze", proof: "Candidate tag pins source/content/config/toolchain." }
+      - { id: M18-L02, stage: archaeology, title: "Authoritative Blueprint closure", proof: "Mọi C/D surface native hoặc terminal exception hợp lệ." }
+      - { id: M18-L03, stage: design, title: "Adopt/Adapt/Keep/Replace/Reject", proof: "Từng capability có convergence disposition." }
+      - { id: M18-L04, stage: practice, title: "Packaged smoke and cold launch", proof: "Supported target build/cook/package/launch pass." }
+      - { id: M18-L05, stage: practice, title: "Performance, reference and rollback audit", proof: "All required positive/zero gates có digest." }
+      - { id: M18-L06, stage: design, title: "Conditional engine migration W12", proof: "N/A decision hoặc separate engine-only plan; no gameplay mix." }
+      - { id: M18-L07, stage: review, title: "Independent audit", proof: "Fresh reviewer xác minh ledger, evidence và deviation." }
+      - { id: M18-L08, stage: proof, title: "Completion Certificate", proof: "COMPLETE/HYBRID/PARITY_WITH_DEVIATIONS/FAILED đúng equations và owner ký." }
