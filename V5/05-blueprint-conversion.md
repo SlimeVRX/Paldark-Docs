@@ -1,15 +1,19 @@
 ---
 title: V5.5 — Blueprint→C++ conversion standard
-description: Audit Soliz-Blueprint-C, qualification gate UE 5.6.1 và pipeline dùng converter mà không làm mất behavior.
+description: Chuẩn qualification UE 5.8.1 và pipeline dùng converter mà không làm mất behavior; audit UE5.6 được giữ như lịch sử.
 ---
 
 # V5.5 — Blueprint→C++ conversion standard
 
 > **Kết luận:** `Soliz-Blueprint-C` là extractor/scaffolder và draft generator hữu ích. Nó không phải parity authority và chưa được phép ghi trực tiếp production source.
+>
+> **Current status:** UE **5.8.1 only**; `TQ0 NOT PASSED`; `P4 NOT PASSED`; bulk conversion chưa được mở. Các số build/test UE5.6.1 trong §1–§3 là `STALE HISTORICAL EVIDENCE`. Kết quả pilot hiện hành ở [MCP + Blueprint conversion pipeline](/V5/08-mcp-conversion-pipeline).
+
+Fresh UE5.8.1 evidence hiện có: full build PASS, BPScaffold **43/43 PASS**, ConversionPilot **3/3 PASS**, fresh-process bundle A/B giữ 604/604 pins, 65/65 execution edges và 145/145 data edges. Tuy nhiên bundle cố ý trả `ok=false`, `conversion_ready=false`, `graph_coverage_complete=false` vì 59 partial nodes và các non-topology dimension chưa đóng. Green tool tests không được nâng thành TQ0/P4 pass.
 
 Repository được audit tại [SlimeVRX/Soliz-Blueprint-C](https://github.com/SlimeVRX/Soliz-Blueprint-C), remote HEAD `6b380a7d407a9a5ffde3050f6dda0e9bfa01abfc`.
 
-## 1. Kết quả build thực tế trên target V5
+## 1. Audit lịch sử trên UE5.6.1 — không phải current proof
 
 Toolchain thử nghiệm:
 
@@ -145,12 +149,12 @@ Writer có thể overwrite `.h/.cpp` cùng tên và chỉ giữ một `.bak`. V�
 Trước `TQ0` chỉ được làm fixture/translator research trong qualification host, không chạm gameplay candidate. Sau `TQ0` mới chạy representative KYWorld pilot của P4. Chỉ sau khi cả TQ0 và P4 pass mới mở general gameplay conversion/cutover.
 
 1. Fork/pin exact BPScaffold + NodeToCode commit; không dùng floating `main`.
-2. Sửa clean-build blocker; clean UHT/UBT exact UE 5.6.1 pass.
-3. Toàn bộ old + new test chạy bằng pinned automated runner; tối thiểu suite hiện tại 28/28, build/test log và result digest được lưu trong qualification certificate. Local click-run không đủ.
+2. Sửa clean-build blocker; clean UHT/UBT exact UE **5.8.1** pass.
+3. Toàn bộ old + new test chạy bằng pinned automated runner; fresh observed suite hiện là BPScaffold 43/43 và ConversionPilot 3/3, nhưng qualification certificate vẫn cần toàn matrix ở các bước sau. Build/test log và result digest phải được lưu; local click-run không đủ.
 4. Thêm real `.uasset` fixtures: Actor, Component, Widget, AnimBP EventGraph/AnimGraph, Interface, RPC/RepNotify, GameplayAbility, Timeline/async/macro, UserDefinedStruct, UserDefinedEnum, DataTable và Level BP.
 5. Mỗi fixture export hai lần phải byte-identical; generated module compile; Blueprint/DataValidation/MapCheck/cook/package pass.
-6. Mỗi export ghi package hash; mọi BP/graph GUID/hash/node count; property/default, SCS component, UMG binding, AnimGraph và dependency surface; engine/tool/settings commit. Stale input bị reject.
-7. Thêm headless commandlet/wrapper theo feature roots; xuất per-surface machine-readable `recognized/partial/unsupported` và zero-silent-omission manifest cho mọi graph, property/default, SCS component, binding, dependency và AnimGraph—not chỉ K2 node.
+6. Mỗi export ghi package hash; mọi BP/graph/node/pin GUID/path; raw/semantic/suppressed node count; authoritative execution/data edge identities + digest; processor disposition; property/default, SCS component, UMG binding, AnimGraph và dependency surface; engine/tool/settings commit. Stale input bị reject.
+7. Thêm strict serializer round-trip và headless commandlet/wrapper theo feature roots; xuất per-surface machine-readable `recognized/partial/unsupported` và zero-silent-omission manifest cho mọi graph/node/pin/edge, property/default, SCS component, binding, dependency và AnimGraph—not chỉ K2 node count.
 8. Output vào staging only; production source không được overwrite.
 9. Hai profile không được trộn:
 
@@ -219,7 +223,7 @@ Generated-From-Graph: <name + GUID + node count>
 Source-Surface-Manifest: <path + digest; graphs/defaults/SCS/bindings/dependencies>
 Converter: Soliz-Blueprint-C@<commit>
 NodeToCode: <version/commit>
-Engine: 5.6.1-<P1_APPROVED_CHANGELIST>
+Engine: 5.8.1-56057345
 Profile-ID: <production_extraction_v1>
 Settings-Digest: <hash>
 Translator-Status: recognized | partial | unsupported
@@ -237,7 +241,7 @@ Tool không làm conversion “khó”; nó làm transcription nhanh hơn. Nhưn
 Khuyến nghị chốt:
 
 - qualify/fork tool trong W0/W1;
-- chỉ dùng sau one-way upgrade project lên 5.6.1;
+- chỉ dùng sau one-way upgrade project lên 5.8.1;
 - dùng extractor/scaffold/LLM bundle làm draft;
 - không merge output thẳng;
 - không dùng tool dependency report làm scope denominator;

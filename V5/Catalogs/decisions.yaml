@@ -1,12 +1,12 @@
 schema: PaldarkV5DecisionRegister/v1
-version: 2026-08-16
+version: 2026-08-19
 
 decisions:
   - id: V5-ADR-001
     status: accepted_by_owner
-    statement: "Paldark V5 chỉ build và chạy trên Unreal Engine 5.6.1; không có runtime/backport path 5.4."
-    owner_evidence: "Owner statement: toàn bộ code chỉ chạy ở Unreal 5.6.1."
-    observed_candidate_build: "Installed Launcher Build.version: 5.6.1, CL 44394996; exact lock remains pending P1 approval."
+    statement: "Paldark V5 chỉ build và chạy trên Unreal Engine 5.8.1; không có runtime/backport path 5.4/5.6."
+    owner_evidence: "Owner statement 2026-08-19: update KYWorld/PaldarkV5 lên UE5.8 tại D:/UE_5.8 và dùng UE5.8 làm mặc định."
+    observed_candidate_build: "Installed Build.version: 5.8.1, CL 56057345, ++UE5+Release-5.8; full P1 toolchain lock remains pending."
 
   - id: V5-ADR-002
     status: recommended
@@ -15,7 +15,7 @@ decisions:
 
   - id: V5-ADR-003
     status: recommended
-    statement: "Archive 5.4 bất biến; gold và candidate đều sinh từ upgraded UE 5.6.1 tag."
+    statement: "Reference bất biến; gold và candidate phải cùng exact upgraded UE 5.8.1 baseline/tag."
 
   - id: V5-ADR-004
     status: proposed

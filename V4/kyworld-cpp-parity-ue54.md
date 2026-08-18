@@ -1,7 +1,7 @@
 # Tái cấu trúc KYWorld bằng C++ mà không đánh mất gameplay
 
 ::: warning Hồ sơ Paldark V4
-Tài liệu này được đóng băng như hồ sơ quyết định lịch sử của phương án UE 5.4. Nó không còn là nguồn quyết định hiện hành sau khi Paldark V5 khóa một target duy nhất là Unreal Engine 5.6.1. Xem [Paldark V5](/V5/) để đọc proposal mới.
+Tài liệu này được đóng băng như hồ sơ quyết định lịch sử của phương án UE 5.4. Nó không còn là nguồn quyết định hiện hành sau khi Paldark V5 khóa một target duy nhất là Unreal Engine 5.8.1. Xem [Paldark V5](/V5/) để đọc proposal mới.
 :::
 
 ## Một mô hình về composability, parity và cộng tác đa tác nhân cho Paldark

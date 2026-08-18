@@ -134,7 +134,7 @@ Mẫu máy đọc được: [Feature Dossier](/V5/Templates/).
 Một observation chỉ có ý nghĩa khi pin:
 
 - gold commit/build hash;
-- UE 5.6.1 changelist;
+- UE 5.8.1 changelist;
 - map, GameMode/profile;
 - save/seed và starting inventory/state;
 - input device/mapping;

@@ -219,7 +219,7 @@ events:
 save_chunk: inventory
 schema_version: 1
 provider_module: PaldarkItemsRuntime
-engine_range: "=5.6.1"
+engine_range: "=5.8.1"
 ```
 
 Composition phải reject provider thứ hai cho cùng tuple:

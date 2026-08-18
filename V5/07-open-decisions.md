@@ -18,13 +18,13 @@ description: Những điểm agent không được tự suy đoán trước khi 
 - main hiện tại; hoặc
 - main cộng ba asset từ `TestTest`, sau khi human xác nhận behavior tốt hơn.
 
-**Khuyến nghị:** không đưa `TestTest` vào gold chỉ vì nó mới hơn. Chạy focused A/B ba asset trên disposable UE 5.6.1 copy rồi quyết định từng delta.
+**Khuyến nghị:** không đưa `TestTest` vào gold chỉ vì nó mới hơn. Chạy focused A/B ba asset trên disposable UE 5.8.1 candidate rồi quyết định từng delta.
 
 ### `Q-V5-002` — Full-seed strategy
 
-**Proposal:** repository game PaldarkV5 mới là full-history fork/clone của KYWorld, one-way upgrade 5.6.1, gold/candidate cùng engine. `Soliz-Blueprint-C` là tool repo riêng.
+**Hiện trạng:** PaldarkV5 đã được import vào monorepo và nâng một chiều lên UE5.8.1; Git ancestry trực tiếp không chứa full KYWorld history, history vẫn ở `02.Palworld/Source`.
 
-**Cần owner:** approve/reject.
+**Cần owner:** chấp nhận imported-tree topology kèm provenance manifest, hay yêu cầu graft/full-history migration riêng. Không copy project lần nữa nếu không có lợi ích audit cụ thể.
 
 ### `Q-V5-003` — Project identity
 
@@ -42,10 +42,10 @@ description: Những điểm agent không được tự suy đoán trước khi 
 
 P1 cần owner approve, không chỉ “máy đang có”:
 
-- exact UE 5.6.1 Launcher changelist (local candidate hiện là `44394996`);
+- exact UE 5.8.1 changelist (installed candidate hiện là `56057345`);
 - Win64 Editor/Development/Shipping target bắt buộc;
 - compiler/Windows SDK;
-- plugin source/binary bắt buộc và exact UE 5.6.1 artifact/version.
+- plugin source/binary bắt buộc và exact UE 5.8.1 artifact/version.
 
 P4 phải dùng lại đúng lock P1; không được chọn toolchain khác trong pilot.
 
@@ -122,7 +122,7 @@ Video README là seed, không đủ cho failure/cancel/edge case. Human cần du
 
 ### `Q-V5-010` — Known bug policy
 
-Khi KYWorld 5.6.1 gold có bug hoặc behavior xấu, owner chọn `PRESERVE_REFERENCE`, `KNOWN_REFERENCE_BUG` hoặc `INCONCLUSIVE` theo behavior row. Không có policy này, “100% giống” có thể vô tình thưởng việc tái tạo bug.
+Khi KYWorld 5.8.1 gold có bug hoặc behavior xấu, owner chọn `PRESERVE_REFERENCE`, `KNOWN_REFERENCE_BUG` hoặc `INCONCLUSIVE` theo behavior row. Không có policy này, “100% giống” có thể vô tình thưởng việc tái tạo bug.
 
 ### `Q-V5-014` — Hardware và performance tolerance
 

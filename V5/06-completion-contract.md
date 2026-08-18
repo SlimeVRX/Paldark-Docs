@@ -19,13 +19,13 @@ Nó không thể chứng minh tương đương toán học cho mọi chuỗi inp
 
 Tuyên bố đúng là:
 
-> Paldark V5 đạt full native ownership và reference parity trên closed corpus, scenario matrix, target UE 5.6.1 và tolerance đã được pin trong certificate.
+> Paldark V5 đạt full native ownership và reference parity trên closed corpus, scenario matrix, target UE 5.8.1 và tolerance đã được pin trong certificate.
 
 ## 2. Closed-world sets
 
 W0 phải tạo chín tập:
 
-- `T` — toàn bộ tracked path của gold UE 5.6.1;
+- `T` — toàn bộ tracked path của gold UE 5.8.1;
 - `P` — runtime-reachable package từ shipping roots qua hard/soft/manage/config/string/dynamic reference;
 - `G(P)` — mọi executable graph/function/GUID trong `P`;
 - `M` — mọi authoritative mutation, validation và ordering decision;
@@ -35,7 +35,7 @@ W0 phải tạo chín tập:
 - `U` — mọi source surface có thể mang semantics/reference: graph, property/default, SCS component, binding, dependency, mutation và reference;
 - `N` — mọi legacy native `.h/.cpp` symbol cần adopt/refactor/replace/remove disposition.
 
-Seed KYWorld hiện có 10.173 tracked path và 10.091 Unreal package. Đó là check ban đầu, không phải con số được hard-code vĩnh viễn; W0 phải tái sinh denominator sau upgrade 5.6.1 và record digest.
+Seed KYWorld hiện có 10.173 tracked path và 10.091 Unreal package. Đó là check ban đầu, không phải con số được hard-code vĩnh viễn; W0 phải tái sinh denominator sau upgrade 5.8.1 và record digest.
 
 File ngoài runtime closure vẫn có row `VENDOR_DEMO_PRESERVED`, `EDITOR_TEST` hoặc `UNUSED_PROVED`. Nó không được biến mất chỉ vì không nằm trong shipping map.
 
@@ -228,7 +228,7 @@ Mẫu: [Completion Certificate](/V5/Templates/).
 Certificate pin:
 
 - reference và candidate commit/build hash;
-- UE 5.6.1 exact changelist;
+- UE 5.8.1 exact changelist;
 - target/platform/compiler/plugin/config;
 - evidence/field-source/scope-decision/unknown/mutation inventory; Asset Registry/allowlist/behavior/native-convergence/test/human/performance/rollback/conformance digest.
 

@@ -1,6 +1,6 @@
 ---
 title: V5.3 — Gameplay dependency roadmap
-description: Lộ trình W0–W12 trên một baseline UE 5.6.1, suy từ corpus, lịch sử KYWorld và dependency gameplay.
+description: Lộ trình W0–W12 trên một baseline UE 5.8.1, suy từ corpus, lịch sử KYWorld và dependency gameplay.
 ---
 
 # V5.3 — Gameplay dependency roadmap
@@ -96,7 +96,7 @@ Task sau chỉ được phụ thuộc capability contract đã certificate, khô
 
 ## 3. W0–W12 mới
 
-Old engine-migration wave bị xóa. Upgrade xảy ra một lần ở W0; mọi wave sau chỉ dùng UE 5.6.1.
+Old engine-migration wave bị xóa. Upgrade xảy ra một lần ở W0; mọi wave sau chỉ dùng UE 5.8.1.
 
 ### W0 — Import, upgrade và gold freeze
 
@@ -109,7 +109,7 @@ Old engine-migration wave bị xóa. Upgrade xảy ra một lần ở W0; mọi 
 - `BASE-005` Asset Registry/reference/Blueprint graph export;
 - `BASE-006` gold behavior atlas và human rehearsal.
 
-**Exit:** gold 5.6.1 chạy đúng critical flow, clean build/cook/package/cold launch; engine-caused deviations đã quyết định; candidate sinh từ cùng tag; không gameplay refactor.
+**Exit:** gold 5.8.1 chạy đúng critical flow, clean build/cook/package/cold launch; engine-caused deviations đã quyết định; candidate sinh từ cùng tag; không gameplay refactor.
 
 ### W1 — V5 foundation và assurance harness
 
@@ -124,7 +124,7 @@ Old engine-migration wave bị xóa. Upgrade xảy ra một lần ở W0; mọi 
 - `WORLD-KERNEL-001` world identity/time/resource/spawn public contracts, chưa triển khai full world runtime;
 - `GAS-001` ASC/ability set/input grant foundation;
 - `ASSURE-001` coverage ledgers, BP ownership lint, certificate commandlet và fixtures.
-- `TOOL-001` fork/pin Soliz-Blueprint-C và pass `TQ0`, gồm clean UE 5.6.1 build, real-asset fixtures và differential runtime semantics.
+- `TOOL-001` fork/pin Soliz-Blueprint-C và pass `TQ0`, gồm clean UE 5.8.1 build, real-asset fixtures và differential runtime semantics.
 
 **Exit:** Core TDD đã duyệt; no duplicate owner/cycle/forbidden dependency; 100 activation cycles trở về baseline; legacy violation snapshot không tăng; `TQ0` pass. P4 representative migration pilot cũng phải pass trước khi mở W2 implementation; gameplay delta W1 bằng 0.
 

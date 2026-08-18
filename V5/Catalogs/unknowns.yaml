@@ -6,7 +6,7 @@ questions:
     question: "Gold dùng main@a6eab166 hay cộng TestTest@0fbf2517?"
   - id: Q-V5-002
     blocks: P1
-    question: "Owner duyệt full-history fork/clone + one-way UE5.6.1 upgrade không?"
+    question: "Owner chấp nhận imported PaldarkV5 tree + provenance manifest hay yêu cầu graft/full-history ancestry riêng?"
   - id: Q-V5-003
     blocks: P1
     question: "Project/module/content identity có được defer rename tới sau parity không?"
@@ -15,7 +15,7 @@ questions:
     question: "Tên/remote/visibility của game repository PaldarkV5 là gì?"
   - id: Q-V5-013
     blocks: P1
-    question: "Owner approve exact UE 5.6.1 changelist, target, compiler/SDK và plugin artifact nào?"
+    question: "Owner approve UE 5.8.1 CL 56057345, target, compiler/SDK và exact plugin artifact nào?"
   - id: Q-V5-005
     blocks: P2
     question: "Release target solo, listen co-op hay dedicated-ready?"

@@ -1,7 +1,7 @@
 # Paldark V4 — Mục lục và đường đọc lưu trữ
 
 ::: warning Trạng thái phiên bản
-Sáu quyển dưới đây là corpus Paldark V4. Chúng được giữ để học và truy vết, nhưng [Paldark V5](/V5/) là nguồn quyết định hiện hành cho project UE 5.6.1.
+Sáu quyển dưới đây là corpus Paldark V4. Chúng được giữ để học và truy vết, nhưng [Paldark V5](/V5/) là nguồn quyết định hiện hành cho project UE 5.8.1.
 :::
 
 Một mục lục thường chỉ cho biết bài nào nằm ở đâu. Mục lục của Paldark còn phải cho thấy vì sao bài sau cần bài trước, bởi cuốn sách này theo đuổi một câu hỏi xuyên suốt: **làm sao để rất nhiều người, hoặc rất nhiều AI agent, cùng dựng lại một game như Palworld mà công việc của họ vẫn ghép được vào nhau?**
