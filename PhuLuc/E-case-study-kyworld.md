@@ -66,7 +66,7 @@ Khi đã phân biệt được behavior, source và asset, ta có thể mang bà
 
 Tốc độ của prototype đi kèm những giả định phù hợp với prototype. Nếu bê nguyên chúng vào Paldark, ta cũng bê theo phần chi phí KYWorld đã chủ động để lại cho tương lai.
 
-1. **Blueprint graph chưa được export.** Agent không thể chứng minh logic bên trong chỉ từ tên `.uasset`.
+1. **Ở snapshot lịch sử này, Blueprint graph chưa được export.** Pilot V5 hiện đã export graph/surface có provenance, nhưng vẫn fail-closed vì processor và non-topology closure chưa đủ; xem [MCP + Blueprint conversion pipeline](/V5/08-mcp-conversion-pipeline). Tên `.uasset` hoặc một Graph.json đơn lẻ vẫn không chứng minh runtime logic.
 2. **Capture prototype không đủ authority.** Luồng “thêm Pal rồi destroy actor” không giải quyết xác suất, reservation, retry, sphere settlement hay exactly-once.
 3. **Craft không chứng minh atomicity.** Remove ingredient tuần tự rồi add output có thể half-commit.
 4. **Building C++ chỉ có helper hẹp.** Preview/snap/support/overlap/permission nằm ngoài source C++ đọc được.

@@ -15,6 +15,8 @@ description: Giáo trình 18 module, 127 bài đi từ first principles và kh�
 
 Machine-readable curriculum: [`course.yaml`](./course.yaml).
 
+**Required foundation:** trước M04 và M06, đọc [V5.9 — Kiến trúc UEFN và bài học cho PaldarkV5](/V5/09-uefn-architecture-and-paldarkv5). Chương này giải phẫu UEFN hiện hành, kiểm toán đúng phạm vi Course 16 và khóa ranh giới UEFN-lab với target UE5.8.1. Đây là prerequisite reading, không thêm module nên tổng vẫn là 18 module/127 bài.
+
 ## 1. Học xong khóa này nghĩa là gì
 
 Người học không chỉ biết gõ lại Blueprint node thành C++. Họ có thể:

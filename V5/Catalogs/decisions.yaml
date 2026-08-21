@@ -1,5 +1,5 @@
 schema: PaldarkV5DecisionRegister/v1
-version: 2026-08-19
+version: 2026-08-22
 
 decisions:
   - id: V5-ADR-001
@@ -52,3 +52,7 @@ decisions:
   - id: V5-ADR-012
     status: proposed
     statement: "Full completion yêu cầu zero authoritative Blueprint exception và closed-world certificate."
+
+  - id: V5-ADR-013
+    status: proposed
+    statement: "UEFN là reference architecture và experimentation lab; Verse/UEFN không là runtime dependency của PaldarkV5, và công cụ nghiên cứu không ảnh hưởng target architecture."

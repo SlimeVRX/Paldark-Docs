@@ -17,6 +17,7 @@ export const bookSidebar: DefaultTheme.SidebarItem[] = [
       page('Completion Contract', '/V5/06-completion-contract'),
       page('Quyết định cần người duyệt', '/V5/07-open-decisions'),
       page('MCP + Blueprint conversion', '/V5/08-mcp-conversion-pipeline'),
+      page('Kiến trúc UEFN & bài học cho V5', '/V5/09-uefn-architecture-and-paldarkv5'),
       page('Khóa học V5 · 18 module/127 bài', '/V5/Course/'),
       page('Catalog V5 máy đọc được', '/V5/Catalogs/'),
       page('Mẫu V5 máy đọc được', '/V5/Templates/'),

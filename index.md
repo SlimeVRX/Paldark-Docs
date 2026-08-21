@@ -28,8 +28,9 @@ Tool/fixture research và staging extraction được phép để hoàn thiện 
 7. [Completion Contract](/V5/06-completion-contract) — cách chứng minh toàn bộ corpus đã được xử lý.
 8. [Quyết định cần người duyệt](/V5/07-open-decisions) — danh sách ngắn những điểm chưa được phép tự suy đoán.
 9. [MCP + Blueprint conversion pipeline](/V5/08-mcp-conversion-pipeline) — root cause pilot, tool roles, 12 trạng thái và bulk gates.
-10. [Khóa học V5 · 18 module/127 bài](/V5/Course/) — theory → archaeology → design → practice → proof.
-11. [Catalog máy đọc được](/V5/Catalogs/) — decision, capability, ownership, unknown và toolchain lock.
+10. [Kiến trúc UEFN và bài học cho PaldarkV5](/V5/09-uefn-architecture-and-paldarkv5) — giải phẫu các hệ thống UEFN, ý định thiết kế của Epic, trade-off và ma trận áp dụng cho V5.
+11. [Khóa học V5 · 18 module/127 bài](/V5/Course/) — theory → archaeology → design → practice → proof.
+12. [Catalog máy đọc được](/V5/Catalogs/) — decision, capability, ownership, unknown và toolchain lock.
 
 Audit [UE5.6.1 cũ](/V5/01-project-baseline-ue561) được giữ như `STALE HISTORICAL EVIDENCE`; không dùng thay current UE5.8.1 proof.
 

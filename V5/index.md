@@ -53,6 +53,7 @@ V5 chỉ được gọi hoàn tất khi cùng lúc đạt bốn mục tiêu:
 | `V5-ADR-010` | Mỗi feature có dossier + gold human rehearsal; main playable, task branch có thể tạm hỏng | **PROPOSED** | Target khóa trước implementation |
 | `V5-ADR-011` | Blueprint→C++ output vào staging; tool phải pass TQ0 và packet mang provenance | **PROPOSED** | Converter tăng tốc nhưng không tự quyết ownership/parity |
 | `V5-ADR-012` | Full certificate yêu cầu zero authoritative Blueprint exception | **PROPOSED** | Có exception thì nhãn là `HYBRID` |
+| `V5-ADR-013` | UEFN là reference architecture/lab, không là runtime dependency của PaldarkV5 | **PROPOSED** | Adopt/Adapt nguyên lý có evidence; công cụ nghiên cứu không ảnh hưởng target architecture |
 
 `ACCEPTED BY OWNER` chỉ dùng khi người sở hữu dự án đã nói rõ quyết định. `RECOMMENDED` và `PROPOSED` vẫn chờ duyệt; agent không được biến chúng thành code convention bằng im lặng.
 
@@ -93,4 +94,4 @@ Quyết định cần human được tập trung tại [V5/07-open-decisions](/V
 
 Decision, capability, ownership, unknown và toolchain pin còn có [catalog máy đọc được](/V5/Catalogs/) để automation và agent không phải suy trạng thái từ văn xuôi.
 
-Baseline hiện hành: [Project baseline UE 5.8.1](/V5/01-project-baseline-ue581). Quy trình tool: [MCP + Blueprint conversion pipeline](/V5/08-mcp-conversion-pipeline). Lộ trình học/triển khai 18 module, 127 bài: [Evidence-Driven Blueprint-to-C++ Migration](/V5/Course/).
+Baseline hiện hành: [Project baseline UE 5.8.1](/V5/01-project-baseline-ue581). Quy trình tool: [MCP + Blueprint conversion pipeline](/V5/08-mcp-conversion-pipeline). Nền kiến trúc Epic: [Kiến trúc UEFN và bài học cho PaldarkV5](/V5/09-uefn-architecture-and-paldarkv5). Lộ trình học/triển khai 18 module, 127 bài: [Evidence-Driven Blueprint-to-C++ Migration](/V5/Course/).

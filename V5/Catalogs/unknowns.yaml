@@ -49,3 +49,6 @@ questions:
   - id: Q-V5-012
     blocks: P4
     question: "Human gate capacity và capture environment là gì?"
+  - id: Q-V5-015
+    blocks: UEFNPaldark-lab-U1-U13
+    question: "UEFNPaldark dùng Lore làm source of truth và được parent Git ignore, hay tắt Lore để áp dụng Git/LFS policy riêng?"
