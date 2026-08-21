@@ -64,6 +64,8 @@ V5 bắt buộc receipt, generation và activation-cycle test để biến conve
 
 Giữ tư duy **device façade**: designer có thể đặt một Actor/Component cấu hình bằng data và nối typed port mà không biết implementation. Device không được biến thành canonical owner của domain khác hoặc giao tiếp bằng string/global search tùy ý.
 
+Phân tích đầy đủ về project/content model, devices, Verse, Scene Graph, gameplay domains, validation, runtime và vận hành nằm ở [V5.9 — Kiến trúc UEFN và bài học cho PaldarkV5](/V5/09-uefn-architecture-and-paldarkv5). UEFN là reference architecture/lab, không phải runtime dependency của PaldarkV5.
+
 ### 2.4. Paldark V1–V4
 
 Giữ stable identity, authority-shaped request, versioned payload, reservation, idempotency, manifest và evidence ladder.
@@ -88,7 +90,7 @@ Các kết luận trên không dựa vào tên framework hoặc trí nhớ hội
 | `SRC-CORDIS-001` | `Documents/KYWorld/paper.pdf`, SHA-256 `4D48478DC0B6222D9F74D7DB10EE776449B1209EB112632336544D32A49DB97F` | calculus về effect/coeffect, temporal/spatial composition; phần self-evolving harness là hướng validation, không phải guarantee đã chứng minh cho Unreal |
 | `SRC-HARNESS-001` | `deepseek-ai/deepseek-harness@47f943859bef60e4160492346772ded9b24f765a`; `architecture.md` SHA-256 `C5B2D290BE49F06019B412E56FEE4C9B36B853813FD927D4E31FE678712A9C70`, `cordis-primer.md` `90E493EA854A8E23FED0FA6B973ADE950D4FD100E6365C6AD52D83D3436F27E9`, `capability-seams.md` `CD42EB79CD51E228F869407A97D92EFB55DA97BFE3F36EB2BBC0A6618C6A6114` | Harness dùng Cordis/capability seams và plugin composition; repository claim không tự chứng minh Unreal teardown/transaction semantics |
 | `SRC-LYRA-001` | `17.Hipernova-Lyra-Inventory@d0c190f13cb67e81f170de2275a74fd5132ff253`, `LyraExperienceManagerComponent.cpp:384–465` | FILO teardown, partial-load TODO, giới hạn async deactivation và deactivate-vs-unload |
-| `SRC-UEFN-001` | immutable synthesis `Paldark-Docs@581e9bd:index.md:378–382`; official Epic Devices/Editable Properties URLs reverified HTTP 200 on 2026-08-16 | placeable/configurable façade và typed wiring; không suy ra canonical state owner; W0 evidence manifest phải pin fetch metadata trước implementation |
+| `SRC-UEFN-001` | [V5.9 UEFN synthesis](/V5/09-uefn-architecture-and-paldarkv5); Epic UEFN/Verse/Scene Graph/validation/Lore sources và local build 42.00 reverified 2026-08-22 | governed creator platform, capability façade, composition/lifecycle, generated digest, hybrid migration và validation; không suy ra canonical Paldark state owner |
 | `SRC-V4-CORE-001` | `Soliz-Devin-Palworld@d0c190f13cb67e81f170de2275a74fd5132ff253`; CoreContracts blob `9cdf943e11d473ea6f985c8afc92598253be760d`, Build.cs blob `3063fb91ceafdd986c383288ecaf998c3206be18` | domain contract dồn vào Core và public dependency `UMG` là debt phải tránh |
 | `SRC-V4-RETRO-001` | `Paldark-Docs@581e9bd:index.md`, nay lưu tại [V4 archive](/V4/kyworld-cpp-parity-ue54) | receipt/owner/adapter/manifest lessons và các giới hạn quan sát của V4 |
 

@@ -1,5 +1,9 @@
 # Chương 9 — UEFN dạy thêm gì
 
+::: warning Corpus V4 — hai chi tiết đã lỗi thời
+Chương này giữ nguyên như synthesis lịch sử từ Course 16. Ở UEFN 42.00, revision control tích hợp đã được tài liệu hóa dưới tên **Lore** với checkout/conflict workflow; persistence hiện cho phép tối đa bốn persistent player weak maps, không phải hai. Xem phân tích kiến trúc hiện hành tại [V5.9 — Kiến trúc UEFN và bài học cho PaldarkV5](/V5/09-uefn-architecture-and-paldarkv5).
+:::
+
 Lyra cho ta một câu trả lời mạnh, nhưng câu trả lời ấy sinh ra trong bối cảnh studio: một đội biết nhau, dùng chung editor, có quy trình review và vẫn đủ ít người để nói chuyện trực tiếp khi một contract đổi.
 
 UEFN bắt đầu từ một bối cảnh khác hẳn. Hàng trăm nghìn người xa lạ cùng xây các thế giới bên trong một game duy nhất; phần lớn không phải lập trình viên chuyên nghiệp, và không thể giả định rằng họ sẽ đọc tài liệu kiến trúc của nhau trước khi làm.

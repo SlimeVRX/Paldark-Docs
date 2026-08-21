@@ -147,6 +147,19 @@ Owner cho biết:
 
 Planner dùng capacity này để chia packet. Human gate ít không được xử lý bằng cách bỏ gate; phải làm packet lớn hơn có chủ ý và tăng automation ở phần state.
 
+## Ưu tiên E — governance cho lab UEFN, không chặn Paldark design
+
+### `Q-V5-015` — Source of truth của `UEFNPaldark`
+
+`UEFNPaldark/` hiện nằm trong parent Git worktree, đang untracked và đã có metadata Lore. Epic khuyến cáo không dùng nhiều version-control/backup system cho cùng project/location.
+
+Owner chọn một trong hai:
+
+1. Lore là source of truth cho toàn bộ UEFN project; parent Git bỏ qua directory này và chỉ giữ tài liệu/receipt đã duyệt.
+2. Tắt Lore; định nghĩa Git/LFS policy riêng trước khi track UEFN binary assets.
+
+Không cho agent/team sửa song song lab trước khi chốt. Quyết định này không chặn P0–P4 của PaldarkV5, nhưng chặn các lab U1–U13 trong [V5.9](/V5/09-uefn-architecture-and-paldarkv5).
+
 ## Thứ tự trả lời đề nghị
 
 Để tiến nhanh mà không khóa sai architecture, owner chỉ cần trả lời bốn nhóm theo thứ tự:
